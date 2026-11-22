@@ -1699,3 +1699,13 @@ Rules that follow from it: backing up is on whenever signed in and everything al
 ## 2026-11-22: No usernames: your name is your name
 
 Revised the same day the account screens were built: there is one field, your name, and no unique username. Two fields on one screen felt strange and unnecessary, and a name people choose for themselves reads as more personal and leads to fewer odd handles. Names can repeat, because every account has its own unique key; anything that links people (friends, sharing a hub, comparing goals) will use codes or links, not names. Google often carries a name and it is prefilled; when it does not, the name is asked. Removed with it: the username field and its free-or-taken check, the reserved words, and the cloud's usernames table (a small cleanup, "part 3" in the schema file, removes the table made by the earlier version). Cost, accepted: nobody can be found by searching a name, and two people can share a name, so any list of people shows a name with a code to tell them apart, which suits sharing by code.
+
+## 2026-11-22: The hub spec is written, and checked against the six example people
+
+Part 3 of the schema is confirmed applied (no profiles or usernames tables, no handle_available); only settings, trackers and entries remain in the cloud.
+
+The hub is specified in `docs/hub-spec.md`. Decisions: a hub panel is only a source, a shape and a period, so there is one idea to learn; a new hub is built from what data exists (never from what a tracker is for), so nobody meets a blank page; goals, streaks, points and levels are all derived by replaying entries, so edits, imports and new goals give right totals at once and a goal can be tried on the past before it is saved; streaks alone are the default gamification and points and levels are offered; trackers get only a read-only strip and a one-line result; comparison is Spearman rank correlation on shared days, needs 20 days, and says "tends to", never "causes"; sharing is an image card (with a hide-values option) and an importable layout that binds by role, not tracker id.
+
+Options considered and set aside: a stored running score (breaks when history changes), preset goal cards (history preview does the same job honestly), and live shared hubs (waits for the code-linking system).
+
+The paper check against the six people found two gaps, both now rules: any panel over 8 rows shows its top 6 (the 18-tracker person), and a period longer than the history clamps to it and says so (the 28-day person). The 5-day person's hub is thin but honest. Open for Nick: the tab's name, the streak default, where comparison starts, and the image card's look.
