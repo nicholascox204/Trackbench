@@ -276,28 +276,6 @@ export function RecordStep({
             style={s.input} value={a.countUnit} maxLength={12} onChangeText={(v) => set({ countUnit: v })}
             placeholder="Unit (optional)" placeholderTextColor={colors.muted}
           />
-          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 12, marginBottom: 6 }}>Daily target (optional)</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {([['none', 'None'], ['max', 'At most'], ['min', 'At least']] as const).map(([k, label]) => {
-              const cur = a.goal === 'number' && a.goals[0] ? a.goals[0].cmp : 'none';
-              const start = a.goals[0]?.value ?? (a.countStep > 1 ? a.countStep * 4 : 4);
-              return (
-                <Chip
-                  key={k} label={label} active={cur === k}
-                  onPress={() => set(k === 'none' ? { goal: 'none', goals: [] } : { goal: 'number', goals: [{ id: 'limit', measure: 'count', cmp: k, value: start, value2: start }] })}
-                />
-              );
-            })}
-          </View>
-          {a.goal === 'number' && a.goals[0] ? (
-            <View style={[s.row, { marginTop: 4 }]}>
-              <Stepper
-                value={a.goals[0].value} min={1} max={9999} step={Math.max(1, a.countStep)}
-                onChange={(v) => set({ goals: [{ ...a.goals[0], value: Math.max(1, Math.round(v)), value2: Math.max(1, Math.round(v)) }] })}
-              />
-              <Text style={{ color: colors.muted, fontSize: 14, marginLeft: 10, flexShrink: 1 }} numberOfLines={1}>{a.countUnit.trim() || 'a day'} {a.countUnit.trim() ? 'a day' : ''}</Text>
-            </View>
-          ) : null}
         </View>
       ) : null}
       {a.record === 'done' ? (

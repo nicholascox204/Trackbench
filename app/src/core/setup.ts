@@ -416,11 +416,22 @@ export function describeGoal(g: Goal, a: Answers, draft: TrackerDraft, settings:
     return g.value <= 1 ? 'log it every day' : `log it ${formatNumber(g.value)} times a day`;
   }
   const unit = m ? measureUnit(draft as unknown as Tracker, m, settings) : undefined;
-  const u = unit ? ' ' + unit : '';
+  const u = unit ? ' ' + unit : g.measure === 'count' && a.record === 'count' && a.countUnit.trim() ? ' ' + a.countUnit.trim() : ''; // a counter's own word (cups)
   const name = m && m.id !== 'count' && m.name.toLowerCase() !== (unit ?? '').toLowerCase() ? m.name.toLowerCase() + ' ' : '';
   const perDay = m?.calc.op === 'latest' ? '' : ' a day'; // a reading like weight is not added up over the day
   if (g.cmp === 'range') return `${name}${formatNumber(Math.min(g.value, g.value2))} to ${formatNumber(Math.max(g.value, g.value2))}${u}${perDay}`;
   return `${name}${g.cmp === 'min' ? 'at least' : 'at most'} ${formatNumber(g.value)}${u}${perDay}`;
+}
+
+// What makes a good day for this tracker, in words, for the summary: its target, or what simply counts.
+export function targetText(a: Answers, draft: TrackerDraft, settings: Settings): string {
+  if (a.avoid && a.record === 'done') return 'A day with nothing logged';
+  const cap = (t: string): string => t.replace(/^./, (c) => c.toUpperCase());
+  const parts: string[] = [];
+  if (a.goal === 'number') for (const g of a.goals) parts.push(cap(describeGoal(g, a, draft, settings)));
+  if (a.finishPlan && draft.input === 'plan') parts.push(a.goal === 'number' && a.goals.length ? 'and finish most of the plan' : 'Finish most of the plan');
+  if (parts.length) return parts.join(' · ');
+  return draft.input === 'check' ? 'Tapping it counts' : 'Any entry counts';
 }
 
 // Switch this tracker's units and carry any goal numbers across, so 150 lb becomes 68 kg and not 150 kg.
@@ -456,7 +467,7 @@ export function planWords(a: Answers): string {
 
 // The rows on the summary: what you log, what it shows, its tools and its options, each with its current contents. Rows that do not
 // apply to a tracker are left out. Each opens the screen where it is set.
-export type SummaryStep = 'record' | 'shows' | 'tools' | 'options';
+export type SummaryStep = 'record' | 'target' | 'shows' | 'tools' | 'options';
 
 export function summaryLines(a: Answers, settings: Settings, editing = false): { label: string; value: string; step: SummaryStep }[] {
   void editing;
@@ -469,9 +480,10 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const named = draft.fields.some((f) => f.label) ? ', each named' : '';
   const logging =
     a.record === 'done' ? (a.avoid ? 'Tap once to log a slip' : 'Tap once when done')
-    : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count') + (a.goal === 'number' && a.goals[0] ? `, ${a.goals[0].cmp === 'max' ? 'at most' : 'at least'} ${a.goals[0].value} a day` : '')
+    : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count')
     : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
   lines.push({ label: 'You log', value: logging, step: 'record' });
+  lines.push({ label: 'Target', value: targetText(a, draft, settings), step: 'target' }); // what makes a good day: where progress is measured from
 
   // What it shows: the numbers it works out, and the small things shown beside your entries.
   const hasLatest = draft.measures.some((m) => m.calc.op === 'latest');
@@ -507,7 +519,7 @@ export function previewText(a: Answers, settings: Settings): string {
 }
 
 // Which screens this person sees, in order. Simple trackers skip most of them.
-export type StepKey = 'start' | 'record' | 'shows' | 'tools' | 'options' | 'summary';
+export type StepKey = 'start' | 'record' | 'target' | 'shows' | 'tools' | 'options' | 'summary';
 // A starting point already answers what is recorded and how, so it goes straight to the summary: start, summary. Building
 // your own is three screens: start, one screen for the name and what is entered, summary. Everything else (days, goals,
 // extras) is one tap from the summary, where it has a sensible default. Editing opens on the summary.

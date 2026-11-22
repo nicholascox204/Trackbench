@@ -68,7 +68,7 @@ function T(
 const ALL: Template[] = [
   // ---- Fitness ----
   T('gym-split', 'Gym split', 'barbell-outline', 'Fitness', 'Plan lifts by day and log every set.', 'gym lifting weights strength push pull legs split workout hypertrophy', 'set-plan', () => ({
-    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: false, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
+    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: false, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
     sample: [
       day('Push', [row('Bench Press', 4, '6-8'), row('Incline Dumbbell Press', 3, '8-10'), row('Overhead Press', 3, '8-10'), row('Lateral Raise', 3, '12-15'), row('Triceps Pushdown', 3, '10-12')]),
       day('Pull', [row('Pull-Up', 4, '6-10'), row('Barbell Row', 4, '8-10'), row('Lat Pulldown', 3, '10-12'), row('Face Pull', 3, '12-15'), row('Biceps Curl', 3, '10-12')]),
@@ -76,7 +76,7 @@ const ALL: Template[] = [
     ],
   })),
   T('full-body', 'Full body', 'fitness-outline', 'Fitness', 'The same list of lifts on each training day.', 'gym lifting weights full body beginner strength 5x5 workout', 'set-plan', () => ({
-    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
+    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
     sample: [day('Full body', [row('Squat', 3, '5'), row('Bench Press', 3, '5'), row('Barbell Row', 3, '5'), row('Overhead Press', 3, '8'), row('Romanian Deadlift', 3, '8'), row('Plank', 3, '30-60s')])],
   })),
   T('running', 'Running', 'footsteps-outline', 'Fitness', 'Log distance and time for each run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' } }),

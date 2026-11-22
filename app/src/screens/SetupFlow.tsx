@@ -21,6 +21,7 @@ import { exportReadable, exportStructure } from '../core/transfer';
 import { measureUnit } from '../core/units';
 import type { Field, FieldType, Tracker } from '../core/types';
 import { ScheduleSection } from './ScheduleSection';
+import { TargetStep } from './TargetStep';
 import { Totals } from './RecordStep';
 import { RecordStep } from './RecordStep';
 import { BackButton, ScreenHeader } from '../ui/kit';
@@ -36,6 +37,7 @@ import { px } from '../ui/theme';
 const QUESTIONS: Record<StepKey, string> = {
   start: 'What do you want to track?',
   record: 'What do you enter?',
+  target: 'Target',
   shows: 'What it shows',
   tools: 'Tools',
   options: 'Options',
@@ -236,6 +238,9 @@ export function SetupFlow({
         ) : null}
 
         {/* days, opened from the summary */}
+
+        {/* target: what makes a good day */}
+        {step === 'target' ? <TargetStep a={a} set={set} draft={draft} settings={settings} /> : null}
 
         {/* what it shows: calculations and the small things beside your entries */}
         {step === 'shows' ? (

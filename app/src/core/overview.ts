@@ -6,6 +6,7 @@
 //   4. the starting panels, built from the data that exists, never from what a tracker is for.
 
 import { dayResult } from './day';
+import { trackerProgress, type Credit } from './measures';
 import type { DayTrackerResult } from './engine';
 import { aggregate, daysOf, isMet, periodOf, dayKey, dayFromKey, type DayVal, type WeekStart } from './goals';
 import { scheduleOf } from './schedule';
@@ -23,7 +24,7 @@ export class DayIndex {
   private perTracker = new Map<string, Entry[]>();
   readonly first: number | undefined; // the first day anything was logged
 
-  constructor(readonly trackers: Tracker[], readonly entries: Entry[]) {
+  constructor(readonly trackers: Tracker[], readonly entries: Entry[], readonly credit: Credit = 'partial') {
     let first: number | undefined;
     for (const e of entries) {
       const d = startOfDay(e.at);
@@ -45,6 +46,9 @@ export class DayIndex {
     for (const e of this.of(trackerId)) if (e.done) { const d = startOfDay(e.at); if (f === undefined || d < f) f = d; }
     return f;
   }
+
+  // How far the tracker got toward its own target on a day, 0 to 1 (1 exactly when the day counts as met).
+  progress(t: Tracker, day: number): number { return trackerProgress(t, this.result(t, day).measures, this.credit); }
 
   result(t: Tracker, day: number): DayTrackerResult {
     const k = `${t.id}|${day}`;
@@ -397,8 +401,7 @@ export function attainment(ix: DayIndex, t: Tracker, start: number, last: number
   if (sched.kind === 'whenever' || sched.kind === 'blocks') return undefined;
   let due = 0; let good = 0;
   for (let d = Math.max(start, first); d <= last; d = addDays(d, 1)) {
-    const r = ix.result(t, d);
-    if (r.expected) { due++; if (r.success) good++; }
+    if (ix.result(t, d).expected) { due++; good += ix.progress(t, d); }
   }
   return due === 0 ? undefined : good / due;
 }
@@ -410,8 +413,7 @@ export function systemShare(ix: DayIndex, day: number): number | undefined {
   for (const t of ix.trackers) {
     const first = ix.firstOf(t.id);
     if (first === undefined || day < first) continue;
-    const r = ix.result(t, day);
-    if (r.expected) per.push(r.success ? 1 : 0);
+    if (ix.result(t, day).expected) per.push(ix.progress(t, day));
   }
   if (per.length > 0) return meanOf(per);
   return anyLogged(ix, day) ? 1 : undefined;

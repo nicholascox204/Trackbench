@@ -31,17 +31,18 @@ test('an avoid tracker with set days is not shown as done on days it does not as
   void entriesOnDay;
 });
 
-test('building a tracker sets no goals: that happens in the system', () => {
-  // The one exception: Caffeine starts with a daily limit, because a limit is what people track it for. It is a starting number they can change or clear.
+test('a tracker carries its own target (what a good day is); anything beyond that happens on the Overview', () => {
+  // A starting target is visible in the summary's Target row and can be changed or cleared there. Caffeine starts with a daily limit, because a limit is what people track it for; planned lifting starts with finishing most of the plan. Most presets start with none: any entry counts.
   const caffeine = draftFromAnswers(TEMPLATES.find((x) => x.id === 'caffeine')!.make(), settings);
   assert.deepEqual(caffeine.targets.map((x) => x.max), [4], 'caffeine starts at most 4 cups a day');
   for (const t of TEMPLATES.filter((x) => x.id !== 'caffeine')) {
     const d = draftFromAnswers(t.make(), settings);
-    assert.equal(d.targets.length, 0, `${t.id} has no daily target`);
-    assert.ok(d.success.mode === 'logged' || d.success.mode === 'clean', `${t.id} counts a day when it is logged`);
+    assert.equal(d.targets.length, 0, `${t.id} has no daily number target`);
+    const lifting = t.id === 'gym-split' || t.id === 'full-body';
+    assert.ok(lifting ? d.success.mode === 'plan' : d.success.mode === 'logged' || d.success.mode === 'clean', `${t.id} counts a day by its starting target`);
     assert.ok((d.goals ?? []).every((g) => g.id === 'sched'), `${t.id} has no goal of its own, only the one its rhythm implies`);
   }
-  for (const id of ['habit', 'running', 'spending', 'gym-split']) assert.ok(!summaryLines(tpl(id), settings).some((l) => l.label === 'Goals'), `${id} summary has no Goals row`);
+  for (const id of ['habit', 'running', 'spending', 'gym-split']) assert.ok(!summaryLines(tpl(id), settings).some((l) => l.label === 'Goals') && summaryLines(tpl(id), settings).some((l) => l.label === 'Target'), `${id} summary has a Target row and no Goals row`);
 });
 
 test('names: empty and already used are problems, case and spaces ignored', () => {

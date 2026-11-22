@@ -21,7 +21,7 @@ const same = (id: string, patch: Partial<Answers>) => assert.deepEqual(structure
 
 test('a gym plan from scratch matches the gym template', () => {
   same('gym-split', {
-    record: 'numbers', chips: ['weight', 'reps'], log: 'plan', planStyle: 'sets', schedule: { kind: 'weekdays', days: [1, 3, 5] },
+    record: 'numbers', chips: ['weight', 'reps'], log: 'plan', planStyle: 'sets', schedule: { kind: 'weekdays', days: [1, 3, 5] }, finishPlan: true, // the target is the person's own choice on the Target screen
     terms: { item: 'Exercise', row: 'Set', target: 'Range' }, // rewording is the person's own choice in the plan editor
     extras: { previous: true, lockPast: false, average: false, countdown: true }, // the countdown is a switch any tracker can turn on
   });

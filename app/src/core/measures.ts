@@ -101,6 +101,35 @@ export function trackerSuccess(t: Tracker, measures: Record<string, number>): bo
   return target ? targetMet(target, measures) : (measures.done ?? 0) > 0;
 }
 
+// ---------- progress, 0 to 1 ----------
+// How far a day got toward what the tracker was set up to ask, by rule type, so every shape reads on one scale. A day that counts as
+// success is always exactly 1. Short of it, partial credit is proportional (6 of 8 glasses is 0.75; 5 cups against a limit of 4 is 0.8,
+// because the limit is the share you stayed within); strict credit gives 0 for anything short. Which one applies is the push setting.
+export type Credit = 'partial' | 'strict';
+const unit = (n: number): number => Math.min(1, Math.max(0, n));
+
+export function targetProgress(target: Target, measures: Record<string, number>, credit: Credit = 'partial'): number {
+  if (targetMet(target, measures)) return 1;
+  if (credit === 'strict') return 0;
+  const v = measures[target.measure] ?? 0;
+  const logged = (measures.done ?? 0) > 0;
+  if (target.min !== undefined && v < target.min) return target.min > 0 ? unit(v / target.min) : 0;
+  if (target.max !== undefined) return logged && v > 0 ? unit(target.max / v) : 0; // over the limit: the share that stayed within it; nothing logged is not a day
+  return 0;
+}
+
+export function trackerProgress(t: Tracker, measures: Record<string, number>, credit: Credit = 'partial'): number {
+  if (trackerSuccess(t, measures)) return 1;
+  if (credit === 'strict') return 0;
+  const rule = t.success;
+  if (rule.mode === 'clean' || rule.mode === 'logged') return 0;
+  if (rule.mode === 'plan') return unit((measures.completion ?? 0) / Math.max(1, rule.minPct));
+  const ids = rule.mode === 'targets' ? rule.targetIds : [rule.targetId];
+  const parts = ids.map((id) => t.targets.find((x) => x.id === id)).filter((x): x is Target => !!x).map((x) => targetProgress(x, measures, credit));
+  if (rule.mode === 'targets' && rule.planMinPct !== undefined) parts.push(unit((measures.completion ?? 0) / Math.max(1, rule.planMinPct)));
+  return parts.length ? parts.reduce((a, b) => a + b, 0) / parts.length : 0;
+}
+
 // Is this tracker expected on this day (a day the schedule leaves out, or an empty plan day, is not)? Blocks of days need
 // the tracker's entries to know where a block began.
 export function expectedOn(t: Tracker, dayStart: number, all?: Entry[]): boolean {

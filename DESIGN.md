@@ -363,7 +363,11 @@ Findings to react to:
 
 Not built: reminders and notifications, friends and links, backend and sync, multiple systems in the UI, a custom tracker builder (only presets), schedules beyond daily in the UI, the raw rule editor beyond simple rules.
 
-## The hub (spec written 2026-11-22, not built)
+## Targets (decided and built 2026-11-22)
+
+Each tracker has a Target in setup: what makes a good day (any entry, finish most of the plan, or at least, at most or between on a number). It is the second row of the summary and opens its own small screen. Progress against it is 0 to 100% for every shape, which is what the Overview reads. There is no separate goals system for now. Detail: `docs/hub-spec.md` section 19.
+
+## The hub (spec written 2026-11-22, partly built)
 
 A tab beside the trackers, called Overview in the app, not the home. Goals start from a panel (bounded options with a history preview). Panels are source + shape + period; goals, streaks, points and levels are derived by replaying history; trackers show a read-only strip; comparison is plain statistics; layouts share as an image card or an importable layout bound by role. Full spec: `docs/hub-spec.md`.
 
