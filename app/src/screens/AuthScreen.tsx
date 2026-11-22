@@ -1,6 +1,4 @@
-// The first thing a new person sees: make an account, so their tracking is backed up. Google is the main way in (one tap, so it is the big
-// button); an email and password sits behind a plain link for people who do not want to use Google. Nothing else is asked here (the name
-// and username come on the next screen), and the app works offline after this.
+// The first thing a new person sees: create an account (or sign in). Google is the big button and works for both; email and password are open below it.
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -24,7 +22,6 @@ function GoogleG({ size = 22 }: { size?: number }) {
 export function AuthScreen() {
   const top = useTopPad();
   const [mode, setMode] = useState<'create' | 'signin'>('create');
-  const [showEmail, setShowEmail] = useState(!googleConfigured); // without Google, email is the only way, so it is not hidden
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,14 +45,14 @@ export function AuthScreen() {
   return (
     <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Scroll contentContainerStyle={[s.content, { flexGrow: 1, justifyContent: 'center', paddingTop: top + 24, paddingBottom: 72 }]} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: colors.text, fontSize: 30, fontWeight: '700' }}>Back up your data</Text>
-        <Text style={{ color: colors.muted, fontSize: 15, marginTop: 8, marginBottom: 28 }}>
-          An account keeps everything safe if you change or lose your phone, and brings it back wherever you sign in.
+        <Text style={{ color: colors.text, fontSize: 30, fontWeight: '700', textAlign: 'center' }}>{mode === 'create' ? 'Create your account' : 'Sign in'}</Text>
+        <Text style={{ color: colors.muted, fontSize: 15, marginTop: 8, marginBottom: 28, textAlign: 'center' }}>
+          Your trackers stay safe if you change phones.
         </Text>
 
         {googleConfigured ? (
           <Tap
-            onPress={() => void run(signInWithGoogle)} disabled={busy} accessibilityLabel="Continue with Google"
+            onPress={() => void run(signInWithGoogle)} disabled={busy} accessibilityLabel='Continue with Google'
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 56, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: EDGE, borderColor: '#DADCE0', opacity: busy ? 0.5 : 1 }}
           >
             <GoogleG />
@@ -63,30 +60,29 @@ export function AuthScreen() {
           </Tap>
         ) : null}
 
-        {googleConfigured && !showEmail ? (
-          <Tap onPress={() => setShowEmail(true)} style={{ alignSelf: 'center', padding: 14, marginTop: 6 }}>
-            <Text style={{ color: colors.muted, fontSize: 15, fontWeight: '600' }}>Use email instead</Text>
-          </Tap>
-        ) : null}
-
-        {showEmail ? (
-          <View style={{ marginTop: googleConfigured ? 22 : 0 }}>
-            <TextInput
-              value={email} onChangeText={setEmail} placeholder="Email" placeholderTextColor={colors.muted}
-              autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress"
-              style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 10 }]}
-            />
-            <TextInput
-              value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor={colors.muted}
-              secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType={mode === 'create' ? 'newPassword' : 'password'}
-              style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 12 }]}
-            />
-            <Button label={busy ? 'One moment…' : mode === 'create' ? 'Create account' : 'Sign in'} variant="ghost" disabled={busy || !ready} onPress={() => void run(() => emailAccount(mode, email, password))} />
-            <Tap onPress={() => { setMode(mode === 'create' ? 'signin' : 'create'); setProblem(''); }} style={{ alignSelf: 'center', padding: 12 }}>
-              <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{mode === 'create' ? 'I already have an account' : 'Create a new account'}</Text>
-            </Tap>
+        {googleConfigured ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 18 }}>
+            <View style={{ flex: 1, height: EDGE, backgroundColor: colors.border }} />
+            <Text style={{ color: colors.muted, fontSize: 14, marginHorizontal: 12 }}>or use email</Text>
+            <View style={{ flex: 1, height: EDGE, backgroundColor: colors.border }} />
           </View>
         ) : null}
+
+        <TextInput
+          value={email} onChangeText={setEmail} placeholder='Email' placeholderTextColor={colors.muted}
+          autoCapitalize='none' autoCorrect={false} keyboardType='email-address' textContentType='emailAddress'
+          style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 10 }]}
+        />
+        <TextInput
+          value={password} onChangeText={setPassword} placeholder='Password' placeholderTextColor={colors.muted}
+          secureTextEntry autoCapitalize='none' autoCorrect={false} textContentType={mode === 'create' ? 'newPassword' : 'password'}
+          style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 12 }]}
+        />
+        <Button label={busy ? 'One moment…' : mode === 'create' ? 'Create account' : 'Sign in'} disabled={busy || !ready} onPress={() => void run(() => emailAccount(mode, email, password))} />
+        <Button
+          label={mode === 'create' ? 'I already have an email account' : 'New here? Create an account'} variant='ghost'
+          onPress={() => { setMode(mode === 'create' ? 'signin' : 'create'); setProblem(''); }} style={{ marginTop: 10 }}
+        />
 
         {problem ? <Text style={{ color: colors.danger, fontSize: 14, marginTop: 10, textAlign: 'center' }}>{problem}</Text> : null}
 

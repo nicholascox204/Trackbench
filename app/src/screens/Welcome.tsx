@@ -36,7 +36,7 @@ export function Welcome({ onDone }: { onDone?: () => void }) {
         <Text style={{ color: colors.muted, fontSize: 14, marginTop: 6, marginBottom: 16 }}>Make it yours first. You can change any of this later in Settings.</Text>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', flex: 1 }}>What should we call you?</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', flex: 1 }}>What is your name?</Text>
           <View style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: empty ? colors.accentBg : 'transparent', borderWidth: px(1), borderColor: empty ? colors.accent : colors.border }}>
             <Text style={{ color: empty ? colors.accent : colors.muted, fontSize: 12, fontWeight: '700' }}>{empty ? 'Required' : 'Done'}</Text>
           </View>
