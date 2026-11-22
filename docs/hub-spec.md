@@ -2,6 +2,14 @@
 
 Builds on `docs/system-goals-spec.md` (one goal shape, trackers capture and the system motivates). This doc says where all of that is *seen*. Nothing here is built.
 
+## 0. Why it exists, and the bar it is held to (decided 2026-11-22)
+
+**Thesis.** Trackbench exists to tie different trackers into one coherent system, and the Overview is where that shows. (Whether any other app already does this is unchecked; see the competitor check in the case study before it is used as a claim.) **Motivation is intrinsic first:** the strongest push is seeing your own progress reflected back clearly, because the stakes are yours. Autonomy (you choose goals, streak rule and how hard the app pushes), mastery (clear progress) and purpose (your own stakes) are the frame, after *Drive*. **Light gamification:** streaks and levels only, built on the replay engine; heavier mechanics (quests, parties, as in Habitica) are a possible later direction, not now.
+
+**Tone dial.** Some people need a coach, or a bully. That is a setting the person chooses for nudges and result lines: Quiet (default), Supportive, Firm. It changes wording and how hard reminders push, nothing else, and the person is the one who picks it. A human coach is a later social feature (shared by code).
+
+**Design quality is a requirement, not polish.** Every shape on the Overview gets a design pass (type, spacing, theme colours), and the share card meets the same bar, because pride in how your data looks is a product goal and the card is how the app is seen. Test: open each of the six example people's Overviews and ask whether they would show it to someone.
+
 ## 1. What the hub is
 
 A tab beside the trackers, not the home screen. The app still opens on the first tracker you have not finished today. The hub is where you look at yourself across trackers: how things are going, what you are working toward, and how it compares with earlier weeks. It replaces the parked Motivation tab and Progress as the one overview place.
