@@ -363,6 +363,10 @@ Findings to react to:
 
 Not built: reminders and notifications, friends and links, backend and sync, multiple systems in the UI, a custom tracker builder (only presets), schedules beyond daily in the UI, the raw rule editor beyond simple rules.
 
+## The hub (spec written 2026-11-22, not built)
+
+A tab beside the trackers, not the home. Panels are source + shape + period; goals, streaks, points and levels are derived by replaying history; trackers show a read-only strip; comparison is plain statistics; layouts share as an image card or an importable layout bound by role. Full spec: `docs/hub-spec.md`.
+
 ## Related
 
 An earlier project, the Loot Game, was dropped and deleted (confirmed 2026-11-16). Only the ideas carry over: config-driven rules, seeded simulations and variable-reward design.
