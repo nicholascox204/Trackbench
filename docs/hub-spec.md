@@ -39,7 +39,7 @@ A new hub is filled from what exists, so nobody opens a blank page:
 - Always: **This week** (days logged per tracker, as a day grid) and **Streak** (current and best, across trackers).
 - If any tracker has a number you enter regularly: one **line** panel for the tracker logged on most days (last 90 days, or all time if shorter).
 - If any goals exist: **Goals** (progress bars, closest to done first).
-- At 3 or more trackers with 30 or more days: **Where you log most** (ranked list).
+- At 3 or more trackers with 30 or more days, or at 8 or more trackers whatever the history: **Where you log most** (ranked list). (The second case came from building it: the 24-tracker, 28-day person needs a ranking most, and the 30-day rule alone left them without one.)
 
 Rules are about what data exists, never about what a tracker is for (the neutral-by-default rule). Add panel, remove, reorder (press and hold, as the tracker bar does), and a change to source, shape or period are all on the panel. "Start over" rebuilds the starting hub.
 
@@ -123,3 +123,9 @@ Two rules came out of the check: panels collapse past 8 rows, and a period clamp
 3. Tracker strip and one-line result.
 4. Comparison.
 5. Image card, then importable layouts (needs the cloud and codes).
+
+## 12. Built so far (2026-11-22)
+
+`app/src/core/overview.ts`, tested in `overview.test.ts` on all six example people. It is a read-only layer: nothing is saved and no screens use it yet. It gives: one goal list over tracker goals and quests (`allGoals`); each goal's history by finished period with met count, current run and best run (`goalHistory`); "how would this have gone" on the last n periods (`previewGoal`); series for any source over a period in day, week or month buckets, with the period clamped to the history and the grain offered as a toggle (`rangeFor`, `bucketFor`, `bucketChoices`, `series`); which shapes suit a source over a range (`shapesFor`); the streak across trackers (`activeStreak`, a day counts when any tracker had a good day); the starting panels (`startingPanels`, panels over six rows show the six most active); and a ranking (`rankTrackers`). The biggest example person (18 trackers, 540 days) computes its starting panels, 19 series and the streak in about 50 ms.
+
+Not yet: moving tracker goals onto the system (storage), points and levels folded in, the screens, comparison, pause, reminders.

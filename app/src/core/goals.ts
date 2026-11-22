@@ -46,7 +46,7 @@ export function periodOf(how: 'week' | 'month', day: number, weekStart: WeekStar
   };
 }
 
-interface DayVal { day: number; m: Record<string, number>; active: boolean; entries: Entry[] }
+export interface DayVal { day: number; m: Record<string, number>; active: boolean; entries: Entry[] }
 
 // The names of the items in a planned tracker's plan (like exercises), in the order first seen.
 export function itemNames(t: Tracker): string[] {
@@ -62,7 +62,7 @@ export function slotNames(t: Tracker): Map<string, string> {
   return m;
 }
 
-function daysOf(t: Tracker, entries: Entry[], from: number, to: number, withMeasures: boolean, item?: string, where?: GoalDef['where']): DayVal[] {
+export function daysOf(t: Tracker, entries: Entry[], from: number, to: number, withMeasures: boolean, item?: string, where?: GoalDef['where']): DayVal[] {
   const byDay = new Map<number, Entry[]>();
   const names = item ? slotNames(t) : undefined;
   const want = item?.toLowerCase();
@@ -99,7 +99,7 @@ function fieldValues(g: GoalDef, vals: DayVal[]): number[] {
 }
 
 // One number for a goal over some days.
-function aggregate(t: Tracker, g: GoalDef, vals: DayVal[]): number | undefined {
+export function aggregate(t: Tracker, g: GoalDef, vals: DayVal[]): number | undefined {
   const active = vals.filter((v) => v.active);
   if (g.agg) {
     if (g.agg === 'days') return active.length;
@@ -126,7 +126,7 @@ function firstValue(g: GoalDef, vals: DayVal[]): number | undefined {
   return vals.find((v) => v.active)?.m[g.measure];
 }
 
-function isMet(g: GoalDef, value: number, start: number | undefined): boolean {
+export function isMet(g: GoalDef, value: number, start: number | undefined): boolean {
   if (g.cmp === 'min') return value >= g.value;
   if (g.cmp === 'max') return value <= g.value;
   if (g.cmp === 'range') return value >= g.value && value <= (g.value2 ?? g.value);
