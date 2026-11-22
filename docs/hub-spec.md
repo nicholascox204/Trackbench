@@ -64,7 +64,7 @@ A "Counts toward" list on the Overview names the trackers that feed streaks, poi
 
 ### Naming and defaults (decided 2026-11-22)
 
-User-facing name: **Overview** (the spec's "hub" is internal). Streaks on by default with no first-run question; points and levels offered later. Comparison starts only from the Overview (Add panel, Compare two things). The image card has a fixed layout in the person's own theme. Notifications attach to goals (an optional "remind me" with a time), plus one global quiet-hours setting; everything off until a first goal is set. Social is built on codes and arrives as another panel source.
+User-facing name: **Overview** (the spec's "hub" is internal). Streaks on by default with no first-run question; points and levels offered later. Comparison starts only from the Overview (Add panel, Compare two things). The image card has a fixed layout in the person's own theme. Reminders attach to a tracker or a goal (optional "remind me" with a time or a cue like "after I wake"); a reminder needs no goal ("read for a bit today"). One global quiet-hours setting; everything off until the person turns a reminder on. Social is built on codes and arrives as another panel source.
 
 ## 5. Trackers show a thin strip, nothing more
 
