@@ -75,6 +75,7 @@ export async function syncNow(): Promise<void> {
   const cloud = await import('./cloud');
   if (!cloud.cloudConfigured) return;
   syncing = true;
+  const startedAt = version;
   cloud.setCloudStatus({ phase: 'syncing' });
   try {
     scheduleSave();
@@ -100,7 +101,15 @@ export async function syncNow(): Promise<void> {
     cloud.setCloudStatus({ phase: 'error', message: cloud.friendlyError(e) });
   } finally {
     syncing = false;
+    if (version !== startedAt && state.settings.cloudSync) void syncNow(); // something changed while this ran: send that too
   }
+}
+
+// The app is being left: send what is waiting now, without the usual pause (the app may not get another chance to run).
+export function flushOnLeave(): void {
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  scheduleSave();
+  void syncNow();
 }
 
 export function setCloudSync(on: boolean): void {
