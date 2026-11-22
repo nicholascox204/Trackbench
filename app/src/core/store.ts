@@ -1,4 +1,4 @@
-// Local-first store: state lives on the device and is saved to AsyncStorage.
+// Local-first store: state lives in memory and is saved to the phone's own database (SQLite) as it changes, one row at a time (see persist.ts).
 // Logging never waits on a network. Backend and sync come later for social features.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +14,8 @@ import { getPreset } from './presets';
 import { withDailyGoal, withoutDailyGoal } from './goals';
 import { defaultAlerts } from './motivation';
 import { buildPersona, PERSONAS } from './personas';
+import { sync } from './sync';
+import { emptySnapshot, isMigrated, load, markMigrated, openSchema, save, wipe, type Db, type Snapshot } from './persist';
 import { refreshPatch } from './presetRefresh';
 import { answersFromPreset, draftFromAnswers } from './setup';
 import { upgradeReadingMinutes, upgradeSleepHours } from './duration';
@@ -36,9 +38,82 @@ let state: AppState = emptyState;
 let loaded = false;
 const listeners = new Set<() => void>();
 
+// The database, and what it holds as of the last save. Without a database (it could not open) saving falls back to the old single value.
+let db: Db | null = null;
+let snap: Snapshot = emptySnapshot();
+let saving: Promise<void> = Promise.resolve();
+let saveQueued = false;
+
+// Save what changed, soon. Changes that arrive while a save runs are picked up by the next one; a failed save is retried with the next change.
+function scheduleSave(): void {
+  if (!db || saveQueued) return;
+  saveQueued = true;
+  saving = saving.then(async () => {
+    saveQueued = false;
+    if (!db) return;
+    try {
+      snap = await save(db, snap, state);
+    } catch {
+      // Saving can fail (full storage). Keep running in memory.
+    }
+  });
+}
+
+let version = 0; // counts every change made through setState, so a sync can tell whether the app changed while it worked
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncing = false;
+
+// Send and fetch changes a few seconds after the last one, so a burst of taps is one sync.
+function queueSync(): void {
+  if (!db || !state.settings.cloudSync || syncTimer) return;
+  syncTimer = setTimeout(() => { syncTimer = null; void syncNow(); }, 4000);
+}
+
+// Back up to the cloud and take in changes from other devices. Nothing here blocks logging.
+export async function syncNow(): Promise<void> {
+  if (!db || syncing || !state.settings.cloudSync) return;
+  const cloud = await import('./cloud');
+  if (!cloud.cloudConfigured) return;
+  syncing = true;
+  cloud.setCloudStatus({ phase: 'syncing' });
+  try {
+    scheduleSave();
+    await saving; // what is waiting to be written goes first
+    const userId = await cloud.signInIfNeeded();
+    const res = await sync(db, cloud.supabaseApi(cloud.cloudClient()), userId);
+    if (res.changedLocal) {
+      // another device changed something: bring it into what is on screen (anything changed meanwhile is saved first, and the load is repeated if the app changed again)
+      for (let tries = 0; tries < 3; tries++) {
+        scheduleSave();
+        await saving;
+        const seen = version;
+        const r = await load(db);
+        if (seen !== version) continue;
+        state = fromStored(r.state);
+        snap = r.snapshot;
+        listeners.forEach((l) => l());
+        break;
+      }
+    }
+    cloud.setCloudStatus({ phase: 'idle', at: Date.now(), sent: res.sent, received: res.received });
+  } catch (e) {
+    cloud.setCloudStatus({ phase: 'error', message: cloud.friendlyError(e) });
+  } finally {
+    syncing = false;
+  }
+}
+
+export function setCloudSync(on: boolean): void {
+  setState({ ...state, settings: { ...state.settings, cloudSync: on } });
+  if (on) void syncNow();
+}
+
 function setState(next: AppState) {
   state = next;
+  version++;
   listeners.forEach((l) => l());
+  queueSync();
+  if (db) { scheduleSave(); return; }
   AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {
     // Saving can fail (full storage). Keep running in memory.
   });
@@ -68,35 +143,68 @@ function upgradeTracker(t: Tracker): Tracker {
   };
 }
 
+// What was saved, brought up to date with how the app builds things now.
+function fromStored(p: Partial<AppState>): AppState {
+  const s: AppState = {
+    // Older saves stored an emoji; give those trackers an icon instead.
+    // The tile-builder experiment was dropped; its trackers have nothing left to draw them.
+    trackers: (p.trackers ?? []).filter((t) => (t.input as string) !== 'grid').map(upgradeTracker),
+    entries: (p.entries ?? []).filter((e) => !(p.trackers ?? []).some((t) => (t.input as string) === 'grid' && t.id === e.trackerId)),
+    systems: p.systems ?? [],
+    settings: {
+      ...emptyState.settings,
+      ...(p.settings ?? {}),
+      // Merge in new appearance options; the old Mono theme became OLED.
+      appearance: (() => {
+        const a = { ...defaultAppearance, ...(p.settings?.appearance ?? {}) };
+        return (a.theme as string) === 'mono' ? { ...a, theme: 'oled' as const } : a;
+      })(),
+    },
+    onboarded: p.onboarded ?? false,
+    trash: p.trash ?? [],
+  };
+  const up = upgradeSleepHours(s.trackers, s.entries); // Sleep used to be hours, Reading plain minutes
+  return { ...s, trackers: upgradeReadingMinutes(up.trackers), entries: up.entries };
+}
+
 export async function loadState(): Promise<void> {
+  let migrating = false; // data from the old single-value save is copied into the database once
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<AppState>;
-      state = {
-        // Older saves stored an emoji; give those trackers an icon instead.
-        // The tile-builder experiment was dropped; its trackers have nothing left to draw them.
-        trackers: (p.trackers ?? []).filter((t) => (t.input as string) !== 'grid').map(upgradeTracker),
-        entries: (p.entries ?? []).filter((e) => !(p.trackers ?? []).some((t) => (t.input as string) === 'grid' && t.id === e.trackerId)),
-        systems: p.systems ?? [],
-        settings: {
-          ...emptyState.settings,
-          ...(p.settings ?? {}),
-          // Merge in new appearance options; the old Mono theme became OLED.
-          appearance: (() => {
-            const a = { ...defaultAppearance, ...(p.settings?.appearance ?? {}) };
-            return (a.theme as string) === 'mono' ? { ...a, theme: 'oled' as const } : a;
-          })(),
-        },
-        onboarded: p.onboarded ?? false,
-        trash: p.trash ?? [],
-      };
+    let p: Partial<AppState> | undefined;
+    try {
+      const { openPhoneDb } = await import('./sqliteDb');
+      const opened = await openPhoneDb();
+      await openSchema(opened);
+      if (await isMigrated(opened)) {
+        const r = await load(opened);
+        p = r.state;
+        snap = r.snapshot;
+      } else {
+        const old = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null); // too big to read counts as nothing to copy
+        p = old ? (JSON.parse(old) as Partial<AppState>) : undefined;
+        migrating = true;
+      }
+      db = opened;
+    } catch {
+      db = null; // no usable database: keep the old way of saving
+      const old = await AsyncStorage.getItem(STORAGE_KEY);
+      p = old ? (JSON.parse(old) as Partial<AppState>) : undefined;
+      migrating = false;
     }
+    if (p) state = fromStored(p);
   } catch {
     // Corrupt storage: start fresh rather than crash.
   }
-  { const up = upgradeSleepHours(state.trackers, state.entries); state = { ...state, trackers: upgradeReadingMinutes(up.trackers), entries: up.entries }; } // Sleep used to be hours, Reading plain minutes
   if (!state.onboarded && state.trackers.length === 0 && !state.settings.welcomed) state = { ...state, settings: { ...state.settings, units: detectUnits() } }; // a fresh start uses the region's units
+  if (db) {
+    // what was upgraded on the way in is saved, and the first time the old save is copied across
+    try {
+      snap = await save(db, snap, state);
+      if (migrating) await markMigrated(db);
+    } catch {
+      // the next change retries
+    }
+  }
   loaded = true;
   listeners.forEach((l) => l());
 }
@@ -561,6 +669,12 @@ export async function resetAll(): Promise<void> {
   listeners.forEach((l) => l());
   try {
     await AsyncStorage.removeItem(STORAGE_KEY);
+    if (db) {
+      await saving;
+      await wipe(db);
+      snap = emptySnapshot();
+      scheduleSave();
+    }
   } catch {
     // ignore
   }

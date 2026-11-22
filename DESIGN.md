@@ -150,6 +150,8 @@ Daily habits is a list of habits ticked each day (the Medication shape, the item
 
 Tools can switch a number to be filled from the phone: "Steps from my phone" appears when a tracker has a number called Steps (on for the Steps preset) and is stored as the tracker's source for that field.
 
+Saving: the app holds its data in memory and saves changes to the phone's SQLite database a row at a time (`core/persist.ts`); trackers, entries and settings mirror the cloud tables in `docs/supabase-schema.sql`. Cloud backup (`core/sync.ts`, `core/cloud.ts`) is off until switched on, signs in anonymously, sends rows marked unsent, then takes rows changed in the cloud since it last asked; the later change to a row wins. Settings > Developer holds the switch for now.
+
 **Field types** (`ui/FieldInput.tsx`): number, note, rating (tap 1 to 5 or 1 to 10, shown as a trend), choice (pick from your own list) and time of day. **Avoid mode** (`Tracker.avoid`, success rule `clean`): you log slips, a day with nothing logged is a good day. The card (`screens/AvoidCard.tsx`) leads with the clean streak in the done colour ("12 days clean", "Today: clean so far", a best streak); "I slipped" is a small outlined button, a slip turns the card to the warning colour and opens an optional "What set it off?" note saved on that slip. **Daily** (`Tracker.daily`): saving again replaces today's reading.
 
 ## Direction: templates and defaults over configuration

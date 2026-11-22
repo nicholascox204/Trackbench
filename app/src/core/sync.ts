@@ -1,0 +1,134 @@
+// Keeping the phone's database and the cloud copy (docs/supabase-schema.sql) the same. The phone is the source of truth: it sends the rows
+// marked dirty, then asks for anything changed in the cloud since it last asked. Where both changed the same row, the later change wins.
+//
+// This file knows nothing about Supabase itself; it talks to the CloudApi below, so the rules can be tested with a fake one.
+import type { Db } from './persist';
+
+export type Table = 'trackers' | 'entries';
+export type CloudRow = Record<string, unknown>;
+export interface Cursor { at: string; id: string }
+
+export interface CloudApi {
+  upsert(table: Table | 'settings', rows: CloudRow[]): Promise<void>;
+  // rows changed after the cursor, oldest first (a page of at most limit)
+  changedSince(table: Table, after: Cursor | null, limit: number): Promise<CloudRow[]>;
+  settings(): Promise<{ data: unknown; updated_at: string } | null>;
+}
+
+export interface SyncResult { sent: number; received: number; changedLocal: boolean }
+
+const PAGE = 500;
+const iso = (ms: number): string => new Date(ms).toISOString();
+// the server sends microseconds (…12:00:00.123456+00:00); only milliseconds are kept
+export const ms = (s: unknown): number => new Date(String(s).replace(/(\.\d{3})\d+/, '$1')).getTime();
+// the server writes +00:00; the same instant as Z is what goes back in a filter
+export const asZ = (s: string): string => s.replace('+00:00', 'Z');
+
+async function metaGet<T>(db: Db, key: string): Promise<T | null> {
+  const r = await db.all<{ value: string }>('select value from kv where key = ?', [key]);
+  return r.length ? (JSON.parse(r[0].value) as T) : null;
+}
+async function metaSet(db: Db, key: string, value: unknown): Promise<void> {
+  await db.run('insert or replace into kv (key, value, updated_at, dirty) values (?, ?, ?, 0)', [key, JSON.stringify(value), Date.now()]);
+}
+
+interface TrackerRow { id: string; name: string; sort_order: number; config: string; created_at: number; updated_at: number; deleted_at: number | null }
+interface EntryRow { id: string; tracker_id: string; at: number; data: string; slot_id: string | null; row_index: number | null; variant: number | null; done: number; auto: string | null; updated_at: number; deleted_at: number | null }
+
+const trackerOut = (userId: string, r: TrackerRow): CloudRow => ({
+  user_id: userId, id: r.id, name: r.name, sort_order: r.sort_order, config: JSON.parse(r.config) as unknown,
+  created_at: iso(r.created_at), deleted_at: r.deleted_at === null ? null : iso(r.deleted_at),
+});
+const entryOut = (userId: string, r: EntryRow): CloudRow => ({
+  user_id: userId, id: r.id, tracker_id: r.tracker_id, at: iso(r.at), data: JSON.parse(r.data) as unknown, slot_id: r.slot_id, row_index: r.row_index, variant: r.variant,
+  done: r.done === 1, auto: r.auto === null ? null : (JSON.parse(r.auto) as string[]), deleted_at: r.deleted_at === null ? null : iso(r.deleted_at),
+});
+
+async function pushRows<R extends { id: string; updated_at: number }>(db: Db, cloud: CloudApi, table: Table, userId: string, out: (u: string, r: R) => CloudRow): Promise<number> {
+  const rows = await db.all<R>(`select * from ${table} where dirty = 1 order by rowid`);
+  for (let i = 0; i < rows.length; i += PAGE) {
+    const page = rows.slice(i, i + PAGE);
+    await cloud.upsert(table, page.map((r) => out(userId, r)));
+    // clean only what has not changed again since it was read
+    await db.runMany(`update ${table} set dirty = 0 where id = ? and updated_at = ?`, page.map((r) => [r.id, r.updated_at]));
+  }
+  return rows.length;
+}
+
+// Take a cloud row into the phone's database, unless the phone has a later change of its own waiting to be sent.
+async function takeTracker(db: Db, c: CloudRow): Promise<boolean> {
+  const at = ms(c.updated_at);
+  const mine = await db.all<{ dirty: number; updated_at: number }>('select dirty, updated_at from trackers where id = ?', [c.id]);
+  if (mine.length && mine[0].dirty === 1 && mine[0].updated_at > at) return false;
+  await db.run(
+    `insert into trackers (id, name, sort_order, config, created_at, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, 0)
+     on conflict(id) do update set name = excluded.name, sort_order = excluded.sort_order, config = excluded.config, created_at = excluded.created_at,
+     updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`,
+    [c.id, c.name, c.sort_order, JSON.stringify(c.config), ms(c.created_at), at, c.deleted_at ? ms(c.deleted_at) : null],
+  );
+  return true;
+}
+
+async function takeEntry(db: Db, c: CloudRow): Promise<boolean> {
+  const at = ms(c.updated_at);
+  const mine = await db.all<{ dirty: number; updated_at: number }>('select dirty, updated_at from entries where id = ?', [c.id]);
+  if (mine.length && mine[0].dirty === 1 && mine[0].updated_at > at) return false;
+  await db.run(
+    `insert into entries (id, tracker_id, at, data, slot_id, row_index, variant, done, auto, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+     on conflict(id) do update set tracker_id = excluded.tracker_id, at = excluded.at, data = excluded.data, slot_id = excluded.slot_id, row_index = excluded.row_index,
+     variant = excluded.variant, done = excluded.done, auto = excluded.auto, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`,
+    [c.id, c.tracker_id, ms(c.at), JSON.stringify(c.data ?? {}), c.slot_id ?? null, c.row_index ?? null, c.variant ?? null, c.done === false ? 0 : 1,
+      c.auto ? JSON.stringify(c.auto) : null, at, c.deleted_at ? ms(c.deleted_at) : null],
+  );
+  return true;
+}
+
+async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: number; changedLocal: boolean }> {
+  const key = `cloud-cursor-${table}`;
+  let cursor = await metaGet<Cursor>(db, key);
+  let received = 0;
+  let changedLocal = false;
+  for (;;) {
+    const page = await cloud.changedSince(table, cursor, PAGE);
+    if (page.length === 0) break;
+    await db.transaction(async () => {
+      for (const c of page) {
+        const took = table === 'trackers' ? await takeTracker(db, c) : await takeEntry(db, c);
+        if (took) changedLocal = true;
+      }
+    });
+    received += page.length;
+    const last = page[page.length - 1];
+    cursor = { at: asZ(String(last.updated_at)), id: String(last.id) };
+    await metaSet(db, key, cursor);
+    if (page.length < PAGE) break;
+  }
+  return { received, changedLocal };
+}
+
+export async function sync(db: Db, cloud: CloudApi, userId: string): Promise<SyncResult> {
+  let sent = 0;
+  sent += await pushRows<TrackerRow>(db, cloud, 'trackers', userId, trackerOut); // trackers first: entries point at them
+  sent += await pushRows<EntryRow>(db, cloud, 'entries', userId, entryOut);
+
+  // settings are one row each way
+  const mine = await db.all<{ value: string; updated_at: number; dirty: number }>("select value, updated_at, dirty from kv where key = 'settings'");
+  let changedLocal = false;
+  const theirs = await cloud.settings();
+  if (mine.length && mine[0].dirty === 1 && (!theirs || ms(theirs.updated_at) <= mine[0].updated_at)) {
+    await cloud.upsert('settings', [{ user_id: userId, data: JSON.parse(mine[0].value) as unknown }]);
+    await db.run("update kv set dirty = 0 where key = 'settings' and updated_at = ?", [mine[0].updated_at]);
+    sent++;
+  } else if (theirs && (!mine.length || ms(theirs.updated_at) > mine[0].updated_at) && !(mine.length && mine[0].dirty === 1)) {
+    await db.run("insert or replace into kv (key, value, updated_at, dirty) values ('settings', ?, ?, 0)", [JSON.stringify(theirs.data), ms(theirs.updated_at)]);
+    changedLocal = true;
+  }
+
+  const t = await pull(db, cloud, 'trackers');
+  const e = await pull(db, cloud, 'entries');
+
+  // rows deleted everywhere are no longer needed here
+  await db.run('delete from entries where deleted_at is not null and dirty = 0');
+  await db.run('delete from trackers where deleted_at is not null and dirty = 0');
+  return { sent, received: t.received + e.received, changedLocal: changedLocal || t.changedLocal || e.changedLocal };
+}

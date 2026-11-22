@@ -7,6 +7,7 @@
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "12.0.1",
+    "@supabase/supabase-js": "^2.119.2",
     "expo": "~58.0.25",
     "expo-audio": "~58.0.12",
     "expo-background-task": "~58.0.13",
@@ -44,6 +45,7 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-svg": "15.16.0",
+    "react-native-url-polyfill": "^4.0.0",
     "react-native-web": "^0.21.4",
     "react-native-worklets": "0.13.0"
   },
@@ -59,7 +61,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "tsx --test src/core/personas.test.ts src/core/engine.test.ts src/core/setup.test.ts src/core/icons.test.ts src/core/templates.test.ts src/core/goals.test.ts src/core/scratch.test.ts src/core/sameBones.test.ts src/core/goalPresets.test.ts src/core/colour.test.ts src/core/schedule.test.ts src/core/fieldKinds.test.ts src/core/labels.test.ts src/core/creation.test.ts src/core/capabilities.test.ts src/core/quests.test.ts src/core/motivation.test.ts src/core/countdown.test.ts src/core/editor.test.ts src/core/trash.test.ts src/core/startPick.test.ts src/core/startPickSim.test.ts src/core/gpx.test.ts src/core/stepLog.test.ts src/core/liveTimer.test.ts src/core/tapTarget.test.ts src/core/rotation.test.ts src/core/summaryRows.test.ts src/core/pickedDay.test.ts src/core/rows.test.ts src/core/stopwatch.test.ts src/core/dirty.test.ts src/core/planDays.test.ts src/core/readings.test.ts src/core/presetSweep.test.ts src/core/tapTotal.test.ts src/core/duration.test.ts src/core/limits.test.ts src/core/avoid.test.ts",
+    "test": "tsx --test src/core/sync.test.ts src/core/persist.test.ts src/core/personas.test.ts src/core/engine.test.ts src/core/setup.test.ts src/core/icons.test.ts src/core/templates.test.ts src/core/goals.test.ts src/core/scratch.test.ts src/core/sameBones.test.ts src/core/goalPresets.test.ts src/core/colour.test.ts src/core/schedule.test.ts src/core/fieldKinds.test.ts src/core/labels.test.ts src/core/creation.test.ts src/core/capabilities.test.ts src/core/quests.test.ts src/core/motivation.test.ts src/core/countdown.test.ts src/core/editor.test.ts src/core/trash.test.ts src/core/startPick.test.ts src/core/startPickSim.test.ts src/core/gpx.test.ts src/core/stepLog.test.ts src/core/liveTimer.test.ts src/core/tapTarget.test.ts src/core/rotation.test.ts src/core/summaryRows.test.ts src/core/pickedDay.test.ts src/core/rows.test.ts src/core/stopwatch.test.ts src/core/dirty.test.ts src/core/planDays.test.ts src/core/readings.test.ts src/core/presetSweep.test.ts src/core/tapTotal.test.ts src/core/duration.test.ts src/core/limits.test.ts src/core/avoid.test.ts",
     "postinstall": "patch-package"
   },
   "private": true

@@ -4,7 +4,7 @@ import { AppState as RNAppState, BackHandler, View, useColorScheme } from 'react
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
-import { applyPresetChanges, completeOnboarding, getState, loadState, noteTrackerOpened, useAppState } from './src/core/store';
+import { applyPresetChanges, completeOnboarding, getState, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { dismissFinishedAlerts, liveTimers, loadTimers } from './src/core/timers';
 import { initialTap, listenForegroundTaps } from './src/core/notificationTap';
@@ -66,12 +66,12 @@ function AppInner() {
 
   // Opening the app (or coming back to it) stops any finished countdown's alert from ringing on.
   useEffect(() => {
-    const sub = RNAppState.addEventListener('change', (s) => { if (s === 'active') { dismissFinishedAlerts(Date.now()); if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); } });
+    const sub = RNAppState.addEventListener('change', (s) => { if (s === 'active') { dismissFinishedAlerts(Date.now()); if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncNow(); } });
     return () => sub.remove();
   }, []);
 
   useEffect(() => {
-    Promise.resolve(loadState()).finally(() => { if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); });
+    Promise.resolve(loadState()).finally(() => { if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncNow(); });
     loadTimers().finally(() => setTimersReady(true)); // the opening choice looks at running timers, so it waits for them
     initialTap().finally(() => setTapChecked(true));
     return listenForegroundTaps();
