@@ -193,3 +193,71 @@ test('the share of the system done: a day is 0 to 1, a rest day is undefined, an
   const overall = mean(shareSeries(ix, all, 'day', TODAY, 'mon').map((d) => d.value));
   assert.ok(Math.abs(mean(months.map((m) => m.value)) - overall) < 0.06, 'months roughly average to the whole');
 });
+
+// ---- judged at each tracker's own cadence, never by how often you log ----
+import { attainment, periodShare, systemShare } from './overview';
+import type { Entry, Schedule, Tracker } from './types';
+
+const WEEK0 = addDays(TODAY, -6); // the Monday of the current week (today is a Sunday)
+const mkEntry = (t: Tracker, day: number, i = 0): Entry => ({ id: `e${t.id}${day}${i}`, trackerId: t.id, at: day + 12 * 3600000, done: true, values: {} });
+const base = () => { const p = person('regular'); return { water: byTemplate(new DayIndex(p.trackers, p.entries), 'water'), mood: byTemplate(new DayIndex(p.trackers, p.entries), 'mood') }; };
+const withSchedule = (t: Tracker, schedule: Schedule): Tracker => ({ ...t, schedule, createdAt: 0, window: undefined });
+const lastFullWeek = addDays(WEEK0, -7);
+
+test('a once-a-week task done once is a full week, and the days around it are rest, not misses', () => {
+  const { water } = base();
+  const t = withSchedule(water, { kind: 'times', n: 1, per: 'week' });
+  const entries = [-5, -4, -3].map((w) => mkEntry(t, addDays(WEEK0, 7 * w + 2))); // a Wednesday in each of three earlier weeks
+  const ix = new DayIndex([t], entries);
+  assert.equal(periodShare(ix, lastFullWeek, addDays(lastFullWeek, 6), TODAY, 'mon'), 0, 'a finished week with the task not done is a miss: that is what it was set up to ask');
+  const wk = addDays(WEEK0, -7 * 3);
+  assert.equal(periodShare(ix, wk, addDays(wk, 6), TODAY, 'mon'), 1, 'done once in a week that asked once is a full week');
+  const firstWeek = addDays(WEEK0, -7 * 5);
+  assert.equal(periodShare(ix, firstWeek, addDays(firstWeek, 6), TODAY, 'mon'), 1, 'the week they began part way through is not judged against the schedule, but they logged, so it counts as showing up');
+  assert.equal(systemShare(ix, addDays(WEEK0, -7 * 4 + 1)), undefined, 'a day with nothing due and nothing logged is rest');
+  assert.equal(systemShare(ix, addDays(WEEK0, -7 * 4 + 2)), 1, 'logging on a day where nothing was due is a full day of showing up');
+});
+
+test('weekly attainment: two of three is two thirds, and an unfinished week is not judged', () => {
+  const { water } = base();
+  const t = withSchedule(water, { kind: 'times', n: 3, per: 'week' });
+  const w1 = addDays(WEEK0, -14); const w2 = addDays(WEEK0, -7);
+  const entries = [w1, addDays(w1, 2), addDays(w1, 4), w2, addDays(w2, 3)].map((d) => mkEntry(t, d));
+  const ix = new DayIndex([t], entries);
+  assert.equal(attainment(ix, t, w2, addDays(w2, 6), addDays(w2, 6), TODAY, 'mon'), 2 / 3);
+  assert.equal(attainment(ix, t, w1, addDays(w1, 6), addDays(w1, 6), TODAY, 'mon'), 1, 'began on the Monday, so the first week is whole and met');
+  assert.equal(attainment(ix, t, WEEK0, TODAY, addDays(WEEK0, 6), TODAY, 'mon'), undefined, 'this week is still going');
+});
+
+test('a weekly tracker counts as much as a daily one in a week, not one day in seven', () => {
+  const { water, mood } = base();
+  const weekly = withSchedule(water, { kind: 'times', n: 1, per: 'week' });
+  const daily = withSchedule(mood, { kind: 'daily' });
+  const w = addDays(WEEK0, -7);
+  const earlier = addDays(WEEK0, -14);
+  const entries = [mkEntry(weekly, earlier), mkEntry(daily, earlier), mkEntry(weekly, addDays(w, 3)), ...[0, 1, 2].map((i) => mkEntry(daily, addDays(w, i)))];
+  const ix = new DayIndex([weekly, daily], entries);
+  const share = periodShare(ix, w, addDays(w, 6), TODAY, 'mon')!;
+  const expected = (1 + 3 / 7) / 2; // weekly task done (1) and the daily one kept on three of its seven days
+  assert.ok(Math.abs(share - expected) < 1e-9, `${share} vs ${expected}`);
+});
+
+test('"whenever" is never judged, and logging it still counts as showing up', () => {
+  const { water } = base();
+  const t = withSchedule(water, { kind: 'whenever' });
+  const ix = new DayIndex([t], [mkEntry(t, addDays(WEEK0, -20)), mkEntry(t, addDays(WEEK0, -3))]);
+  const w = addDays(WEEK0, -7);
+  assert.equal(periodShare(ix, w, addDays(w, 6), TODAY, 'mon'), 1, 'logged in that week');
+  const quiet = addDays(WEEK0, -14);
+  assert.equal(periodShare(ix, quiet, addDays(quiet, 6), TODAY, 'mon'), undefined, 'a week with nothing logged and nothing owed is not a miss');
+});
+
+test('the streak is not broken by rest days', () => {
+  const { water } = base();
+  const t = withSchedule(water, { kind: 'weekdays', days: [1, 3, 5] }); // Mon Wed Fri
+  const entries: Entry[] = [];
+  for (let d = addDays(WEEK0, -21); d <= TODAY; d = addDays(d, 1)) if ([1, 3, 5].includes(new Date(d).getDay())) entries.push(mkEntry(t, d));
+  const ix = new DayIndex([t], entries);
+  const s = activeStreak(ix, TODAY);
+  assert.ok(s.current >= 9, `kept every due day, so the run covers them all, got ${s.current}`);
+});

@@ -8,7 +8,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { mixHex } from '../core/colour';
 import { periodOf } from '../core/goals';
 import {
-  PERIOD_CHOICES, activeStreak, bucketChoices, bucketFor, buckets, DayIndex, rangeFor, rankTrackers, series, shapesFor, shareSeries, systemShare,
+  PERIOD_CHOICES, activeStreak, bucketChoices, bucketFor, buckets, DayIndex, periodShare, rangeFor, rankTrackers, series, shapesFor, shareSeries, systemShare,
   type Bucket, type PeriodChoice, type Point,
 } from '../core/overview';
 import { useAppState } from '../core/store';
@@ -72,9 +72,7 @@ export function Overview() {
   const streak = useMemo(() => activeStreak(ix, today), [ix, today]);
   const recent = useMemo(() => {
     const r = rangeFor('30d', today, ws, ix.first);
-    let sum = 0; let n = 0;
-    for (let d = r.start; d <= today; d = addDays(d, 1)) { const v = systemShare(ix, d); if (v !== undefined) { sum += v; n++; } }
-    return { share: n === 0 ? undefined : sum / n, label: r.label };
+    return { share: periodShare(ix, r.start, today, today, ws), label: r.label }; // each tracker at its own cadence, so a weekly task counts as much as a daily one
   }, [ix, today, ws]);
 
   if (ix.first === undefined) {
@@ -100,7 +98,7 @@ export function Overview() {
     const starts = Array.from({ length: 12 }, (_, i) => addDays(lastWeek, -7 * (11 - i)));
     const wk = selWeek !== null && starts.includes(selWeek) ? selWeek : lastWeek;
     const dayVal = (d: number) => (d > today || (ix.first !== undefined && d < ix.first) ? undefined : systemShare(ix, d));
-    const weekAvg = (s: number) => { const v = Array.from({ length: 7 }, (_, i) => dayVal(addDays(s, i))).filter((x): x is number => x !== undefined); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : undefined; };
+    const weekAvg = (s: number) => periodShare(ix, s, addDays(s, 6), today, ws);
     const tiles = [] as { v: number | undefined; i: number }[];
     values.forEach((v, i) => tiles.push({ v, i }));
     const rows: (typeof tiles)[] = [];

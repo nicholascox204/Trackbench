@@ -8,6 +8,7 @@
 import { dayResult } from './day';
 import type { DayTrackerResult } from './engine';
 import { aggregate, daysOf, isMet, periodOf, dayKey, dayFromKey, type DayVal, type WeekStart } from './goals';
+import { scheduleOf } from './schedule';
 import { addDays, startOfDay } from './time';
 import type { Entry, GoalAgg, GoalDef, Quest, Tracker } from './types';
 
@@ -292,9 +293,13 @@ export const STREAK_SHARE = 0.5; // a day keeps the streak when at least this sh
 export function activeStreak(ix: DayIndex, today: number): { current: number; best: number } {
   const first = ix.first;
   if (first === undefined) return { current: 0, best: 0 };
-  const good = (d: number): boolean => (systemShare(ix, d) ?? 0) >= STREAK_SHARE;
   let best = 0; let run = 0;
-  for (let d = first; d <= today; d = addDays(d, 1)) { run = good(d) ? run + 1 : d === today ? run : 0; best = Math.max(best, run); }
+  for (let d = first; d <= today; d = addDays(d, 1)) {
+    const v = systemShare(ix, d);
+    if (v === undefined) continue; // a rest day (nothing due, nothing logged) neither breaks the streak nor extends it
+    run = v >= STREAK_SHARE ? run + 1 : d === today ? run : 0;
+    best = Math.max(best, run);
+  }
   return { current: run, best };
 }
 
@@ -356,31 +361,79 @@ export function rankTrackers(ix: DayIndex, range: Range, today: number): { track
 }
 
 // ---------- how much of your system you did ----------
+// The rule (decided 2026-11-22): nothing is judged by how often you log, only by what a tracker was set up to ask and how well you
+// kept to it. Each tracker is judged at its own cadence: day by day when it is due on particular days, week by week or month by month
+// for "n times a week or month", and not at all for "whenever". A week of once-a-week tasks done is a full week, not one day in seven.
 
-// One day, across every tracker in play: the share that had a good day, 0 to 1. A tracker is in play on a day when it was due
-// (or logged anyway) and the person had started it. A day with nothing in play (a rest day) is undefined, not zero, so a quiet
-// day nobody owed anything is not drawn as a miss. This is the one measure the ladder and the grids share, so a week is the
-// average of its days and a month of its weeks, and one colour scale means the same at every size.
+const meanOf = (a: number[]): number => a.reduce((s, x) => s + x, 0) / a.length;
+
+// Whether anything was logged on a day, on any tracker.
+function anyLogged(ix: DayIndex, day: number): boolean {
+  return ix.trackers.some((t) => ix.on(t.id, day).some((e) => e.done));
+}
+
+// One tracker, one stretch (start to last, a bucket that ends at end): how well it kept to what it was set up to ask, 0 to 1, or
+// undefined when it asked nothing in that stretch. Day-specific schedules are judged on their due days; "n times a week or month" on
+// each calendar week or month that fits wholly inside the stretch and is finished; "whenever" and blocks are never judged.
+export function attainment(ix: DayIndex, t: Tracker, start: number, last: number, end: number, today: number, weekStart: WeekStart): number | undefined {
+  const first = ix.firstOf(t.id);
+  if (first === undefined) return undefined;
+  const sched = scheduleOf(t, last);
+  if (sched.kind === 'times') {
+    const how = sched.per;
+    const got: number[] = [];
+    let d = start;
+    while (d <= last) {
+      const p = periodOf(how, d, weekStart);
+      if (p.start >= start && p.end <= end && p.end < today && p.start >= first) {
+        const days = new Set<number>();
+        for (let x = p.start; x <= p.end; x = addDays(x, 1)) if (ix.on(t.id, x).some((e) => e.done)) days.add(x);
+        got.push(Math.min(1, days.size / Math.max(1, sched.n)));
+      }
+      d = addDays(p.end, 1);
+    }
+    return got.length ? meanOf(got) : undefined;
+  }
+  if (sched.kind === 'whenever' || sched.kind === 'blocks') return undefined;
+  let due = 0; let good = 0;
+  for (let d = Math.max(start, first); d <= last; d = addDays(d, 1)) {
+    const r = ix.result(t, d);
+    if (r.expected) { due++; if (r.success) good++; }
+  }
+  return due === 0 ? undefined : good / due;
+}
+
+// One day, across the system: the average of each tracker due that day. A day where nothing was due is a rest day (undefined), and
+// if something was logged on it anyway that counts as a full day of showing up. Never a low day for logging less.
 export function systemShare(ix: DayIndex, day: number): number | undefined {
-  let inPlay = 0; let good = 0;
+  const per: number[] = [];
   for (const t of ix.trackers) {
     const first = ix.firstOf(t.id);
     if (first === undefined || day < first) continue;
     const r = ix.result(t, day);
-    if (r.expected || r.success) { inPlay++; if (r.success) good++; }
+    if (r.expected) per.push(r.success ? 1 : 0);
   }
-  return inPlay === 0 ? undefined : good / inPlay;
+  if (per.length > 0) return meanOf(per);
+  return anyLogged(ix, day) ? 1 : undefined;
 }
 
-// The share per slice of time: the average of the days that had something in play. Future slices are marked.
+// A week, a month or any stretch: the average of each tracker's attainment over it, so a once-a-week tracker counts as much as a
+// daily one. If nothing was owed in the stretch, logging anything is a full showing-up and logging nothing is nothing to judge.
+export function periodShare(ix: DayIndex, start: number, end: number, today: number, weekStart: WeekStart): number | undefined {
+  const last = Math.min(end, today);
+  if (start > last) return undefined;
+  const per: number[] = [];
+  for (const t of ix.trackers) { const a = attainment(ix, t, start, last, end, today, weekStart); if (a !== undefined) per.push(a); }
+  if (per.length > 0) return meanOf(per);
+  for (let d = start; d <= last; d = addDays(d, 1)) if (anyLogged(ix, d)) return 1;
+  return undefined;
+}
+
+// The share per slice of time. Days use the day rule; weeks and months judge each tracker at its own cadence. Future slices are marked.
 export function shareSeries(ix: DayIndex, range: Range, bucket: Bucket, today: number, weekStart: WeekStart): Point[] {
   return buckets(range, bucket, weekStart).map((s) => {
     if (s.start > today) return { start: s.start, end: s.end, value: undefined, future: true };
-    let sum = 0; let n = 0;
-    for (let d = s.start; d <= Math.min(s.end, today); d = addDays(d, 1)) {
-      const v = systemShare(ix, d);
-      if (v !== undefined) { sum += v; n++; }
-    }
-    return { start: s.start, end: s.end, value: n === 0 ? undefined : sum / n, future: false };
+    const value = bucket === 'day' ? systemShare(ix, s.start) : periodShare(ix, s.start, s.end, today, weekStart);
+    return { start: s.start, end: s.end, value, future: false };
   });
 }
