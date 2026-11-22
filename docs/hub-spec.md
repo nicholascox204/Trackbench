@@ -46,6 +46,18 @@ Use the goal shape already specified (scope + measure + period + aim; one list o
 
 Gamification is switchable per element (points, levels, streaks) and defaults to **streaks only** for new people; points and levels are offered, not imposed. A miss costs nothing but a streak.
 
+### Goals start from the data (decided 2026-11-22)
+
+Setting goals tracker by tracker in setup was too much, because people had to invent targets blind. Instead, goals are made from a panel: every numeric panel has "Make this a goal", offering a few bounded options built from that panel's own history: **keep this up** (match the last period), **beat last period** (a small step above), **stay in your range** (a band around your usual values), **reach a number** (latest, lowest or highest). Each shows how it would have gone on the past before it is saved. The goal shape underneath is unchanged. A "Goals" list on the Overview is still there for managing and for goals not started from a panel.
+
+### Which trackers count
+
+A "Counts toward" list on the Overview names the trackers that feed streaks, points and levels. Default: all. Switching one off removes it from the engine, not from the Overview's charts. This replaces the old per-tracker setting in setup. A person who sets no goals and changes nothing still has the full Overview.
+
+### Naming and defaults (decided 2026-11-22)
+
+User-facing name: **Overview** (the spec's "hub" is internal). Streaks on by default with no first-run question; points and levels offered later. Comparison starts only from the Overview (Add panel, Compare two things). The image card has a fixed layout in the person's own theme. Notifications attach to goals (an optional "remind me" with a time), plus one global quiet-hours setting; everything off until a first goal is set. Social is built on codes and arrives as another panel source.
+
 ## 5. Trackers show a thin strip, nothing more
 
 - A read-only line under the week strip listing the goals that concern this tracker ("Run 3 times a week: 2 of 3"). Tap opens that goal in the hub. No settings on the tracker.
