@@ -76,30 +76,6 @@ export async function deleteAccountNow(): Promise<void> {
   await signOutNow();
 }
 
-// ---- the username ----
-
-export async function handleFree(handle: string): Promise<boolean> {
-  const { data, error } = await cloudClient().rpc('handle_available', { h: handle });
-  if (error) throw error;
-  return data === true;
-}
-
-export async function myProfile(): Promise<{ handle: string; display_name: string } | null> {
-  const { data, error } = await cloudClient().from('profiles').select('handle, display_name').maybeSingle();
-  if (error) throw error;
-  return data as { handle: string; display_name: string } | null;
-}
-
-// Returns false when somebody else got the handle first.
-export async function saveProfile(handle: string, displayName: string): Promise<boolean> {
-  const uid = current.userId;
-  if (!uid) throw new Error('not signed in');
-  const { error } = await cloudClient().from('profiles').upsert({ user_id: uid, handle, display_name: displayName }, { onConflict: 'user_id' });
-  if (!error) return true;
-  if (error.code === '23505') return false;
-  throw error;
-}
-
 // ---- plain sentences, never the raw error ----
 export function authProblem(e: unknown): string {
   const text = String((e as { message?: string })?.message ?? e).toLowerCase();

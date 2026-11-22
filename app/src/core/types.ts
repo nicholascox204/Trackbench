@@ -37,7 +37,6 @@ export interface Settings {
   name?: string; // what to call the person; also the display name once there are accounts
   welcomed?: boolean; // the opening screen (name and look) has been done
   alerts?: AlertSettings; // what the app may nudge you about (set up; delivery comes later)
-  handle?: string; // the username, once chosen (the cloud holds the same one)
   skippedSignIn?: boolean; // testing only: use the app without an account
   cloudSync?: boolean; // back up to the cloud and keep other devices in step (off until chosen)
   devSync?: boolean; // testing: trackers made from a template are rebuilt from it each time the app opens

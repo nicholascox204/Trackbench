@@ -60,7 +60,7 @@ export function Settings() {
           <View>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Account</Text>
             <Card>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{state.settings.handle ? `@${state.settings.handle}` : session.name ?? 'Signed in'}</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{state.settings.name || session.name || 'Signed in'}</Text>
               {session.email ? <Muted>{session.email}</Muted> : null}
               <Tap onPress={() => void syncNow()} style={{ marginTop: 6, marginBottom: 10 }}><Muted>{cloudLine}</Muted></Tap>
               <Button

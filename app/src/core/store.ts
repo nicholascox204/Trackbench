@@ -114,10 +114,6 @@ export function flushOnLeave(): void {
 
 // ---------- the account ----------
 
-export function setHandle(handle: string): void {
-  setState({ ...state, settings: { ...state.settings, handle } });
-}
-
 // Testing only: use the app without an account (nothing is backed up).
 export function skipSignIn(): void {
   setState({ ...state, settings: { ...state.settings, skippedSignIn: true } });

@@ -100,43 +100,8 @@ create policy "own settings" on public.settings for all to authenticated
 
 
 -- =====================================================================================================================
--- Part 2: accounts. Run this after part 1.
+-- Part 2: accounts. Run this after part 1. (A person's name lives in their settings; there are no unique usernames.)
 -- =====================================================================================================================
-
--- ---------- profiles ----------
--- A person's username (handle) and the name others see. The handle is unique whatever its capitals, and has the same shape the app checks
--- (3 to 20 lowercase letters, numbers and underscores). Only the person can read and change their own row for now; what others may see
--- is decided when the social features are built.
-create table if not exists public.profiles (
-  user_id      uuid        primary key default auth.uid() references auth.users (id) on delete cascade,
-  handle       text        not null,
-  display_name text        not null default '',
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now(),
-  constraint handle_shape check (handle ~ '^[a-z0-9_]{3,20}$')
-);
-create unique index if not exists profiles_handle_unique on public.profiles (lower(handle));
-
-drop trigger if exists profiles_touch on public.profiles;
-create trigger profiles_touch before insert or update on public.profiles for each row execute function public.touch_updated_at();
-
-alter table public.profiles enable row level security;
-revoke all on public.profiles from anon;
-grant select, insert, update on public.profiles to authenticated;
-
-drop policy if exists "own profile" on public.profiles;
-create policy "own profile" on public.profiles for all to authenticated
-  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
-
--- Is this handle free? Anyone signed in may ask; it answers only yes or no, never who has it.
-create or replace function public.handle_available(h text) returns boolean
-language sql security definer stable
-set search_path = ''
-as $$
-  select not exists (select 1 from public.profiles where lower(handle) = lower(h));
-$$;
-revoke execute on function public.handle_available(text) from public, anon;
-grant execute on function public.handle_available(text) to authenticated;
 
 -- ---------- deleting an account ----------
 -- Removes the signed-in person's account; everything they own (trackers, entries, settings, profile) goes with it.
@@ -153,3 +118,10 @@ end;
 $$;
 revoke execute on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+
+-- =====================================================================================================================
+-- Part 3: only if an earlier version of part 2 was already run (it made a usernames table that is no longer used).
+-- =====================================================================================================================
+drop function if exists public.handle_available(text);
+drop table if exists public.profiles;
