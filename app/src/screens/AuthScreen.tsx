@@ -47,7 +47,7 @@ export function AuthScreen() {
 
   return (
     <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Scroll contentContainerStyle={[s.content, { paddingTop: top + 24, paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
+      <Scroll contentContainerStyle={[s.content, { flexGrow: 1, justifyContent: 'center', paddingTop: top + 24, paddingBottom: 72 }]} keyboardShouldPersistTaps="handled">
         <Text style={{ color: colors.text, fontSize: 30, fontWeight: '700' }}>Back up your data</Text>
         <Text style={{ color: colors.muted, fontSize: 15, marginTop: 8, marginBottom: 28 }}>
           An account keeps everything safe if you change or lose your phone, and brings it back wherever you sign in.
