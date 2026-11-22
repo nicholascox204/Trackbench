@@ -168,3 +168,11 @@ test('the server sends microseconds; only milliseconds are kept, and the cursor 
   assert.equal(ms('2026-11-22T12:00:00+00:00'), Date.UTC(2026, 10, 22, 12));
   assert.equal(asZ('2026-11-22T12:00:00.123456+00:00'), '2026-11-22T12:00:00.123456Z');
 });
+
+test('syncing again with nothing new reports no change at all', async () => {
+  const cloud = fakeCloud();
+  const a = await phone(personState('fresh'));
+  await sync(a.db, cloud, USER);
+  const again = await sync(a.db, cloud, USER);
+  assert.deepEqual(again, { sent: 0, received: 0, changedLocal: false });
+});

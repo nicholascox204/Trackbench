@@ -119,7 +119,7 @@ export async function sync(db: Db, cloud: CloudApi, userId: string): Promise<Syn
     await cloud.upsert('settings', [{ user_id: userId, data: JSON.parse(mine[0].value) as unknown }]);
     await db.run("update kv set dirty = 0 where key = 'settings' and updated_at = ?", [mine[0].updated_at]);
     sent++;
-  } else if (theirs && (!mine.length || ms(theirs.updated_at) > mine[0].updated_at) && !(mine.length && mine[0].dirty === 1)) {
+  } else if (theirs && (!mine.length || (ms(theirs.updated_at) > mine[0].updated_at && mine[0].value !== JSON.stringify(theirs.data))) && !(mine.length && mine[0].dirty === 1)) { // only a real difference counts as a change
     await db.run("insert or replace into kv (key, value, updated_at, dirty) values ('settings', ?, ?, 0)", [JSON.stringify(theirs.data), ms(theirs.updated_at)]);
     changedLocal = true;
   }
