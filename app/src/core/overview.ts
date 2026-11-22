@@ -285,11 +285,14 @@ export function previewGoal(t: Tracker, def: GoalDef, ix: DayIndex, today: numbe
 
 // ---------- the streak across trackers ----------
 
-// Days in a row (up to today) when any tracker had a good day. Today may still be on its way, so it does not break the run.
+// Days in a row (up to today) when at least half of what was in play got done (see systemShare). Counting any single tracker was tried first and
+// made the streak meaningless (300 days for someone who skips most of their trackers). Today may still be on its way, so it does not break the run.
+export const STREAK_SHARE = 0.5; // a day keeps the streak when at least this share of the system was done
+
 export function activeStreak(ix: DayIndex, today: number): { current: number; best: number } {
   const first = ix.first;
   if (first === undefined) return { current: 0, best: 0 };
-  const good = (d: number): boolean => ix.trackers.some((t) => ix.result(t, d).success);
+  const good = (d: number): boolean => (systemShare(ix, d) ?? 0) >= STREAK_SHARE;
   let best = 0; let run = 0;
   for (let d = first; d <= today; d = addDays(d, 1)) { run = good(d) ? run + 1 : d === today ? run : 0; best = Math.max(best, run); }
   return { current: run, best };
@@ -350,4 +353,34 @@ export function rankTrackers(ix: DayIndex, range: Range, today: number): { track
       return { tracker, days: seen.size };
     })
     .sort((a, b) => b.days - a.days || a.tracker.name.localeCompare(b.tracker.name));
+}
+
+// ---------- how much of your system you did ----------
+
+// One day, across every tracker in play: the share that had a good day, 0 to 1. A tracker is in play on a day when it was due
+// (or logged anyway) and the person had started it. A day with nothing in play (a rest day) is undefined, not zero, so a quiet
+// day nobody owed anything is not drawn as a miss. This is the one measure the ladder and the grids share, so a week is the
+// average of its days and a month of its weeks, and one colour scale means the same at every size.
+export function systemShare(ix: DayIndex, day: number): number | undefined {
+  let inPlay = 0; let good = 0;
+  for (const t of ix.trackers) {
+    const first = ix.firstOf(t.id);
+    if (first === undefined || day < first) continue;
+    const r = ix.result(t, day);
+    if (r.expected || r.success) { inPlay++; if (r.success) good++; }
+  }
+  return inPlay === 0 ? undefined : good / inPlay;
+}
+
+// The share per slice of time: the average of the days that had something in play. Future slices are marked.
+export function shareSeries(ix: DayIndex, range: Range, bucket: Bucket, today: number, weekStart: WeekStart): Point[] {
+  return buckets(range, bucket, weekStart).map((s) => {
+    if (s.start > today) return { start: s.start, end: s.end, value: undefined, future: true };
+    let sum = 0; let n = 0;
+    for (let d = s.start; d <= Math.min(s.end, today); d = addDays(d, 1)) {
+      const v = systemShare(ix, d);
+      if (v !== undefined) { sum += v; n++; }
+    }
+    return { start: s.start, end: s.end, value: n === 0 ? undefined : sum / n, future: false };
+  });
 }

@@ -14,6 +14,7 @@ import { startOfDay } from './src/core/time';
 import { defaultAppearance, type AppState } from './src/core/types';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { Welcome } from './src/screens/Welcome';
+import { Overview } from './src/screens/Overview';
 import { Settings } from './src/screens/Settings';
 import { SetupFlow } from './src/screens/SetupFlow';
 import { TrackerScreen } from './src/screens/TrackerScreen';
@@ -33,6 +34,7 @@ type Nav =
   | { name: 'welcome'; revisit?: boolean } // revisit: came back from the first tracker to change the name or look
   | { name: 'tracker'; id: string }
   | { name: 'setup'; id?: string }
+  | { name: 'overview' }
   | { name: 'settings' };
 
 // Open on the tracker you are likely to need (see core/startPick.ts): one still due today, the one you usually log around
@@ -106,7 +108,7 @@ function AppInner() {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       const here = state.trackers.find((t) => t.id === lastId) ?? state.trackers[0];
       const toTracker = () => setNav(here ? { name: 'tracker', id: here.id } : { name: 'setup' });
-      if (nav.name === 'settings') { toTracker(); return true; }
+      if (nav.name === 'settings' || nav.name === 'overview') { toTracker(); return true; }
       return false;
     });
     return () => sub.remove();
@@ -172,7 +174,7 @@ function AppInner() {
   // While the countdown is being typed, the page makes room for the keyboard and the navigation steps aside.
   const lift = editingTool ? keyboard : 0;
 
-  const place = nav.name === 'tracker' ? state.trackers.findIndex((t) => t.id === nav.id) : nav.name === 'settings' ? state.trackers.length : -1;
+  const place = nav.name === 'tracker' ? state.trackers.findIndex((t) => t.id === nav.id) : nav.name === 'overview' ? state.trackers.length : nav.name === 'settings' ? state.trackers.length + 1 : -1;
   const dir: -1 | 0 | 1 = place < 0 || spot.current === null || spot.current < 0 || place === spot.current ? 0 : place > spot.current ? 1 : -1;
   spot.current = place;
   let body;
@@ -198,6 +200,9 @@ function AppInner() {
         toWelcome={() => setNav({ name: 'welcome', revisit: true })}
       />
     );
+  } else if (nav.name === 'overview') {
+    showBar = true;
+    body = <Overview />;
   } else if (nav.name === 'settings') {
     showBar = true;
     body = <Settings />;
@@ -208,12 +213,13 @@ function AppInner() {
   return (
     <View style={[s.screen, lift > 0 ? { paddingBottom: lift + 6 } : null]}>
       {bar}
-      <View style={{ flex: 1, overflow: 'hidden' }}>{nav.name === 'tracker' || nav.name === 'settings' ? <SwipeIn key={nav.name === 'tracker' ? nav.id : 'settings'} dir={dir}>{body}</SwipeIn> : body}</View>
+      <View style={{ flex: 1, overflow: 'hidden' }}>{nav.name === 'tracker' || nav.name === 'settings' || nav.name === 'overview' ? <SwipeIn key={nav.name === 'tracker' ? nav.id : nav.name} dir={dir}>{body}</SwipeIn> : body}</View>
       {toolTracker?.tools.countdown ? <CountdownBar key={`c${toolTracker.id}`} trackerId={toolTracker.id} name={toolTracker.name} into={toolTracker.tools.countdownInto} onEditing={setEditingTool} /> : null}
       {toolTracker?.tools.timer ? <TimerBar key={`t${toolTracker.id}`} trackerId={toolTracker.id} name={toolTracker.name} into={toolTracker.tools.timerInto} /> : null}
       {showBar && lift === 0 ? (
         <TrackerBar
-          currentId={nav.name === 'tracker' ? nav.id : undefined} settingsOpen={nav.name === 'settings'}
+          currentId={nav.name === 'tracker' ? nav.id : undefined} settingsOpen={nav.name === 'settings'} overviewOpen={nav.name === 'overview'}
+          onOverview={() => setNav({ name: 'overview' })}
           onSettings={() => setNav({ name: 'settings' })}
           onOpen={(id) => setNav({ name: 'tracker', id })}
           onAdd={() => setNav({ name: 'setup' })}

@@ -28,8 +28,8 @@ const PAD = 7; // room either side of a name inside its highlight
 const MIN_BOX = 46; // a short name still gets a box a thumb can hit
 
 export function TrackerBar({
-  currentId, settingsOpen, onOpen, onAdd, onSettings,
-}: { currentId?: string; settingsOpen?: boolean; onOpen: (id: string) => void; onAdd: () => void; onSettings: () => void }) {
+  currentId, settingsOpen, overviewOpen, onOpen, onAdd, onSettings, onOverview,
+}: { currentId?: string; settingsOpen?: boolean; overviewOpen?: boolean; onOpen: (id: string) => void; onAdd: () => void; onSettings: () => void; onOverview: () => void }) {
   const { state } = useAppState();
   const inset = useSafeAreaInsets().bottom;
   const { width: screenW } = useWindowDimensions();
@@ -38,7 +38,7 @@ export function TrackerBar({
   const [, remeasured] = useState(0);
 
   // Each place's width comes from its name; names not measured yet are measured out of sight first (and estimated until then).
-  const labels = [...trackers.map((t) => t.name), 'New', 'Settings'];
+  const labels = [...trackers.map((t) => t.name), 'Overview', 'New', 'Settings'];
   const unmeasured = [...new Set(labels.filter((l) => !labelWidth.has(l)))];
   const boxOf = (name: string): number => Math.max(MIN_BOX, Math.ceil(labelWidth.get(name) ?? name.length * 6) + 2 + 2 * PAD);
   const widths = labels.map(boxOf);
@@ -180,13 +180,19 @@ export function TrackerBar({
               </Tap>
             );
           })}
-          <Tap onPress={() => { close(); onAdd(); }} style={{ width: widths[trackers.length], height: NAV.height, marginRight: gap, alignItems: 'center', justifyContent: 'center' }}>
+          <Tap onPress={() => { close(); onOverview(); }} style={{ width: widths[trackers.length], height: NAV.height, marginRight: gap, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ alignItems: 'center', paddingVertical: 3 }}>
+              <Icon name="stats-chart-outline" size={NAV.icon + 2} color={overviewOpen ? colors.accent : colors.muted} />
+              <Text style={{ color: overviewOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: overviewOpen ? '800' : '600', marginTop: 2 }}>Overview</Text>
+            </View>
+          </Tap>
+          <Tap onPress={() => { close(); onAdd(); }} style={{ width: widths[trackers.length + 1], height: NAV.height, marginRight: gap, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ alignItems: 'center', paddingVertical: 3 }}>
               <Icon name="add-circle-outline" size={NAV.icon + 2} color={colors.accent} />
               <Text style={{ color: colors.accent, fontSize: 10, lineHeight: 12, fontWeight: '600', marginTop: 2 }}>New</Text>
             </View>
           </Tap>
-          <Tap onPress={() => { close(); onSettings(); }} style={{ width: widths[trackers.length + 1], height: NAV.height, alignItems: 'center', justifyContent: 'center' }}>
+          <Tap onPress={() => { close(); onSettings(); }} style={{ width: widths[trackers.length + 2], height: NAV.height, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ alignItems: 'center', paddingVertical: 3 }}>
               <Icon name="settings-outline" size={NAV.icon + 2} color={settingsOpen ? colors.accent : colors.muted} />
               <Text style={{ color: settingsOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: settingsOpen ? '800' : '600', marginTop: 2 }}>Settings</Text>

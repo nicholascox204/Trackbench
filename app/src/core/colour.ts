@@ -117,3 +117,11 @@ export function tintedBackground(highlight: string, kind: TintKind): string {
   const h = hs.s < 10 ? 220 : hs.h; // a grey or white highlight has no hue to follow; use a calm blue-grey
   return kind === 'tint' ? hslToHex({ h, s: 45, l: 15 }) : hslToHex({ h: h + 180, s: 35, l: 15 });
 }
+
+// A colour part of the way from one to another (t 0 gives a, 1 gives b). Used to draw a scale from the card colour up to the highlight.
+export function mixHex(a: string, b: string, t: number): string {
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  const k = clamp(t, 0, 1);
+  return rgbToHex(Math.round(r1 + (r2 - r1) * k), Math.round(g1 + (g2 - g1) * k), Math.round(b1 + (b2 - b1) * k));
+}

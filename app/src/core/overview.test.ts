@@ -152,6 +152,8 @@ test('the streak across trackers: best is never below current, and a long histor
     assert.ok(s.best >= s.current, p.id);
   }
   assert.ok(activeStreak(indexOf('veteran'), TODAY).best >= 5);
+  const reg = indexOf('regular');
+  assert.ok(activeStreak(reg, TODAY).best < 250, 'a regular person skips days, so the best run is not every day of 300');
 });
 
 test('trackers rank by days logged, most first', () => {
@@ -172,4 +174,22 @@ test('the biggest example person is fast enough to draw', () => {
   const ms = Date.now() - t0;
   console.log(`  18 trackers, 540 days: starting panels, 19 series and the streak in ${ms} ms`);
   assert.ok(ms < 8000, `took ${ms} ms`);
+});
+
+test('the share of the system done: a day is 0 to 1, a rest day is undefined, and levels nest', async () => {
+  const { systemShare, shareSeries } = await import('./overview');
+  for (const p of PERSONAS) {
+    const ix = indexOf(p.id);
+    const all = rangeFor('all', TODAY, 'mon', ix.first);
+    const days = shareSeries(ix, all, 'day', TODAY, 'mon');
+    assert.ok(days.every((d) => d.value === undefined || (d.value >= 0 && d.value <= 1)), p.id);
+    assert.ok(days.filter((d) => d.value !== undefined).length > days.length * 0.5, `${p.id} most days have something in play`);
+  }
+  const ix = indexOf('regular');
+  assert.equal(systemShare(ix, addDays(TODAY, -2000)), undefined, 'before they started there is nothing in play');
+  const all = rangeFor('all', TODAY, 'mon', ix.first);
+  const months = shareSeries(ix, all, 'month', TODAY, 'mon');
+  const mean = (a: (number | undefined)[]) => { const v = a.filter((x): x is number => x !== undefined); return v.reduce((s, x) => s + x, 0) / v.length; };
+  const overall = mean(shareSeries(ix, all, 'day', TODAY, 'mon').map((d) => d.value));
+  assert.ok(Math.abs(mean(months.map((m) => m.value)) - overall) < 0.06, 'months roughly average to the whole');
 });
