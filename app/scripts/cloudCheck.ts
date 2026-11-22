@@ -1,3 +1,4 @@
+// @ts-nocheck (a Node-only script: the phone app does not carry Node types)
 // Checks the real cloud end to end from Node: anonymous sign-in, sending, a second phone receiving, and that nobody else can read the rows.
 // Run: npx tsx scripts/cloudCheck.ts   (uses .env.local; it cleans up the rows it makes)
 import { createClient } from '@supabase/supabase-js';
