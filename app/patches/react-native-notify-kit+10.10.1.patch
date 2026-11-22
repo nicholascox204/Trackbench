@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-notify-kit/android/src/main/java/app/notifee/core/NotificationManager.java b/node_modules/react-native-notify-kit/android/src/main/java/app/notifee/core/NotificationManager.java
+index 82b3ea0..d52a917 100644
+--- a/node_modules/react-native-notify-kit/android/src/main/java/app/notifee/core/NotificationManager.java
++++ b/node_modules/react-native-notify-kit/android/src/main/java/app/notifee/core/NotificationManager.java
+@@ -321,6 +321,10 @@ class NotificationManager {
+             }
+ 
+             builder.setUsesChronometer(androidModel.getShowChronometer());
++            // Trackbench patch: an ongoing notification with a chronometer asks Android 16 to show it as a live chip in the status bar.
++            if (androidModel.getOngoing() && androidModel.getShowChronometer()) {
++              builder.getExtras().putBoolean("android.requestPromotedOngoing", true);
++            }
+ 
+             long[] vibrationPattern = androidModel.getVibrationPattern();
+             if (vibrationPattern.length > 0) builder.setVibrate(vibrationPattern);

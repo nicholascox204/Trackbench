@@ -1,0 +1,591 @@
+// Local-first store: state lives on the device and is saved to AsyncStorage.
+// Logging never waits on a network. Backend and sync come later for social features.
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { nickGym, nickNutrition, nickWeight } from '../fixtures/nick';
+import { Derived, dayResult, derive, entriesOnDay } from './derive';
+import { applyIntensity, defaultConfig, hash01 } from './engine';
+import { iconFromEmoji } from './icons';
+import { emit } from './events';
+import { dayKeyOf, emptyPlanDays, planFor, previousRow, stripRest, syncSame, versionFor } from './plan';
+import { normalizeSchedule, scheduleOf, weekdaysOf } from './schedule';
+import { getPreset } from './presets';
+import { withDailyGoal, withoutDailyGoal } from './goals';
+import { defaultAlerts } from './motivation';
+import { buildPersona, PERSONAS } from './personas';
+import { refreshPatch } from './presetRefresh';
+import { answersFromPreset, draftFromAnswers } from './setup';
+import { upgradeReadingMinutes, upgradeSleepHours } from './duration';
+import { changeTotal } from './tapTotal';
+import { addDays, startOfDay } from './time';
+import { applyRow } from './rows';
+import { SETS_TERMS } from './terms';
+import { dropFromTrash, moveToTrash, restoreFromTrash } from './trash';
+import type { Backup } from './transfer';
+import {
+  AlertSettings, Appearance, AppState, CustomRule, Entry, GoalDef, Intensity, PlanDay, Quest, Settings, System, SystemConfig, Tracker, TrackerDraft, UnitSystem,
+  defaultAppearance, emptyState,
+} from './types';
+import { detectUnits, round2 } from './units';
+
+const STORAGE_KEY = 'sandbox.state.v3';
+const HALF_DAY = 12 * 60 * 60 * 1000;
+
+let state: AppState = emptyState;
+let loaded = false;
+const listeners = new Set<() => void>();
+
+function setState(next: AppState) {
+  state = next;
+  listeners.forEach((l) => l());
+  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {
+    // Saving can fail (full storage). Keep running in memory.
+  });
+}
+
+function makeId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+export function getState(): AppState {
+  return state;
+}
+
+// Trackers saved by earlier versions get the same explicit settings new ones are built with, so editing them
+// in the builder keeps behaving the same: wording, readings, icons.
+function upgradeTracker(t: Tracker): Tracker {
+  const latestOf = new Set(t.measures.filter((m) => m.calc.op === 'latest').map((m) => (m.calc as { field: string }).field));
+  const legacyRest = (t.tools as { rest?: boolean }).rest; // the countdown's first name
+  const { rest: _rest, timerStart: _ts, timerStop: _tp, ...tools } = t.tools as Tracker['tools'] & { rest?: boolean; timerStart?: string; timerStop?: string }; // the timer once carried its own words; it no longer does
+  return {
+    ...t,
+    tools: legacyRest ? { ...tools, countdown: true } : tools,
+    plan: (t.plan ?? []).map((v) => ({ ...v, days: stripRest(v.days) })), // rest days were dropped; the flag and the "Rest" label go
+    ...(t.input === 'plan' && !t.terms && t.measures.some((m) => m.id === 'sets') ? { terms: SETS_TERMS } : {}),
+    fields: t.fields.map((f) => (f.type === 'number' && f.reading === undefined && latestOf.has(f.id) ? { ...f, reading: true } : f)),
+    icon: t.icon ?? iconFromEmoji((t as { emoji?: string }).emoji),
+  };
+}
+
+export async function loadState(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<AppState>;
+      state = {
+        // Older saves stored an emoji; give those trackers an icon instead.
+        // The tile-builder experiment was dropped; its trackers have nothing left to draw them.
+        trackers: (p.trackers ?? []).filter((t) => (t.input as string) !== 'grid').map(upgradeTracker),
+        entries: (p.entries ?? []).filter((e) => !(p.trackers ?? []).some((t) => (t.input as string) === 'grid' && t.id === e.trackerId)),
+        systems: p.systems ?? [],
+        settings: {
+          ...emptyState.settings,
+          ...(p.settings ?? {}),
+          // Merge in new appearance options; the old Mono theme became OLED.
+          appearance: (() => {
+            const a = { ...defaultAppearance, ...(p.settings?.appearance ?? {}) };
+            return (a.theme as string) === 'mono' ? { ...a, theme: 'oled' as const } : a;
+          })(),
+        },
+        onboarded: p.onboarded ?? false,
+        trash: p.trash ?? [],
+      };
+    }
+  } catch {
+    // Corrupt storage: start fresh rather than crash.
+  }
+  { const up = upgradeSleepHours(state.trackers, state.entries); state = { ...state, trackers: upgradeReadingMinutes(up.trackers), entries: up.entries }; } // Sleep used to be hours, Reading plain minutes
+  if (!state.onboarded && state.trackers.length === 0 && !state.settings.welcomed) state = { ...state, settings: { ...state.settings, units: detectUnits() } }; // a fresh start uses the region's units
+  loaded = true;
+  listeners.forEach((l) => l());
+}
+
+// ---------- settings ----------
+
+export function setUnits(units: UnitSystem): void {
+  setState({ ...state, settings: { ...state.settings, units } });
+}
+
+// Testing aid: rebuild every tracker that came from a template using the template as it is now.
+export function applyPresetChanges(): number {
+  let n = 0;
+  const trackers = state.trackers.map((t) => { const p = refreshPatch(t, state.settings); if (!p) return t; n++; return { ...t, ...p }; });
+  if (n > 0) setState({ ...state, trackers });
+  return n;
+}
+
+export function setDevSync(on: boolean): void {
+  setState({ ...state, settings: { ...state.settings, devSync: on } });
+  if (on) applyPresetChanges();
+}
+
+export function setOpenOn(openOn: NonNullable<Settings['openOn']>): void {
+  setState({ ...state, settings: { ...state.settings, openOn } });
+}
+
+// Remember the tracker you are on, so a quick reopen can go back to it.
+export function noteTrackerOpened(id: string): void {
+  if (state.settings.lastTracker?.id === id && Date.now() - state.settings.lastTracker.at < 60000) return; // no need to save on every tap
+  setState({ ...state, settings: { ...state.settings, lastTracker: { id, at: Date.now() } } });
+}
+
+export function setWeekStart(weekStart: 'mon' | 'sun'): void {
+  setState({ ...state, settings: { ...state.settings, weekStart } });
+}
+
+// The opening screen: what to call you. The look is saved as it is chosen, so this only records the name.
+export function finishWelcome(name: string): void {
+  setState({ ...state, settings: { ...state.settings, name: name.trim(), welcomed: true } });
+}
+
+export function setName(name: string): void {
+  setState({ ...state, settings: { ...state.settings, name: name.trim() } });
+}
+
+// ---------- quests (goals that belong to the system) ----------
+
+// A quest belongs to one game: the one that already holds it, else the one named, else the default.
+export function saveQuest(quest: Quest, systemId?: string): void {
+  const sys = state.systems.find((x) => (x.quests ?? []).some((q) => q.id === quest.id)) ?? state.systems.find((x) => x.id === systemId) ?? state.systems[0];
+  if (!sys) return;
+  const rest = (sys.quests ?? []).filter((q) => q.id !== quest.id);
+  setState({ ...state, systems: state.systems.map((x) => (x.id === sys.id ? { ...x, quests: [...rest, quest] } : x)) });
+}
+
+export function removeQuest(questId: string): void {
+  setState({ ...state, systems: state.systems.map((x) => ((x.quests ?? []).some((q) => q.id === questId) ? { ...x, quests: (x.quests ?? []).filter((q) => q.id !== questId) } : x)) });
+}
+
+// ---------- games (each is a set of rules for the trackers that are in it) ----------
+
+export function addGame(name: string, config: SystemConfig): string {
+  const system: System = { id: makeId(), name: name.trim() || 'Another game', config, createdAt: Date.now() };
+  setState({ ...state, systems: [...state.systems, system] });
+  return system.id;
+}
+
+export function renameGame(systemId: string, name: string): void {
+  if (!name.trim()) return;
+  setState({ ...state, systems: state.systems.map((x) => (x.id === systemId ? { ...x, name: name.trim() } : x)) });
+}
+
+// Its trackers go to the default game (or to none when it was the only one).
+export function removeGame(systemId: string): void {
+  const rest = state.systems.filter((x) => x.id !== systemId);
+  const fallback = rest[0]?.id ?? null;
+  setState({ ...state, systems: rest, trackers: state.trackers.map((t) => (t.systemId === systemId ? { ...t, systemId: fallback } : t)) });
+}
+
+// Which game a tracker is in; null leaves it out of every game (a plain log).
+export function setTrackerGame(trackerId: string, systemId: string | null): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, systemId } : t)) });
+}
+
+export function setAlerts(patch: Partial<AlertSettings>): void {
+  const cur = state.settings.alerts ?? defaultAlerts();
+  setState({ ...state, settings: { ...state.settings, alerts: { ...cur, ...patch } } });
+}
+
+// ---------- goals ----------
+
+export function saveGoal(trackerId: string, goal: GoalDef): void {
+  setState({
+    ...state,
+    trackers: state.trackers.map((t) => {
+      if (t.id !== trackerId) return t;
+      const rest = (t.goals ?? []).filter((g) => g.id !== goal.id);
+      return { ...t, goals: [...rest, goal] };
+    }),
+  });
+}
+
+// A daily goal is one of the tracker's daily targets (see core/goals.ts); these keep the daily rule consistent.
+export function saveDailyGoal(trackerId: string, goal: GoalDef): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, ...withDailyGoal(t, goal) } : t)) });
+}
+
+export function removeDailyGoal(trackerId: string, goalId: string): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, ...withoutDailyGoal(t, goalId) } : t)) });
+}
+
+export function removeGoal(trackerId: string, goalId: string): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, goals: (t.goals ?? []).filter((g) => g.id !== goalId) } : t)) });
+}
+
+export function setAppearance(patch: Partial<Appearance>): void {
+  const cur = state.settings.appearance ?? defaultAppearance;
+  setState({ ...state, settings: { ...state.settings, appearance: { ...cur, ...patch } } });
+}
+
+// Create the system with a chosen config and put every existing tracker in it.
+export function createSystemWithConfig(config: SystemConfig): void {
+  if (state.systems.length > 0) return;
+  const system: System = { id: makeId(), name: 'Motivation', config, createdAt: Date.now() };
+  setState({ ...state, systems: [system], trackers: state.trackers.map((t) => ({ ...t, systemId: system.id })) });
+}
+
+// ---------- trackers ----------
+
+function build(draft: TrackerDraft, systemId: string | null, createdAt = Date.now()): Tracker {
+  return { ...draft, id: makeId(), systemId, createdAt };
+}
+
+export function addTrackerDraft(draft: TrackerDraft): string {
+  const t = build(draft, state.systems[0]?.id ?? null);
+  setState({ ...state, trackers: [...state.trackers, t] });
+  emit({ type: 'tracker.added', trackerId: t.id });
+  return t.id;
+}
+
+export function addTrackerFromPreset(presetId: string): string | null {
+  return getPreset(presetId) ? addTrackerDraft(draftFromAnswers(answersFromPreset(presetId), state.settings)) : null;
+}
+
+export function completeOnboarding(presetIds: string[], useSystem: boolean, config: SystemConfig): void {
+  const now = Date.now();
+  const system: System | null = useSystem ? { id: makeId(), name: 'Motivation', config, createdAt: now } : null;
+  const trackers: Tracker[] = [];
+  for (const id of presetIds) {
+    const preset = getPreset(id);
+    if (preset) trackers.push(build(draftFromAnswers(answersFromPreset(id), state.settings), system?.id ?? null, now));
+  }
+  setState({ ...state, trackers, entries: [], systems: system ? [system] : [], onboarded: true });
+}
+
+export function updateTracker(trackerId: string, patch: Partial<Tracker>): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, ...patch } : t)) });
+}
+
+// Put a tracker at a given place in the bottom bar.
+export function moveTrackerTo(trackerId: string, index: number): void {
+  const i = state.trackers.findIndex((t) => t.id === trackerId);
+  if (i < 0 || index < 0 || index >= state.trackers.length || i === index) return;
+  const next = [...state.trackers];
+  const [t] = next.splice(i, 1);
+  next.splice(index, 0, t);
+  setState({ ...state, trackers: next });
+}
+
+// Move a tracker one place left (-1) or right (1) in the bottom bar.
+export function moveTracker(trackerId: string, delta: -1 | 1): void {
+  const i = state.trackers.findIndex((t) => t.id === trackerId);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= state.trackers.length) return;
+  const next = [...state.trackers];
+  [next[i], next[j]] = [next[j], next[i]];
+  setState({ ...state, trackers: next });
+}
+
+// Bring back one of the last few deleted trackers, with its entries.
+export function restoreTracker(trashId: string): void {
+  const item = (state.trash ?? []).find((d) => d.id === trashId);
+  if (!item) return;
+  setState(restoreFromTrash(state, trashId));
+  emit({ type: 'tracker.added', trackerId: item.tracker.id });
+}
+
+// Delete one of them for good.
+export function forgetDeleted(trashId: string): void {
+  setState(dropFromTrash(state, trashId));
+}
+
+export function removeTracker(trackerId: string): void {
+  setState(moveToTrash(state, trackerId, Date.now()));
+  emit({ type: 'tracker.removed', trackerId });
+}
+
+// Saves the plan as a new version effective today (replacing one made today). The "same every day"
+// setting carries over unless a new value is given.
+export function savePlanDays(trackerId: string, days: PlanDay[], same?: boolean): void {
+  const from = dayKeyOf(Date.now());
+  setState({
+    ...state,
+    trackers: state.trackers.map((t) => {
+      if (t.id !== trackerId) return t;
+      const keep = same ?? !!versionFor(t.plan, Date.now())?.same;
+      const turns = !!versionFor(t.plan, Date.now())?.rotation;
+      const others = t.plan.filter((v) => v.from !== from);
+      return { ...t, plan: [...others, { from, days, ...(keep ? { same: true } : {}), ...(turns ? { rotation: true } : {}) }].sort((a, b) => (a.from < b.from ? -1 : 1)) };
+    }),
+  });
+}
+
+// Create a tracker from the setup flow, or update one when editing.
+export function saveSetup(draft: TrackerDraft, inSystem: boolean, existingId?: string): string {
+  const sysId = state.systems[0]?.id ?? null;
+  if (existingId) {
+    updateTracker(existingId, { ...draft, systemId: inSystem ? sysId : null });
+    return existingId;
+  }
+  const t = build(draft, inSystem ? sysId : null);
+  setState({ ...state, trackers: [...state.trackers, t] });
+  emit({ type: 'tracker.added', trackerId: t.id });
+  return t.id;
+}
+
+// Change one weekday of the plan from today on (past days keep the plan they had).
+// When the tracker uses the same list every day, the change is copied to every training day.
+export function mutatePlanDay(trackerId: string, weekday: number, fn: (d: PlanDay) => void): void {
+  const t = state.trackers.find((x) => x.id === trackerId);
+  if (!t) return;
+  const v = versionFor(t.plan, Date.now());
+  const days = JSON.parse(JSON.stringify(v?.days ?? emptyPlanDays())) as PlanDay[];
+  fn(days[weekday]);
+  if (v?.same) syncSame(days, weekday, weekdaysOf(scheduleOf(t))); // one shared list: the edit goes to every scheduled day
+  savePlanDays(trackerId, days);
+}
+
+// ---------- entries ----------
+
+function atFor(day: number): number {
+  return day === startOfDay(Date.now()) ? Date.now() : day + HALF_DAY;
+}
+
+// One reading a day: save over today's entry if there is one, otherwise add it.
+export function saveDaily(trackerId: string, values: Entry['values'], day: number = startOfDay(Date.now())): void {
+  const existing = state.entries.find((e) => e.trackerId === trackerId && e.done && startOfDay(e.at) === day);
+  if (!existing) return logFree(trackerId, values, day);
+  setState({ ...state, entries: state.entries.map((e) => (e.id === existing.id ? { ...e, values: { ...e.values, ...values } } : e)) });
+}
+
+export function logFree(trackerId: string, values: Entry['values'] = {}, day: number = startOfDay(Date.now())): void {
+  const entry: Entry = { id: makeId(), trackerId, at: atFor(day), done: true, values };
+  setState({ ...state, entries: [...state.entries, entry] });
+  emit({ type: 'entry.logged', entry });
+}
+
+// Set a counter's total for a day by typing it: new taps are added, or the newest come off (see tapTotal.ts).
+export function setTapTotal(trackerId: string, day: number, target: number, amounts: boolean): void {
+  const mine = entriesOnDay(state.entries, trackerId, day).filter((e) => e.done);
+  const c = changeTotal(mine, target, amounts);
+  if (!c.remove.length && !c.shrink.length && !c.add.length) return;
+  const drop = new Set(c.remove);
+  const shrunk = new Map(c.shrink.map((x) => [x.id, x.n] as const));
+  const kept = state.entries.filter((e) => !drop.has(e.id)).map((e) => (shrunk.has(e.id) ? { ...e, values: { ...e.values, n: shrunk.get(e.id) as number } } : e));
+  const added: Entry[] = c.add.map((n) => ({ id: makeId(), trackerId, at: atFor(day), done: true, values: (amounts ? { n } : {}) as Entry['values'] }));
+  setState({ ...state, entries: [...kept, ...added] });
+  for (const entry of added) emit({ type: 'entry.logged', entry });
+}
+
+// Change what an entry holds (its day and time stay).
+export function updateEntry(entryId: string, values: Entry['values']): void {
+  setState({ ...state, entries: state.entries.map((e) => (e.id === entryId ? { ...e, values } : e)) });
+}
+
+export function deleteEntry(entryId: string): void {
+  const entry = state.entries.find((e) => e.id === entryId);
+  if (!entry) return;
+  setState({ ...state, entries: state.entries.filter((e) => e.id !== entryId) });
+  emit({ type: 'entry.removed', entry });
+}
+
+export function undoLast(trackerId: string, day: number = startOfDay(Date.now())): void {
+  const mine = entriesOnDay(state.entries, trackerId, day).filter((e) => e.done);
+  const last = mine[mine.length - 1];
+  if (last) deleteEntry(last.id);
+}
+
+// Set a row of a row slot: typed values and/or the done tick. Ticking done fills
+// missing numbers from last time (when the tracker shows previous numbers), then defaults.
+export function setRow(
+  trackerId: string, day: number, slotId: string, row: number,
+  patch: { values?: Entry['values']; done?: boolean },
+): void {
+  const t = state.trackers.find((x) => x.id === trackerId);
+  if (!t) return;
+  const mine = state.entries.filter((e) => e.trackerId === trackerId);
+  const existing = mine.find((e) => e.slotId === slotId && e.row === row && startOfDay(e.at) === day);
+  const prev = patch.done === true && t.tools.previous ? previousRow(mine, slotId, row, day) : null;
+  const { values, done, auto } = applyRow(existing, patch, { fields: t.fields, prev });
+  const autoField = auto.length > 0 ? auto : undefined;
+  if (existing) {
+    setState({ ...state, entries: state.entries.map((e) => (e.id === existing.id ? { ...e, values, done, auto: autoField } : e)) });
+  } else {
+    const entry: Entry = { id: makeId(), trackerId, at: atFor(day), slotId, row, done, values, ...(autoField ? { auto: autoField } : {}) };
+    setState({ ...state, entries: [...state.entries, entry] });
+  }
+  const after = state.entries.find((e) => e.trackerId === trackerId && e.slotId === slotId && e.row === row && startOfDay(e.at) === day);
+  if (after && done && patch.done === true) emit({ type: 'entry.logged', entry: after });
+}
+
+// Tick an item slot (like a food). With variants, choosing another variant switches;
+// choosing the same one again unticks.
+export function toggleItem(trackerId: string, day: number, slotId: string, variant?: number): void {
+  const t = state.trackers.find((x) => x.id === trackerId);
+  if (!t) return;
+  const slot = planFor(t, day)?.slots.find((s) => s.id === slotId);
+  if (!slot) return;
+  const existing = state.entries.find(
+    (e) => e.trackerId === trackerId && e.slotId === slotId && e.row === undefined && startOfDay(e.at) === day,
+  );
+  const values = (variant !== undefined && slot.variants?.[variant] ? slot.variants[variant].values : slot.values) ?? {};
+  if (existing && existing.done) {
+    if (variant !== undefined && existing.variant !== variant) {
+      setState({ ...state, entries: state.entries.map((e) => (e.id === existing.id ? { ...e, variant, values } : e)) });
+      return;
+    }
+    deleteEntry(existing.id);
+    return;
+  }
+  const entry: Entry = { id: makeId(), trackerId, at: atFor(day), slotId, variant, done: true, values };
+  setState({ ...state, entries: [...state.entries.filter((e) => e.id !== existing?.id), entry] });
+  emit({ type: 'entry.logged', entry });
+}
+
+// ---------- system ----------
+
+export function createSystem(): void {
+  if (state.systems.length > 0) return;
+  const system: System = { id: makeId(), name: 'Motivation', config: defaultConfig('standard'), createdAt: Date.now() };
+  setState({ ...state, systems: [system], trackers: state.trackers.map((t) => ({ ...t, systemId: system.id })) });
+}
+
+export function updateConfig(systemId: string, fn: (c: SystemConfig) => SystemConfig): void {
+  setState({ ...state, systems: state.systems.map((s) => (s.id === systemId ? { ...s, config: fn(s.config) } : s)) });
+}
+
+export function setIntensity(systemId: string, intensity: Intensity): void {
+  updateConfig(systemId, (c) => applyIntensity(c, intensity));
+}
+
+export function addRule(systemId: string, rule: Omit<CustomRule, 'id'>): void {
+  updateConfig(systemId, (c) => ({ ...c, rules: [...c.rules, { ...rule, id: makeId() }] }));
+}
+
+export function removeRule(systemId: string, ruleId: string): void {
+  updateConfig(systemId, (c) => ({ ...c, rules: c.rules.filter((r) => r.id !== ruleId) }));
+}
+
+// ---------- import ----------
+
+export function mergeBackup(b: Backup): { trackers: number; entries: number } {
+  const haveT = new Set(state.trackers.map((t) => t.id));
+  const haveE = new Set(state.entries.map((e) => e.id));
+  const newT = b.trackers.filter((t) => !haveT.has(t.id)).map((t) => ({ ...t, systemId: null }));
+  const newE = b.entries.filter((e) => !haveE.has(e.id));
+  setState({ ...state, trackers: [...state.trackers, ...newT], entries: [...state.entries, ...newE], onboarded: true });
+  return { trackers: newT.length, entries: newE.length };
+}
+
+// ---------- developer helpers ----------
+
+function demoValues(t: Tracker, seed: string): Entry['values'] {
+  const v: Entry['values'] = {};
+  for (const f of t.fields) {
+    if (f.type === 'text') {
+      v[f.id] = typeof f.default === 'string' ? f.default : '';
+    } else {
+      const base = typeof f.default === 'number' ? f.default : 1;
+      const w = 1 + (hash01(seed + f.id) - 0.5) * 0.12;
+      v[f.id] = f.step === 1 ? Math.max(1, Math.round(base * w)) : round2(base * w);
+    }
+  }
+  return v;
+}
+
+// Replaces history with three weeks of plausible data so the system has something to show.
+export function seedDemo(): void {
+  const today = startOfDay(Date.now());
+  const span = 21;
+  const trackers = state.trackers.map((t) => ({ ...t, createdAt: addDays(today, -span) }));
+  const entries: Entry[] = state.entries.filter((e) => e.at >= today);
+  let n = 0;
+  const id = () => `demo${n++}`;
+
+  for (const t of trackers) {
+    for (let i = span; i >= 1; i--) {
+      const day = addDays(today, -i);
+      const hit = hash01(`demo|${t.id}|${i}`) < 0.75;
+      if (t.input === 'plan') {
+        const pd = planFor(t, day);
+        if (!pd) continue;
+        const p = hit ? 1 : 0.4;
+        for (const s of pd.slots) {
+          const rowsN = (s.sets ?? 0) > 0 ? (s.sets as number) : 1;
+          for (let r = 0; r < rowsN; r++) {
+            if (hash01(`demo3|${t.id}|${i}|${s.id}|${r}`) > p) continue;
+            const isRow = (s.sets ?? 0) > 0;
+            entries.push({
+              id: id(), trackerId: t.id, at: day + HALF_DAY, slotId: s.id,
+              row: isRow ? r : undefined, done: true,
+              values: isRow ? demoValues(t, `${i}|${s.id}|${r}`) : { ...(s.values ?? {}) },
+            });
+          }
+        }
+      } else {
+        const wanted = hit ? 20 : hash01(`demo2|${t.id}|${i}`) < 0.5 ? 1 : 0;
+        const mine: Entry[] = [];
+        for (let k = 0; k < wanted; k++) {
+          const e: Entry = {
+            id: id(), trackerId: t.id, at: day + HALF_DAY + k * 60000, done: true,
+            values: demoValues(t, `${i}|${k}`),
+          };
+          mine.push(e);
+          entries.push(e);
+          if (hit && dayResult(t, mine, day, state.entries).success) break;
+        }
+      }
+    }
+  }
+  setState({ ...state, trackers, entries });
+}
+
+// Testing: replace everything tracked with an example person (their trackers and a realistic history).
+export function loadPersona(id: string): void {
+  const p = PERSONAS.find((x) => x.id === id);
+  if (!p) return;
+  const built = buildPersona(p, state.settings, state.systems[0]?.id ?? null);
+  setState({ ...state, trackers: built.trackers, entries: built.entries, trash: [], onboarded: true });
+}
+
+export function loadNickSetup(): void {
+  const sys = state.systems[0]?.id ?? null;
+  const now = Date.now();
+  const drafts = [nickGym(), nickNutrition(), nickWeight()];
+  setState({
+    ...state,
+    trackers: [...state.trackers, ...drafts.map((d) => build(d, sys, now))],
+    onboarded: true,
+  });
+}
+
+// Remove trackers, entries and the points system, but keep who you are and how the app looks (name, colours, units).
+export function deleteData(): void {
+  setState({ ...emptyState, settings: state.settings });
+}
+
+// Start over completely: everything goes, including the name and look, and the app opens on the first screen again.
+export async function resetAll(): Promise<void> {
+  state = { ...emptyState, settings: { ...emptyState.settings, units: detectUnits() } };
+  listeners.forEach((l) => l());
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// ---------- React hooks ----------
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function useAppState(): { state: AppState; loaded: boolean } {
+  const s = useSyncExternalStore(subscribe, () => state);
+  const l = useSyncExternalStore(subscribe, () => loaded);
+  return { state: s, loaded: l };
+}
+
+export function useDerived(): Derived & { state: AppState } {
+  const { state: s } = useAppState();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+  const derived = useMemo(() => derive(s.trackers, s.entries, s.systems, now, s.settings), [s, now]);
+  return { ...derived, state: s };
+}

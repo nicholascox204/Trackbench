@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-48 -36 96 72" width="480" height="360">
+  <title>Tallysmith mark, for dark backgrounds</title>
+  <path fill="#eef0f4" d="M-32 -26H-22V-21H-25V25H-29V-21H-32Z M-14 -26H-4V-21H-7V25H-11V-21H-14Z M4 -26H14V-21H11V25H7V-21H4Z M22 -26H32V-21H29V25H25V-21H22Z"/>
+  <line x1="-38" y1="16" x2="38" y2="-16" stroke="#7c9cff" stroke-width="6"/>
+</svg>

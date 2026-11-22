@@ -1,0 +1,12 @@
+# private notes and local tool settings: never committed
+Passwords.txt
+.claude/settings.local.json
+
+# keys and local environment files
+.env
+.env.*
+*.pem
+
+# generated or downloaded
+node_modules/
+.DS_Store

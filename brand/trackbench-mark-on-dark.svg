@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-75 -60 150 120">
+  <title>Trackbench mark</title>
+  <circle cx="0" cy="-45" r="3.4" fill="#3a3f4d"/>
+  <circle cx="60" cy="-45" r="3.4" fill="#3a3f4d"/>
+  <circle cx="-30" cy="45" r="3.4" fill="#3a3f4d"/>
+  <circle cx="0" cy="45" r="3.4" fill="#3a3f4d"/>
+  <circle cx="30" cy="45" r="3.4" fill="#3a3f4d"/>
+  <rect x="-72.5" y="-57.5" width="55" height="55" rx="6" fill="#7c9cff"/>
+  <rect x="-12.5" y="-27.5" width="25" height="25" rx="6" fill="#eef0f4"/>
+  <rect x="17.5" y="-57.5" width="25" height="55" rx="6" fill="#7c9cff" opacity="0.55"/>
+  <rect x="47.5" y="-27.5" width="25" height="25" rx="6" fill="#7c9cff"/>
+  <rect x="-72.5" y="2.5" width="145" height="25" rx="3" fill="#eef0f4"/>
+  <rect x="-72.5" y="2.5" width="25" height="55" rx="3" fill="#eef0f4"/>
+  <rect x="47.5" y="2.5" width="25" height="55" rx="3" fill="#eef0f4"/>
+</svg>
