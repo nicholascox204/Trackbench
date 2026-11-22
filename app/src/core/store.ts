@@ -80,7 +80,7 @@ export async function syncNow(): Promise<void> {
   try {
     scheduleSave();
     await saving; // what is waiting to be written goes first
-    const userId = await cloud.signInIfNeeded();
+    const userId = await cloud.signedInUserId();
     const res = await sync(db, cloud.supabaseApi(cloud.cloudClient()), userId);
     if (res.changedLocal) {
       // another device changed something: bring it into what is on screen (anything changed meanwhile is saved first, and the load is repeated if the app changed again)
@@ -110,6 +110,47 @@ export function flushOnLeave(): void {
   if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
   scheduleSave();
   void syncNow();
+}
+
+// ---------- the account ----------
+
+export function setHandle(handle: string): void {
+  setState({ ...state, settings: { ...state.settings, handle } });
+}
+
+// Testing only: use the app without an account (nothing is backed up).
+export function skipSignIn(): void {
+  setState({ ...state, settings: { ...state.settings, skippedSignIn: true } });
+}
+
+// Just signed in: backing up switches on, what is on this phone goes up, and what the account already holds (a new phone) comes down.
+export async function afterSignIn(): Promise<void> {
+  setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });
+  await syncNow();
+}
+
+// Sign out. What is on the phone is sent first, then removed (the next person to sign in must not receive it); it all comes back on signing in again.
+// Returns a sentence when it could not be done safely.
+export async function signOutSafely(): Promise<string | null> {
+  const cloud = await import('./cloud');
+  const auth = await import('./auth');
+  await syncNow();
+  if (cloud.getCloudStatus().phase === 'error') return 'The latest changes could not be backed up, so signing out would lose them. Connect and try again.';
+  await resetAll();
+  await auth.signOutNow();
+  return null;
+}
+
+// Delete the account and everything under it, in the cloud and on this phone.
+export async function deleteMyAccount(): Promise<string | null> {
+  const auth = await import('./auth');
+  try {
+    await auth.deleteAccountNow();
+  } catch {
+    return 'The account could not be deleted right now. Check the connection and try again.';
+  }
+  await resetAll();
+  return null;
 }
 
 export function setCloudSync(on: boolean): void {

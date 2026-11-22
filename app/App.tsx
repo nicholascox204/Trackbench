@@ -5,12 +5,14 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
 import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
+import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { dismissFinishedAlerts, liveTimers, loadTimers } from './src/core/timers';
 import { initialTap, listenForegroundTaps } from './src/core/notificationTap';
 import { peekTapTarget, subscribeTap, takeTapTarget } from './src/core/tapTarget';
 import { startOfDay } from './src/core/time';
 import { defaultAppearance, type AppState } from './src/core/types';
+import { AuthScreen } from './src/screens/AuthScreen';
 import { Welcome } from './src/screens/Welcome';
 import { Settings } from './src/screens/Settings';
 import { SetupFlow } from './src/screens/SetupFlow';
@@ -53,6 +55,9 @@ export default function App() {
 
 function AppInner() {
   const { state, loaded } = useAppState();
+  const session = useSession();
+  // Everyone has an account; only while testing can it be skipped.
+  const needsAccount = cloudConfigured && !session.loading && !session.userId && !state.settings.skippedSignIn;
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });
   const [timersReady, setTimersReady] = useState(false);
@@ -71,6 +76,7 @@ function AppInner() {
   }, []);
 
   useEffect(() => {
+    startAuth();
     Promise.resolve(loadState()).finally(() => { if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncNow(); });
     loadTimers().finally(() => setTimersReady(true)); // the opening choice looks at running timers, so it waits for them
     initialTap().finally(() => setTapChecked(true));
@@ -84,8 +90,8 @@ function AppInner() {
   }, [loaded, state.onboarded]);
 
   useEffect(() => {
-    if (loaded && timersReady && tapChecked && nav.name === 'launch') setNav(!state.settings.welcomed ? { name: 'welcome' } : state.onboarded ? startNav(state, takeTapTarget()) : { name: 'setup' });
-  }, [loaded, timersReady, tapChecked, nav.name, state]);
+    if (loaded && timersReady && tapChecked && !session.loading && !needsAccount && nav.name === 'launch') setNav(!state.settings.welcomed ? { name: 'welcome' } : state.onboarded ? startNav(state, takeTapTarget()) : { name: 'setup' });
+  }, [loaded, timersReady, tapChecked, session.loading, needsAccount, nav.name, state]);
 
   // A notification tapped while the app is already open or in the background.
   useEffect(() => {
@@ -151,7 +157,8 @@ function AppInner() {
   const theme = applyAppearance(state.settings.appearance ?? defaultAppearance, scheme);
   const bar = <StatusBar style={theme.colors.isDark ? 'light' : 'dark'} />;
 
-  if (!loaded) return <View style={s.screen} />;
+  if (!loaded || (cloudConfigured && session.loading)) return <View style={s.screen} />;
+  if (needsAccount) return <View style={s.screen}>{bar}<AuthScreen /></View>;
 
   // Where "back" goes from Progress, Settings and flows: the tracker you were on, else the first one.
   const here = state.trackers.find((t) => t.id === lastId) ?? state.trackers[0];

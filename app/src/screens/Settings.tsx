@@ -3,11 +3,12 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
-import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setCloudSync, setDevSync, syncNow, setName, setUnits, setWeekStart, useAppState } from '../core/store';
+import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setCloudSync, setDevSync, syncNow, signOutSafely, deleteMyAccount, setName, setUnits, setWeekStart, useAppState } from '../core/store';
 import { exportBackup, exportReadable, parseBackup } from '../core/transfer';
 import { minuteText, usualMinute } from '../core/startPick';
 import { resetAllPermissions } from '../core/devReset';
 import { cloudConfigured, useCloudStatus } from '../core/cloud';
+import { useSession } from '../core/auth';
 import { PERSONAS } from '../core/personas';
 import { DeletedList } from './DeletedList';
 import { formatNumber } from '../core/units';
@@ -25,6 +26,8 @@ export function Settings() {
   const a = state.settings.appearance ?? defaultAppearance;
   const [msg, setMsg] = useState('');
   const cloud = useCloudStatus();
+  const session = useSession();
+  const [accountMsg, setAccountMsg] = useState('');
   const cloudLine = cloud.phase === 'syncing' ? 'Backing up…' : cloud.phase === 'error' ? `${cloud.message ?? 'The backup did not finish.'} Tap to try again.` : cloud.at ? `Backed up ${new Date(cloud.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${cloud.sent || cloud.received ? ` (${cloud.sent ?? 0} sent, ${cloud.received ?? 0} received)` : ''}. Tap to back up now.` : 'Waiting to back up. Tap to back up now.';
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
@@ -52,6 +55,26 @@ export function Settings() {
     <View style={s.screen}>
       <ScreenHeader label="Settings" />
       <Scroll contentContainerStyle={[s.content, { paddingTop: 12 }]} keyboardShouldPersistTaps="handled">
+
+        {cloudConfigured && session.userId ? (
+          <View>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Account</Text>
+            <Card>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{state.settings.handle ? `@${state.settings.handle}` : session.name ?? 'Signed in'}</Text>
+              {session.email ? <Muted>{session.email}</Muted> : null}
+              <Tap onPress={() => void syncNow()} style={{ marginTop: 6, marginBottom: 10 }}><Muted>{cloudLine}</Muted></Tap>
+              <Button
+                label={confirm === 'out' ? 'Tap again: this phone is cleared, your data stays in your account' : 'Sign out'} variant="ghost" style={{ marginBottom: 8 }}
+                onPress={async () => { if (confirm !== 'out') { setConfirm('out'); return; } setConfirm(null); const why = await signOutSafely(); if (why) setAccountMsg(why); }}
+              />
+              <Button
+                label={confirm === 'delete' ? 'Tap again to delete your account and all its data' : 'Delete my account'} variant="danger"
+                onPress={async () => { if (confirm !== 'delete') { setConfirm('delete'); return; } setConfirm(null); const why = await deleteMyAccount(); if (why) setAccountMsg(why); }}
+              />
+              {accountMsg ? <Text style={{ color: colors.danger, fontSize: 13, marginTop: 8 }}>{accountMsg}</Text> : null}
+            </Card>
+          </View>
+        ) : null}
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>You</Text>
         <Card>
@@ -140,7 +163,7 @@ export function Settings() {
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Developer</Text>
         <Card>
           <Button label="Load my gym, nutrition and weight setup" variant="ghost" onPress={loadNickSetup} style={{ marginBottom: 8 }} />
-          {cloudConfigured ? (
+          {cloudConfigured && !session.userId ? (
             <View style={{ marginBottom: 8 }}>
               <Toggle label="Back up to the cloud" value={!!state.settings.cloudSync} onChange={setCloudSync} />
               {state.settings.cloudSync ? (

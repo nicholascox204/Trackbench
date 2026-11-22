@@ -1,5 +1,5 @@
 // The cloud copy, through Supabase. Everything else (what to send, what to take in, who wins) is in sync.ts; this only knows how to talk
-// to the service: sign in without an account, send rows, ask for rows changed since a point.
+// to the service: the client, the signed-in account's id, and the status shown in Settings.
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -12,28 +12,25 @@ const KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY;
 export const cloudConfigured = !!(URL && KEY);
 
 let client: SupabaseClient | null = null;
-export function cloudClient(): SupabaseClient { return get(); }
-function get(): SupabaseClient {
+export function cloudClient(): SupabaseClient {
   client ??= createClient(URL as string, KEY as string, {
     auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
   });
   return client;
 }
 
-// Anyone starts without an account: the phone gets an anonymous user, and an email or Google account can be attached to it later.
-export async function signInIfNeeded(): Promise<string> {
-  const c = get();
-  const { data } = await c.auth.getSession();
-  if (data.session) return data.session.user.id;
-  const res = await c.auth.signInAnonymously();
-  if (res.error || !res.data.user) throw res.error ?? new Error('Could not sign in');
-  return res.data.user.id;
+// The signed-in account (see auth.ts). Without one there is nothing to sync.
+export async function signedInUserId(): Promise<string> {
+  const { data } = await cloudClient().auth.getSession();
+  if (!data.session) throw new Error('not signed in');
+  return data.session.user.id;
 }
 
 // ---- what the app shows about it ----
 export interface CloudStatus { phase: 'idle' | 'syncing' | 'error'; at?: number; sent?: number; received?: number; message?: string }
 let status: CloudStatus = { phase: 'idle' };
 const listeners = new Set<() => void>();
+export const getCloudStatus = (): CloudStatus => status;
 export function setCloudStatus(next: CloudStatus): void {
   status = { ...(next.phase === 'syncing' ? { at: status.at } : {}), ...next };
   listeners.forEach((l) => l());
