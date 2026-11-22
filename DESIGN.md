@@ -369,7 +369,7 @@ Each tracker has a Target in setup: what makes a good day (any entry, finish mos
 
 ## The hub (spec written 2026-11-22, partly built)
 
-A tab beside the trackers, called Overview in the app, not the home. Goals start from a panel (bounded options with a history preview). Panels are source + shape + period; goals, streaks, points and levels are derived by replaying history; trackers show a read-only strip; comparison is plain statistics; layouts share as an image card or an importable layout bound by role. Full spec: `docs/hub-spec.md`.
+A tab beside the trackers, called Overview in the app, not the home. Goals start from a panel (bounded options with a history preview). Panels are source + shape + period; goals, streaks, points and levels are derived by replaying history; trackers show a read-only strip; comparison is plain statistics; layouts share as an image card or an importable layout bound by role. Full spec: `docs/hub-spec.md`. Current build (section 20): the Overview is one page of panels, each tracker in its own shape (habit grid, limit bars, reading line with change, plan grid plus running best) under a system panel with the ladder; hide and show panels in Edit, kept for the visit only. Trackers can be marked watch (no setup screen yet).
 
 ## Related
 

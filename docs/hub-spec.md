@@ -180,3 +180,19 @@ Nick wants a scalable data system with one macro screen and deeper layers: the O
 Not carried over for now: cadence goals as their own type, at-most/range/reach aim types as a separate system, Easier/Suggested/Harder levels, goal events feeding points, and weekly or monthly limits ("at most 15 coffees a week"; setup could later give the rule an optional period). Existing saved goals keep working through the old code; no new screens are built on it.
 
 **Presets.** Only Caffeine (at most 4 cups) and the avoid-style trackers carried a target; Gym split and Full body now start with "finish most of the plan" (the threshold is 80%, not all sets). Every other preset reads "Any entry counts", which is the gap the Target row exposed; deciding starting targets (for example Water, Sleep, Steps) is the paused preset review, now with a place to set them.
+
+## 20. The Overview is one page of panels, each tracker in its own shape (decided 2026-11-22, first version built)
+
+The single blended percent could not carry nuance (a weigh-in trending down, a new lift record and a skipped habit cannot honestly sit on one scale), and the rules needed to force it (target kinds, credit modes, per-movement weights, push levels) were the source of the complexity. So the Overview stops blending. Prior art: Apple Health's summary cards, Oura's contributors under one score, Loop and Streaks keeping a few simple goal types, Beeminder's line for numbers, Strava's single total per goal.
+
+**Layout.** A headline and streak, then a "your system" panel (the ladder from section 13, or a year of days), then one panel per tracker, most used first. "Edit this page" lets a person hide panels and put them back. Hiding lasts for the visit only; saving the layout with the account is not built.
+
+**Four panel kinds**, chosen from setup by `panelKind` in `core/panels.ts`:
+- **habit**: a grid of the last 28 days shaded by progress toward the target, with "N good days of the M it asked for".
+- **limit** (a target of "at most"): bars per day with the limit drawn across; days over are muted, never red.
+- **reading** (a number you watch, such as weight): its 90-day line and a plain change since the first reading ("Down 3.1 lb since Aug 25"). No pass or fail.
+- **plan**: the grid plus a running best (the heaviest lift), with how many new bests in 90 days.
+
+**Watch vs do.** A tracker can be marked `watch` (type field exists; no setup screen yet) and then reads as a reading panel. Until then a number marked as a reading with nothing asked of it is treated as watched. A weigh-in no longer counts as a good day just for being logged.
+
+**What stays.** The 0 to 100% progress engine feeds the habit grids and the system panel only. The Target row in setup stays. Not built yet: a better-when direction on numbers, a "reach X" line, the big-day highlights, per-panel period choices, the share card, and the do/watch question on the Target screen. "Add another target" is dropped; two goals means two trackers or the plan.

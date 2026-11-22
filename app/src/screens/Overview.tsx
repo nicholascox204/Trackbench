@@ -8,22 +8,17 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { mixHex } from '../core/colour';
 import { periodOf } from '../core/goals';
 import {
-  PERIOD_CHOICES, activeStreak, bucketChoices, bucketFor, buckets, DayIndex, periodShare, rangeFor, rankTrackers, series, shapesFor, shareSeries, systemShare,
-  type Bucket, type PeriodChoice, type Point,
+  activeStreak, bucketFor, buckets, DayIndex, periodShare, rangeFor, series, shareSeries, systemShare,
+  type Point,
 } from '../core/overview';
+import { bestMeasure, dailyValues, limitOf, mainField, pagePanels, records, trendOf, type PanelSpec } from '../core/panels';
 import { useAppState } from '../core/store';
 import { addDays, startOfDay } from '../core/time';
-import { formatFieldValue } from '../core/units';
+import { formatFieldValue, formatMeasure } from '../core/units';
 import type { Tracker } from '../core/types';
 import { Icon, Scroll, Tap, colors, useTopPad } from '../ui/kit';
 import { EDGE, px } from '../ui/theme';
 
-type View_ = 'ladder' | 'year' | 'trackers' | 'lines' | 'rank';
-const VIEWS: { id: View_; label: string }[] = [
-  { id: 'ladder', label: 'Ladder' }, { id: 'year', label: 'Year' }, { id: 'trackers', label: 'Trackers' }, { id: 'lines', label: 'Lines' }, { id: 'rank', label: 'Ranking' },
-];
-const PERIOD_LABEL: Record<PeriodChoice, string> = { week: 'Week', month: 'Month', '30d': '30 days', '90d': '90 days', year: 'Year', all: 'All' };
-const BUCKET_LABEL: Record<Bucket, string> = { day: 'Days', week: 'Weeks', month: 'Months' };
 const GAP = 3;
 
 const dateText = (d: number): string => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
@@ -59,13 +54,11 @@ export function Overview() {
   const inner = Math.min(width, 600) - 32;
   const today = startOfDay(Date.now());
   const ws = state.settings.weekStart ?? 'mon';
-  const [view, setView] = useState<View_>('ladder');
-  const [period, setPeriod] = useState<PeriodChoice>('90d');
-  const [grain, setGrain] = useState<Bucket | null>(null);
+  const [system, setSystem] = useState<'ladder' | 'year'>('ladder');
   const [selMonth, setSelMonth] = useState<number | null>(null);
   const [selWeek, setSelWeek] = useState<number | null>(null);
-  const [lineId, setLineId] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const [hide, setHide] = useState<string[]>([]); // panels put away; kept for this visit only until the page layout is saved with the account
 
   const ix = useMemo(() => new DayIndex(state.trackers, state.entries), [state.trackers, state.entries]);
   const all = useMemo(() => rangeFor('all', today, ws, ix.first), [ix, today, ws]);
@@ -173,89 +166,86 @@ export function Overview() {
     );
   }
 
-  // ----- each tracker on its own -----
-  function perTracker() {
-    const r = rangeFor('90d', today, ws, ix.first);
-    const ranked = rankTrackers(ix, r, today);
-    const list = showAll ? ranked : ranked.slice(0, 6);
-    const wr = rangeFor('90d', today, ws, ix.first);
+  // ----- one panel per tracker, each in its own shape -----
+  const hidden = new Set(hide);
+  const cardW = inner - 30;
+  function habitGrid(t: Tracker) {
+    const from = Math.max(addDays(today, -27), ix.firstOf(t.id) ?? today);
+    const days = Array.from({ length: Math.round((today - from) / 86400000) + 1 }, (_, i) => addDays(from, i));
+    let due = 0; let good = 0;
+    const cells = days.map((d) => {
+      const r = ix.result(t, d);
+      if (r.expected) due++;
+      if (r.expected && r.success) good++;
+      return r.expected || r.success ? ix.progress(t, d) : undefined;
+    });
+    const logged = days.filter((d) => ix.on(t.id, d).some((e) => e.done)).length;
     return (
       <View>
-        <Caption>{`Good days a week, ${wr.label.toLowerCase()}`}</Caption>
-        {list.map(({ tracker, days }) => {
-          const pts = series({ kind: 'goodDays', trackerId: tracker.id }, ix, wr, 'week', today, ws);
-          return (
-            <View key={tracker.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <View style={{ width: 96, flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name={tracker.icon} size={16} color={colors.muted} />
-                <Text numberOfLines={1} style={{ color: colors.text, fontSize: 13, marginLeft: 6, flex: 1 }}>{tracker.name}</Text>
-              </View>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', height: 26, gap: 2 }}>
-                {pts.map((p, i) => <View key={i} style={{ flex: 1, height: Math.max(2, ((p.value ?? 0) / 7) * 26), borderRadius: 2, backgroundColor: p.value === undefined ? 'transparent' : p.value === 0 ? colors.raised : colors.accent, opacity: p.future ? 0.2 : 1 }} />)}
-              </View>
-              <Text style={{ color: colors.muted, fontSize: 12, width: 44, textAlign: 'right' }}>{`${days} d`}</Text>
-            </View>
-          );
-        })}
-        {ranked.length > 6 ? (
-          <Tap onPress={() => setShowAll(!showAll)} style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
-            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{showAll ? 'Show the top six' : `Show all ${ranked.length}`}</Text>
-          </Tap>
-        ) : null}
+        <View style={{ flexDirection: 'row', gap: 2 }}>{cells.map((v, i) => <View key={i} style={{ flex: 1 }}><Cell v={v} h={22} radius={3} edge /></View>)}</View>
+        <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>{due > 0 ? `${good} good days of the ${due} it asked for, last ${days.length}` : `Logged on ${logged} of the last ${days.length} days`}</Text>
       </View>
     );
   }
-
-  // ----- a reading over time -----
-  function lines() {
-    const withNumber = state.trackers.filter((t) => t.fields.some((f) => f.type === 'number')).sort((a, b) => readingScore(b) - readingScore(a)); // one-reading-a-day trackers and true readings (a weigh-in) first
-    if (withNumber.length === 0) return <Caption>None of your trackers records a number yet.</Caption>;
-    const t: Tracker = withNumber.find((x) => x.id === lineId) ?? withNumber[0];
-    const f = t.fields.find((x) => x.type === 'number' && x.reading) ?? t.fields.find((x) => x.type === 'number')!;
-    const range = rangeFor(period, today, ws, ix.first);
-    const choices = bucketChoices(range, ws);
-    const b: Bucket = grain && choices.includes(grain) ? grain : choices.includes(bucketFor(range)) ? bucketFor(range) : choices[0] ?? 'day';
+  function limitBars(t: Tracker) {
+    const lim = limitOf(t)!;
+    const pts = dailyValues(t, ix, lim.measure.id, addDays(today, -27), today, today);
+    const top = Math.max(lim.max * 1.4, ...pts.map((p) => p.value ?? 0)) || 1;
+    const H = 70;
+    const over = pts.filter((p) => (p.value ?? 0) > lim.max).length;
+    return (
+      <View>
+        <View style={{ height: H, flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+          {pts.map((p, i) => <View key={i} style={{ flex: 1, height: Math.max(2, ((p.value ?? 0) / top) * H), borderRadius: 2, backgroundColor: (p.value ?? 0) === 0 ? colors.raised : (p.value ?? 0) > lim.max ? colors.muted : colors.accent }} />)}
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: (lim.max / top) * H, height: 1, backgroundColor: colors.text, opacity: 0.6 }} />
+        </View>
+        <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>{`${over === 0 ? 'Never over' : `Over on ${over} of 28 days,`} the limit of ${formatMeasure(t, lim.measure, lim.max, state.settings)}`}</Text>
+      </View>
+    );
+  }
+  function readingLine(t: Tracker) {
+    const f = mainField(t)!;
+    const range = rangeFor('90d', today, ws, ix.first);
     const src = { kind: 'field', trackerId: t.id, field: f.id, agg: f.reading ? 'latest' : 'sum' } as const;
-    const pts = series(src, ix, range, b, today, ws).filter((p) => !p.future);
-    const shape = shapesFor(src, range)[0];
+    const pts = series(src, ix, range, bucketFor(range), today, ws).filter((p) => !p.future);
+    const tr = trendOf(pts);
     return (
       <View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 }}>{withNumber.map((x) => <Chip key={x.id} label={x.name} on={x.id === t.id} onPress={() => setLineId(x.id)} />)}</View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{PERIOD_CHOICES.map((p) => <Chip key={p} label={PERIOD_LABEL[p]} on={p === period} onPress={() => { setPeriod(p); setGrain(null); }} />)}</View>
-        {choices.length > 1 ? <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{choices.map((c) => <Chip key={c} label={BUCKET_LABEL[c]} on={c === b} onPress={() => setGrain(c)} />)}</View> : null}
-        <Caption>{`${t.name}: ${f.name.toLowerCase()}, ${range.label.toLowerCase()}, by ${BUCKET_LABEL[b].toLowerCase()}`}</Caption>
-        <Chart pts={pts} shape={shape === 'line' ? 'line' : 'bar'} w={inner} fmt={(n) => formatFieldValue(f, n, state.settings)} />
+        {tr ? <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: 6 }}>{tr.change === 0 ? `Level since ${dateText(tr.since)}` : `${tr.change < 0 ? 'Down' : 'Up'} ${formatFieldValue(f, Math.abs(tr.change), state.settings)} since ${dateText(tr.since)}`}</Text> : null}
+        <Chart pts={pts} shape="line" w={cardW} fmt={(n) => formatFieldValue(f, n, state.settings)} />
       </View>
     );
   }
-
-  // ----- who gets the most days -----
-  function ranking() {
-    const range = rangeFor(period, today, ws, ix.first);
-    const ranked = rankTrackers(ix, range, today);
-    const max = Math.max(1, ...ranked.map((x) => x.days));
-    const list = showAll ? ranked : ranked.slice(0, 6);
+  function bestStairs(t: Tracker) {
+    const m = bestMeasure(t);
+    if (!m) return null;
+    const span = rangeFor('all', today, ws, ix.first);
+    const r = records(t, ix, span, bucketFor(span) === 'day' ? 'week' : bucketFor(span), today, ws);
+    const recent = r.days.filter((d) => d >= addDays(today, -89)).length;
     return (
-      <View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 }}>{PERIOD_CHOICES.map((p) => <Chip key={p} label={PERIOD_LABEL[p]} on={p === period} onPress={() => setPeriod(p)} />)}</View>
-        <Caption>{`Days logged, ${range.label.toLowerCase()}`}</Caption>
-        {list.map(({ tracker, days }) => (
-          <View key={tracker.id} style={{ marginBottom: 10 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
-              <Text style={{ color: colors.text, fontSize: 13 }}>{tracker.name}</Text>
-              <Text style={{ color: colors.muted, fontSize: 13 }}>{days}</Text>
-            </View>
-            <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.raised }}><View style={{ height: 8, borderRadius: 4, width: `${(days / max) * 100}%`, backgroundColor: colors.accent }} /></View>
-          </View>
-        ))}
-        {ranked.length > 6 ? (
-          <Tap onPress={() => setShowAll(!showAll)} style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
-            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{showAll ? 'Show the top six' : `Show all ${ranked.length}`}</Text>
-          </Tap>
-        ) : null}
+      <View style={{ marginTop: 14 }}>
+        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: 6 }}>{r.best === undefined ? 'No best yet' : `Best ${m.name.toLowerCase()} ${formatMeasure(t, m, r.best, state.settings)}${recent > 0 ? `, ${recent} new in 90 days` : ''}`}</Text>
+        <Chart pts={r.points.filter((p) => !p.future)} shape="line" w={cardW} fmt={(n) => formatMeasure(t, m, n, state.settings)} />
       </View>
     );
   }
+  function panelCard(p: PanelSpec) {
+    const t = p.tracker;
+    return (
+      <View key={p.id} style={{ marginTop: 12, padding: 15, borderRadius: 14, borderWidth: EDGE, borderColor: colors.border }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Icon name={t.icon} size={16} color={colors.muted} />
+          <Text numberOfLines={1} style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginLeft: 8, flex: 1 }}>{t.name}</Text>
+          {edit ? <Tap onPress={() => setHide([...hide, p.id])}><Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>Hide</Text></Tap> : null}
+        </View>
+        {p.kind === 'reading' ? readingLine(t) : p.kind === 'limit' ? limitBars(t) : habitGrid(t)}
+        {p.kind === 'plan' ? bestStairs(t) : null}
+      </View>
+    );
+  }
+  const specs = pagePanels(ix, today, addDays(today, -89));
+  const shown = specs.filter((p) => !hidden.has(p.id));
+  const tucked = specs.filter((p) => hidden.has(p.id));
 
   return (
     <Scroll contentContainerStyle={{ paddingTop: top, paddingHorizontal: 16, paddingBottom: 40, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
@@ -264,20 +254,34 @@ export function Overview() {
       <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{`of your system done, ${recent.label.toLowerCase()}`}</Text>
       <Text style={{ color: colors.muted, fontSize: 14, marginTop: 4 }}>{`Streak ${streak.current} ${streak.current === 1 ? 'day' : 'days'} · best ${streak.best}`}</Text>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16 }}>{VIEWS.map((v) => <Chip key={v.id} label={v.label} on={v.id === view} onPress={() => { setView(v.id); setShowAll(false); }} />)}</View>
-
-      {view === 'ladder' ? ladder() : view === 'year' ? year() : view === 'trackers' ? perTracker() : view === 'lines' ? lines() : ranking()}
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20 }}>
-        <Text style={{ color: colors.muted, fontSize: 11, marginRight: 6 }}>Less</Text>
-        {[0, 0.2, 0.5, 0.8, 1].map((v) => <View key={v} style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: stepColour(v), marginRight: 4 }} />)}
-        <Text style={{ color: colors.muted, fontSize: 11 }}>more of your system done</Text>
+      <View style={{ marginTop: 16, padding: 15, borderRadius: 14, borderWidth: EDGE, borderColor: colors.border }}>
+        <View style={{ flexDirection: 'row' }}>
+          <Chip label="Ladder" on={system === 'ladder'} onPress={() => setSystem('ladder')} />
+          <Chip label="Year" on={system === 'year'} onPress={() => setSystem('year')} />
+        </View>
+        {system === 'ladder' ? ladder() : year()}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14 }}>
+          <Text style={{ color: colors.muted, fontSize: 11, marginRight: 6 }}>Less</Text>
+          {[0, 0.2, 0.5, 0.8, 1].map((v) => <View key={v} style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: stepColour(v), marginRight: 4 }} />)}
+          <Text style={{ color: colors.muted, fontSize: 11 }}>more of your system done</Text>
+        </View>
       </View>
+
+      {shown.map(panelCard)}
+
+      {edit && tucked.length > 0 ? (
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Put away</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{tucked.map((p) => <Chip key={p.id} label={`Show ${p.tracker.name}`} on={false} onPress={() => setHide(hide.filter((h) => h !== p.id))} />)}</View>
+        </View>
+      ) : null}
+      <Tap onPress={() => setEdit(!edit)} style={{ alignSelf: 'center', paddingVertical: 14, marginTop: 8 }}>
+        <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>{edit ? 'Done' : 'Edit this page'}</Text>
+      </Tap>
     </Scroll>
   );
 }
 
-const readingScore = (t: Tracker): number => (t.daily ? 2 : 0) + (t.fields.some((f) => f.type === 'number' && f.reading) ? 1 : 0);
 
 function daysSince(first: number, today: number): string {
   const n = Math.round((today - first) / 86400000) + 1;

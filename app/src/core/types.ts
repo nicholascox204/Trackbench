@@ -229,6 +229,7 @@ export interface Tracker {
   sources?: Record<string, 'sensor' | 'health' | 'manual'>; // where a number comes from, by field id: the phone's own counter, Health Connect, or entered by hand
   rotationPick?: { day: number; index: number }; // a rotation: the list chosen for this day before anything was logged
   daily?: boolean; // one reading a day; saving again replaces it
+  watch?: boolean; // something you watch rather than a habit you keep: no good day, drawn as a line with its change (setup screen not built yet)
   systemId: string | null;
   createdAt: number;
   /** An avoid tracker: the day the streak counts from, when set by hand (someone who quit before they started tracking). */
