@@ -35,11 +35,11 @@ test('every template builds a sound tracker', () => {
   }
 });
 
-test('shapes start without a name and are named on the build screen', () => {
+test('shapes start without a name and are named on the summary', () => {
   for (const sh of SHAPES) {
     const a = sh.make();
     assert.equal(a.name, '');
-    assert.equal(stepsFor(a, false).includes('record'), true, sh.id);
+    assert.deepEqual(stepsFor(a, false), ['start', 'summary'], sh.id);
     draftFromAnswers({ ...a, name: 'x' }, imperial);
   }
 });

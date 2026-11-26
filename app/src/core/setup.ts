@@ -493,7 +493,8 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
     a.record === 'done' ? (a.avoid ? 'Tap once to log a slip' : 'Tap once when done')
     : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count')
     : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
-  lines.push({ label: 'You log', value: logging, step: 'record' });
+  const empty = a.record === 'numbers' && a.log !== 'plan' && !names;
+  lines.push({ label: 'You log', value: empty ? 'Nothing yet' : logging, step: 'record' });
   // No Target row: goals and progress are worked out after the fact, apart from setup (decided 2026-11-26). A preset's own
   // target (Caffeine at most 4) still applies; the Target screen stays in the code for when goals are reworked. // what makes a good day: where progress is measured from
 
@@ -550,6 +551,5 @@ export type StepKey = 'start' | 'record' | 'target' | 'shows' | 'tools' | 'bring
 // extras) is one tap from the summary, where it has a sensible default. Editing opens on the summary.
 export function stepsFor(a: Answers, editing: boolean): StepKey[] {
   if (editing) return ['summary'];
-  if (a.templateId) return ['start', 'summary'];
-  return ['start', 'record', 'summary'];
+  return ['start', 'summary']; // building your own opens the same summary a template does, just empty
 }

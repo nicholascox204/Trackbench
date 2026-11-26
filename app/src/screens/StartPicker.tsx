@@ -33,6 +33,7 @@ export function StartPicker({
         style={[s.input, { marginBottom: 6 }]} value={query} onChangeText={setQuery}
         placeholder="Search starting points" placeholderTextColor={colors.muted}
       />
+      <View style={{ marginTop: 8 }}>{buildOwn}</View>
 
       {results.map((t) => (
         <Tap key={t.id} onPress={() => onTemplate(t)}>
@@ -46,8 +47,7 @@ export function StartPicker({
           </View>
         </Tap>
       ))}
-      {results.length === 0 ? <Muted style={{ paddingVertical: 14 }}>Nothing matches. Try another word, or build your own below.</Muted> : null}
-      <View style={{ marginTop: 14 }}>{buildOwn}</View>
+      {results.length === 0 ? <Muted style={{ paddingVertical: 14 }}>Nothing matches. Try another word, or build your own above.</Muted> : null}
     </View>
   );
 }

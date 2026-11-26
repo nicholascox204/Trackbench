@@ -45,9 +45,9 @@ test('setup has one You log line that says how it is logged and what is written 
   assert.equal(summaryLines(base, settings).filter((l) => l.label === 'You log').length, 1, 'one line, not two');
 });
 
-test('building from scratch is three screens: start, build, summary', () => {
+test('building your own opens the same summary as a template: start, summary', () => {
   const steps = stepsFor({ ...answersFromPreset('blank'), record: 'numbers', log: 'plan' }, false);
-  assert.deepEqual(steps, ['start', 'record', 'summary']);
+  assert.deepEqual(steps, ['start', 'summary']);
   assert.ok(!(steps as string[]).includes('log'));
 });
 

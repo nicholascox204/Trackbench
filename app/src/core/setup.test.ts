@@ -12,7 +12,7 @@ function asTracker(d: ReturnType<typeof draftFromAnswers>): Tracker {
 
 test('a counter builds a tap tracker, and sets no goal of its own', () => {
   const a = answersFromPreset('counter');
-  assert.deepEqual(stepsFor(a, false), ['start', 'record', 'summary']);
+  assert.deepEqual(stepsFor(a, false), ['start', 'summary']);
   const d = draftFromAnswers(a, imperial);
   assert.equal(d.input, 'tap');
   assert.equal(d.targets.length, 0);
@@ -20,13 +20,13 @@ test('a counter builds a tap tracker, and sets no goal of its own', () => {
 });
 
 test('building your own is three screens, with the goal one tap away on the summary', () => {
-  assert.deepEqual(stepsFor(answersFromPreset('check-in'), false), ['start', 'record', 'summary']);
+  assert.deepEqual(stepsFor(answersFromPreset('check-in'), false), ['start', 'summary']);
 });
 
 test('training builds a plan tracker on the chosen days with weight and reps', () => {
   const a = { ...answersFromPreset('set-plan'), planMode: 'asigo' as const };
   assert.deepEqual(stepsFor({ ...a, templateId: 'gym-split' }, false), ['start', 'summary']);
-  assert.deepEqual(stepsFor({ ...answersFromPreset('blank'), record: 'numbers', log: 'plan' }, false), ['start', 'record', 'summary']);
+  assert.deepEqual(stepsFor({ ...answersFromPreset('blank'), record: 'numbers', log: 'plan' }, false), ['start', 'summary']);
   assert.deepEqual(stepsFor(a, true), ['summary']);
   const d = draftFromAnswers(a, imperial);
   assert.equal(d.input, 'plan');

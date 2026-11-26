@@ -87,7 +87,6 @@ export function SetupFlow({
 
   const steps = stepsFor(a, editing);
   const step: StepKey = detour ?? steps[Math.min(idx, steps.length - 1)];
-  const scratch = step === 'record' && !editing && !detour && !a.templateId; // building your own: the name is asked on this screen
   const draft = useMemo(() => draftFromAnswers(a, settings, existing), [a, settings, existing]);
 
   const set = (patch: Partial<Answers>) => setA((p) => ({ ...p, ...patch }));
@@ -186,22 +185,24 @@ export function SetupFlow({
     setComboA(''); setComboB(''); setComboName('');
   }
 
-  const example = getPreset(a.presetId)?.examples[0]; // a starting point's own example is fine; a blank one gets a plain description
-  const namePlaceholder = example ? `e.g. ${example}` : 'Tracker name';
   const otherNames = state.trackers.filter((x) => x.id !== existing?.id).map((x) => x.name);
   const nameIssue = nameProblem(a.name, otherNames);
   const nameMsg = nameIssue === 'taken' ? 'You already have a tracker with this name.' : nameIssue === 'empty' && nameNudge ? 'Give it a name to continue.' : '';
   const hasThings = draft.fields.some((f) => !f.label);
   // What stops you going on from here, if anything. The button then looks unavailable but still answers.
   const blocked =
-    step === 'summary' ? nameIssue !== '' :
-    step === 'record' ? (scratch && nameIssue !== '') || (a.record === 'numbers' && a.log !== 'plan' && !hasThings) : false;
+    step === 'summary' ? nameIssue !== '' || (a.record === 'numbers' && a.log !== 'plan' && !hasThings) :
+    step === 'record' ? (a.record === 'numbers' && a.log !== 'plan' && !hasThings) : false;
   const isStart = step === 'start';
   const isSummary = step === 'summary';
   const planned = a.record === 'numbers' && a.log === 'plan';
   const nudgeName = () => { setNameNudge(true); nameRef.current?.focus(); };
   const pressNext = () => {
-    if (blocked) return step === 'record' && !(scratch && nameIssue !== '') ? setRecordNudge(true) : nudgeName();
+    if (blocked) {
+      if (nameIssue !== '') return nudgeName();
+      setRecordNudge(true);
+      return step === 'summary' ? go('record') : undefined;
+    }
     return isSummary ? finish() : next();
   };
   // Saving from the leave sheet: go ahead if it is complete, otherwise show what is missing.
@@ -226,23 +227,15 @@ export function SetupFlow({
       <Scroll resetKey={step} focusToTop={searchFocused} contentContainerStyle={[s.content, { paddingTop: firstStart ? top : 12, paddingBottom: isStart ? SCROLL.basePadding : SCROLL.footerPadding }]} keyboardShouldPersistTaps="handled">
         {firstStart && Platform.OS === 'ios' ? <BackButton label="Name and look" onPress={() => toWelcome?.()} /> : null}
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
-          {editing && step === 'summary' ? 'Your tracker' : scratch ? 'Build your tracker' : step === 'options' ? (draft.fields.some((f) => f.unitKind) ? 'Past days and units' : 'Past days') : QUESTIONS[step]}
+          {editing && step === 'summary' ? 'Your tracker' : step === 'options' ? (draft.fields.some((f) => f.unitKind) ? 'Past days and units' : 'Past days') : QUESTIONS[step]}
         </Text>
 
         {/* 1 start: templates, or build your own */}
         {step === 'start' ? <StartPicker onTemplate={pickTemplate} onScratch={() => pickStart('blank')} /> : null}
 
-        {/* 2 record: when building your own it also holds the name, so it is one screen */}
+        {/* record: what you log, opened from the summary */}
         {step === 'record' ? (
           <View>
-            {scratch ? (
-              <View style={{ marginTop: 10, marginBottom: 6 }}>
-                <NameCard
-                  name={a.name} icon={a.icon} onName={(v) => { set({ name: v }); if (v.trim()) setNameNudge(false); }} onIcon={(n) => set({ icon: n })}
-                  message={nameMsg} inputRef={nameRef} placeholder={namePlaceholder} onSearchFocus={setSearchFocused}
-                />
-              </View>
-            ) : null}
             <RecordStep a={a} set={set} fields={draft.fields} settings={settings} nudge={recordNudge} />
           </View>
         ) : null}
