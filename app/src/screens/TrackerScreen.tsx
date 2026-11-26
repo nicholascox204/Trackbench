@@ -26,7 +26,7 @@ import { NumInput } from '../ui/NumInput';
 import { AvoidCard } from './AvoidCard';
 import { canImportRun } from '../core/runImport';
 import { decodeRoute } from '../core/runRecorder';
-import { RunRecorder, useRun } from './RunRecorder';
+import { RunCard, useRun } from './RunRecorder';
 import { RouteMap } from '../ui/RouteMap';
 import { bestsBefore, liftFields, oneRepMax, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
@@ -306,7 +306,6 @@ function FreeForm({
     logFree(t.id, draft, day);
     if (lf) setDraft((p) => ({ ...p, [lf.id]: '' })); // the next entry is something new
   };
-  const [recording, setRecording] = useState(false);
   const mapW = Math.min(useWindowDimensions().width, 600) - 32;
   const run = useRun();
   const runLive = run.status === 'running' || run.status === 'paused' || run.status === 'done';
@@ -323,15 +322,13 @@ function FreeForm({
   ));
   return (
     <View>
+      {editable && ((t.tools.gps && canImportRun(t)) || runLive) ? <RunCard t={t} settings={settings} /> : null}
+      {editable && t.tools.gps && canImportRun(t) ? <Text style={{ color: colors.muted, fontSize: 13, marginBottom: 6 }}>Or add one by hand</Text> : null}
       {editable ? (
         <Card tone="new" keep>
           <StepGroup>{fieldsJsx}</StepGroup>
-          {(t.tools.gps && canImportRun(t)) || runLive ? (
-            <Button label={runLive ? (run.status === 'done' ? 'Your run is ready to save' : `Run in progress · ${(run.meters / 1000).toFixed(2)} km`) : 'Record a run'} onPress={() => setRecording(true)} />
-          ) : null}
-          {recording ? <RunRecorder t={t} settings={settings} onClose={() => setRecording(false)} /> : null}
           <Button
-            label={t.daily ? (saved ? 'Saved' : 'Save today') : 'Log'} onPress={save}
+            label={t.daily ? (saved ? 'Saved' : 'Save today') : 'Log'} onPress={save} variant={t.tools.gps && canImportRun(t) ? 'ghost' : 'primary'}
             done={saved}
           />
         </Card>

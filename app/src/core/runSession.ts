@@ -12,7 +12,7 @@ import { addFix, cueText, finish, newRun, pause, start, type RunState } from './
 
 export const RUN_TASK = 'trackbench-run';
 
-type Spot = { lat: number; lon: number };
+type Spot = { lat: number; lon: number; acc?: number };
 
 let state: RunState = newRun();
 let unit: { name: 'km' | 'mi'; meters: number } = { name: 'km', meters: 1000 };
@@ -34,7 +34,7 @@ function set(next: RunState): void {
 }
 
 function setHere(l: Location.LocationObject): void {
-  here = { lat: l.coords.latitude, lon: l.coords.longitude };
+  here = { lat: l.coords.latitude, lon: l.coords.longitude, acc: l.coords.accuracy ?? undefined };
   hereListeners.forEach((f) => f(here));
 }
 

@@ -21,7 +21,7 @@ export function RouteMap({ pts, w, h, live, empty }: { pts: { lat: number; lon: 
   return (
     <View style={{ width: w, height: h, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.raised }}>
       {tilesFor(v).map((t) => (
-        <Image key={t.key} source={Platform.OS === 'web' ? { uri: t.url } : { uri: t.url, headers: HEADERS }} style={{ position: 'absolute', left: t.x, top: t.y, width: TILE, height: TILE }} />
+        <Image key={t.key} source={Platform.OS === 'web' ? { uri: t.url } : { uri: t.url, headers: HEADERS }} style={{ position: 'absolute', left: t.x, top: t.y, width: TILE, height: TILE, zIndex: 0 /* on the web the picture sits a layer below its box; without its own layer it hid under the map's background */ }} />
       ))}
       <Svg width={w} height={h} style={{ position: 'absolute', left: 0, top: 0 }}>
         {line.length > 1 ? <Polyline points={line.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill="none" stroke="#fff" strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} /> : null}

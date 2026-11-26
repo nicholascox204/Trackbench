@@ -1818,3 +1818,14 @@ Not matched yet: choosing how often and what the voice says, saved and planned r
 Testing on his phone, Nick found the run screen stuck on "Finding your location" with no permission prompt. The screen showed that message before Start was pressed, and nothing asked for location until then. Now opening the run screen asks for location straight away and shows where you are before you start, and every failure shows a plain sentence. Screen-off recording is tried first and falls back to recording while the app is open; on that fallback, a link asks for "Allow all the time" for the next run.
 
 He also set a principle: a tracker's own screen stays functional and simple. Features people do not need are fine as long as they do not get in the way and are easy to switch off, and imports belong in setup. So "Fill from a run file" left the tracker screen and became **Import runs** in the tracker's Tools step (several GPX files at once, each added on the day it was run, with its map). **Record runs with GPS** is now a tool toggle like the stopwatch, on by default for Running and listed in the summary's Tools row.
+
+## 2026-11-26: Run recording, reworked to behave like a running app
+
+Nick saw Record a run and Log overlapping and, since he does not run or use running apps, asked me to make the run feature both look right and behave the way runners expect. Changes, each following the common pattern in running apps:
+- **Layout:** recording is the main action, so it has its own card above the form (Record a run, or while a run is going: "Run in progress 12:40 · 1.52 mi" and Open the run). The form below is labelled "Or add one by hand" and its Log button is outlined, so there are not two filled buttons.
+- **States:** before the run you see your position and the GPS signal; while running there is only Pause (no way to end a run by accident); paused shows Resume and Finish; finished shows the map, average pace, climb and splits with Save run and Discard (asks twice). Hide keeps the run going.
+- **Screen kept on** while recording, since a sleeping screen would stop a run when screen-off recording is not allowed.
+- **Units in words:** "per mile", "Mile 3", climb in feet with miles.
+- **Running no longer starts with the stopwatch,** because recording the run times it; it stays in Tools.
+- **Map fix:** on the web the map tiles were drawn under the map's background; the native phone was not affected.
+Checked end to end in the web preview with a simulated GPS route: start, live route and numbers, pause, finish, summary, save, and the saved entry showing its map. Not checked: a real outdoor run, voice updates, and recording with the screen locked.

@@ -45,7 +45,7 @@ export const TEMPLATE_TOOLS: Record<string, { countdown?: boolean; timer?: boole
   meditate: { countdown: true, timer: true },
   study: { countdown: true, timer: true },
   practice: { countdown: true, timer: true },
-  running: { timer: true, gps: true },
+  running: { gps: true }, // recording the run times it; the stopwatch is still in Tools for anyone who wants it
   reading: { timer: true },
   language: { timer: true },
   'time-log': { timer: true },
@@ -79,7 +79,7 @@ const ALL: Template[] = [
     chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
     sample: [day('Full body', [row('Squat', 3, '5'), row('Bench Press', 3, '5'), row('Barbell Row', 3, '5'), row('Overhead Press', 3, '8'), row('Romanian Deadlift', 3, '8'), row('Plank', 3, '30-60s')])],
   })),
-  T('running', 'Running', 'footsteps-outline', 'Fitness', 'Log distance and time for each run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' } }),
+  T('running', 'Running', 'footsteps-outline', 'Fitness', 'Log distance and time for each run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false } }),
   T('steps', 'Steps', 'walk-outline', 'Fitness', 'Your steps, once a day.', 'steps walking walk daily movement pedometer', 'measurement', () => ({
     chips: [], custom: [num('steps', 'Steps', { step: 500, default: 6000 })], daily: true, extras: { previous: true, lockPast: false, average: true, auto: true },
     goal: 'none', goals: [],
@@ -146,7 +146,7 @@ const ALL: Template[] = [
     chips: [], custom: [named('what', 'Subject'), duration('minutes', 'Time', { step: 5, default: 30 })], goal: 'none', goals: [],
     extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
-  T('practice', 'Practice', 'musical-notes-outline', 'Study', 'Minutes, and what you practiced.', 'practice instrument piano guitar singing music skill', 'time-blocks', () => ({ chips: [], custom: [named('what', 'What'), duration('minutes', 'Time', { step: 5, default: 25 }), note()], goal: 'none', goals: [], extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' } })),
+  T('practice', 'Practice', 'musical-notes-outline', 'Study', 'Minutes, and what you practiced.', 'practice instrument piano guitar singing music skill', 'time-blocks', () => ({ chips: [], custom: [named('what', 'What'), duration('minutes', 'Time', { step: 5, default: 25 }), note()], goal: 'none', goals: [], extras: { previous: true, lockPast: false, average: false } })),
   T('language', 'Language', 'language-outline', 'Study', 'A short daily routine of rounds.', 'language spanish french vocabulary duolingo speaking listening learning', 'set-plan', () => ({
     chips: ['minutes'], combos: [], schedule: { kind: 'daily' }, samePlan: true, planMode: 'asigo', terms: { item: 'Skill', row: 'Round', target: 'Goal' },
     sample: [day('Daily practice', [row('Vocabulary', 3, '20 words'), row('Listening', 2, '10 min'), row('Speaking', 2, '5 min')])],
