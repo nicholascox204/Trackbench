@@ -31,7 +31,7 @@ export function StartPicker({
     <Tap key={t.id} onPress={() => onTemplate(t)}>
       <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
         <TrackerIcon name={t.icon} size={40} />
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, marginRight: 12 }}>
           <View style={s.row}>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{t.name}</Text>
             {have.has(t.id) ? <Text style={{ color: colors.muted, fontSize: 12, marginLeft: 8 }}>Added</Text> : null}

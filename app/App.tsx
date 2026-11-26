@@ -70,7 +70,8 @@ function AppInner() {
   const [lastId, setLastId] = useState<string | null>(null); // the tracker you were last on
   const [editingTool, setEditingTool] = useState(false); // the countdown's time is being typed, so the bars lift above the keyboard
   const keyboard = useKeyboardHeight();
-  const bottomInset = useSafeAreaInsets().bottom;
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom;
   const spot = useRef<number | null>(null); // where on the bar the last place was, to know which side the next one arrives from
 
   // Opening the app (or coming back to it) stops any finished countdown's alert from ringing on.
@@ -159,7 +160,13 @@ function AppInner() {
 
   // The theme is applied before anything renders, so every screen reads the current look.
   const theme = applyAppearance(state.settings.appearance ?? defaultAppearance, scheme);
-  const bar = <StatusBar style={theme.colors.isDark ? 'light' : 'dark'} />;
+  // The phone's clock and notch sit on a block of the background colour on every screen, so nothing scrolls behind them.
+  const bar = (
+    <>
+      <StatusBar style={theme.colors.isDark ? 'light' : 'dark'} />
+      {insets.top > 0 ? <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: theme.colors.bg, zIndex: 100, elevation: 100 }} /> : null}
+    </>
+  );
 
   if (!loaded || (cloudConfigured && session.loading)) return <View style={s.screen} />;
   if (needsAccount) return <View style={s.screen}>{bar}<AuthScreen /></View>;

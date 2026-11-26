@@ -9,7 +9,7 @@ import type { Field, PlanDay, Slot } from './types';
 
 export type Category = 'Fitness' | 'Body' | 'Health' | 'Mind' | 'Habits' | 'Money' | 'Study' | 'Life';
 export const CATEGORIES: Category[] = ['Habits', 'Fitness', 'Body', 'Mind', 'Health', 'Money', 'Study', 'Life'];
-export const POPULAR_COUNT = 10; // the first this many by popularity sit under Popular on the start screen
+export const POPULAR_COUNT = 6; // the first this many by popularity sit under Popular on the start screen
 
 export interface Template {
   id: string;
@@ -210,8 +210,8 @@ const ALL: Template[] = [
 // One ranking drives both Popular (the first POPULAR_COUNT) and the order inside every category, so the likeliest pick
 // leads wherever you look. Broad, everyday trackers first; narrow or condition-specific ones later.
 export const POPULARITY: string[] = [
-  'habit', 'water', 'sleep', 'mood', 'weigh-in', 'workout-log', 'steps', 'spending', 'reading', 'meditate',
-  'gym-split', 'running', 'journal', 'food-log', 'medication', 'savings', 'no-alcohol', 'quit-smoking', 'vitamins',
+  'habit', 'water', 'sleep', 'mood', 'weigh-in', 'gym-split', 'workout-log', 'steps', 'spending', 'reading', 'meditate',
+  'running', 'journal', 'food-log', 'medication', 'savings', 'no-alcohol', 'quit-smoking', 'vitamins',
   'caffeine', 'study', 'fasting', 'full-body', 'stretching', 'no-scrolling', 'bills', 'language', 'practice', 'chores',
   'meals', 'blood-pressure', 'time-log', 'challenge', 'symptoms', 'cycle', 'pet-care', 'balance', 'blood-sugar', 'plants', 'pain',
 ];

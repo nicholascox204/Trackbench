@@ -1897,3 +1897,7 @@ Category chips were removed earlier because a filter hides everything outside it
 ## 2026-11-26: One ranking for Popular and every category
 
 Popular now works as its own category: its 10 entries also appear in their families, so every family is complete and browsing one never misses its most common tracker. One popularity ranking orders both Popular and the inside of each family, so the likeliest pick leads wherever you look: broad everyday trackers (habits, water, sleep, mood, weight, workouts, steps, spending, reading, meditation) first, narrow or condition-specific ones (blood sugar, pain, plants) last. Families are ordered by how many people are likely to want them: Habits, Fitness, Body, Mind, Health, Money, Study, Life. The ranking is a reasoned guess from common tracker apps, not usage data; once there are real users, it should come from what people actually pick.
+
+## 2026-11-26: Popular trimmed so the next heading shows; a block under the clock
+
+Popular at 10 filled the first screen, so nothing hinted that categories sat below. Cut to 6 so the Habits heading and its first rows peek above the fold, the cue to scroll. Gym split moved above Workout log: a planned split does more for people who lift than a general log, even if the general log reads as broader. Row text now keeps clear of the chevron on narrow phones. Every screen now has a block of the chosen background behind the phone's clock and notch, matching the block under the bottom bar, so scrolled content never runs under the status bar.
