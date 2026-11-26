@@ -1,6 +1,7 @@
 // Recently deleted trackers. Deleting a tracker moves it, with its entries and the system rules that pointed at it, to a
 // short list; the last five can be restored from Settings. Older ones are gone for good. Pure functions on the state.
 
+import { uniqueName } from './names';
 import type { AppState, DeletedTracker } from './types';
 
 export const TRASH_MAX = 5;
@@ -29,7 +30,7 @@ export function restoreFromTrash(state: AppState, trashId: string): AppState {
   const systemStill = state.systems.some((s) => s.id === item.tracker.systemId);
   return {
     ...state,
-    trackers: [...state.trackers, { ...item.tracker, systemId: systemStill ? item.tracker.systemId : null }],
+    trackers: [...state.trackers, { ...item.tracker, name: uniqueName(item.tracker.name, state.trackers.map((t) => t.name)), systemId: systemStill ? item.tracker.systemId : null }],
     entries: [...state.entries, ...item.entries],
     systems: state.systems.map((s) => ({ ...s, config: { ...s.config, rules: [...s.config.rules, ...item.rules.filter((r) => r.systemId === s.id).map((r) => r.rule)] } })),
     trash: (state.trash ?? []).filter((d) => d.id !== trashId),

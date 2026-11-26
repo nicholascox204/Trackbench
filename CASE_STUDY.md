@@ -1885,3 +1885,7 @@ The progress dots at the top of setup were left over from a multi-step flow; wit
 ## 2026-11-26: Equal-width choice grid replaces stretched pills
 
 Stretched pills still read as a ranking (a long word got a wider button), and the icon grid visibly stretched for a moment as it opened. Chose an equal-width grid for choices among equals: a fixed number of columns, every cell the same size, label centred, widths set as shares of the row so the layout is right on the first frame with nothing measured. Icon categories are three across. The icon grid still needs the real width to pick its column count, so it stays hidden until that is known once and remembers it, so it never appears small and then grows. Candidate standard for every place chips wrap; to be applied spot by spot as the setup pass reaches them.
+
+## 2026-11-26: Tracker names stay unique everywhere
+
+Considered allowing repeat names. Kept them unique: the name is the only label on the bar, the Overview panels and anything copied to share, so two "Gym" trackers could only be told apart by icon. Setup already blocked a taken name (ignoring capitals and end spaces), but restoring a deleted tracker or importing a backup skipped the check. Those now never block: a taken name becomes the next free "Water 2", "Water 3", shortened if needed to stay within 24 letters. The message under the name still opens up space when it appears; it is rare and the shift draws the eye, which beats reserving a blank line on every setup.

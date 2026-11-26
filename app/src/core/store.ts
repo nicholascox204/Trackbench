@@ -2,6 +2,7 @@
 // Logging never waits on a network. Backend and sync come later for social features.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { uniqueName, uniqueNames } from './names';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { nickGym, nickNutrition, nickWeight } from '../fixtures/nick';
 import { Derived, dayResult, derive, entriesOnDay } from './derive';
@@ -386,7 +387,7 @@ function build(draft: TrackerDraft, systemId: string | null, createdAt = Date.no
 }
 
 export function addTrackerDraft(draft: TrackerDraft): string {
-  const t = build(draft, state.systems[0]?.id ?? null);
+  const t = build({ ...draft, name: uniqueName(draft.name, state.trackers.map((x) => x.name)) }, state.systems[0]?.id ?? null);
   setState({ ...state, trackers: [...state.trackers, t] });
   emit({ type: 'tracker.added', trackerId: t.id });
   return t.id;
@@ -624,7 +625,7 @@ export function removeRule(systemId: string, ruleId: string): void {
 export function mergeBackup(b: Backup): { trackers: number; entries: number } {
   const haveT = new Set(state.trackers.map((t) => t.id));
   const haveE = new Set(state.entries.map((e) => e.id));
-  const newT = b.trackers.filter((t) => !haveT.has(t.id)).map((t) => ({ ...t, systemId: null }));
+  const newT = uniqueNames(b.trackers.filter((t) => !haveT.has(t.id)).map((t) => ({ ...t, systemId: null })), state.trackers.map((t) => t.name));
   const newE = b.entries.filter((e) => !haveE.has(e.id));
   setState({ ...state, trackers: [...state.trackers, ...newT], entries: [...state.entries, ...newE], onboarded: true });
   return { trackers: newT.length, entries: newE.length };
