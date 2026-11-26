@@ -18,12 +18,12 @@ export function NameCard({
   return (
     <Card>
       <View style={s.row}>
-        <Tap
-          onPress={() => setOpen((o) => !o)} accessibilityLabel="Change icon"
-          style={{ width: 54, height: 54, borderRadius: 14, borderWidth: EDGE, borderColor: open ? colors.accent : colors.border, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}
-        >
-          <Icon name={icon} size={28} color={colors.accent} />
-          <View style={{ position: 'absolute', right: -8, bottom: -8, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, borderWidth: EDGE, borderColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
+        {/* The tap area covers the badge too (it pokes out past the tile), so fading it while pressed never clips the badge. */}
+        <Tap onPress={() => setOpen((o) => !o)} accessibilityLabel="Change icon" style={{ paddingRight: 8, paddingBottom: 8, marginRight: 6, marginBottom: -8 }}>
+          <View style={{ width: 54, height: 54, borderRadius: 14, borderWidth: EDGE, borderColor: open ? colors.accent : colors.border, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={icon} size={28} color={colors.accent} />
+          </View>
+          <View style={{ position: 'absolute', right: 0, bottom: 0, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, borderWidth: EDGE, borderColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name={open ? 'chevron-up' : 'chevron-down'} size={14} color={colors.onAccent} />
           </View>
         </Tap>

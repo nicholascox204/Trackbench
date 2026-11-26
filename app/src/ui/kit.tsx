@@ -292,12 +292,13 @@ export function BackButton({ label, onPress }: { label: string; onPress: () => v
   );
 }
 
-export function Chip({ label, active, onPress, onLongPress, disabled }: { label: string; active?: boolean; onPress: () => void; onLongPress?: () => void; disabled?: boolean }) {
+// fill: chips on a line stretch to reach the edge, so wrapped lines end flush instead of ragged.
+export function Chip({ label, active, onPress, onLongPress, disabled, fill }: { label: string; active?: boolean; onPress: () => void; onLongPress?: () => void; disabled?: boolean; fill?: boolean }) {
   return (
     <Tap
       onPress={onPress} onLongPress={onLongPress}
       disabled={disabled}
-      style={[s.chip, active && { backgroundColor: colors.accent, borderColor: colors.accent }, disabled && { opacity: 0.4 }]}
+      style={[s.chip, fill && { flexGrow: 1, alignItems: 'center' }, active && { backgroundColor: colors.accent, borderColor: colors.accent }, disabled && { opacity: 0.4 }]}
     >
       <Text style={[s.chipText, active && { color: colors.onAccent }]}>{label}</Text>
     </Tap>

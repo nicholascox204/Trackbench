@@ -22,7 +22,7 @@ export function IconPicker({ value, onPick, onSearchFocus }: { value: string; on
       />
       {searching ? null : (
         <View style={s.wrap}>
-          {ICON_GROUPS.map((g, i) => <Chip key={g.name} label={g.name} active={i === group} onPress={() => setGroup(i)} />)}
+          {ICON_GROUPS.map((g, i) => <Chip key={g.name} label={g.name} active={i === group} fill onPress={() => setGroup(i)} />)}
         </View>
       )}
       <View style={s.wrap}>
