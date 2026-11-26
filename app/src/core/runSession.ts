@@ -8,6 +8,7 @@
 import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addFix, cueText, finish, newRun, pause, start, type RunState } from './runRecorder';
 
 export const RUN_TASK = 'trackbench-run';
@@ -17,6 +18,9 @@ type Spot = { lat: number; lon: number; acc?: number };
 let state: RunState = newRun();
 let unit: { name: 'km' | 'mi'; meters: number } = { name: 'km', meters: 1000 };
 let speak = true;
+let every = 1; // voice update every this many km or miles
+const KEY = 'trackbench.run.v1';
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let watcher: Location.LocationSubscription | null = null;
 let background = false;
 let here: Spot | undefined;
@@ -27,11 +31,46 @@ const NO_LOCATION = 'Location is off for Trackbench, so a run cannot be recorded
 const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 function set(next: RunState): void {
-  const spoke = next.splits.length > state.splits.length;
+  const step = unit.meters * every;
+  const spoke = next.status === 'running' && Math.floor(next.meters / step) > Math.floor(state.meters / step);
   state = next;
   listeners.forEach((l) => l(state));
-  if (spoke && speak) say(cueText(state, Date.now(), unit.name, unit.meters));
+  if (spoke && speak) say(cueText(state, Date.now(), unit.name, unit.meters, every));
+  persist();
 }
+
+// The run in progress is saved as it goes, so closing the app or the phone ending it does not lose it.
+function persist(): void {
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    const body = state.status === 'idle' ? null : JSON.stringify({ state, unit, background });
+    (body ? AsyncStorage.setItem(KEY, body) : AsyncStorage.removeItem(KEY)).catch(() => undefined);
+  }, 1500);
+}
+
+// On start-up: bring back a run that was going. If the phone was still recording it in the background it carries on; otherwise it
+// comes back paused, so nothing is added for the time the app was closed.
+export async function restoreRun(): Promise<void> {
+  try {
+    const [raw, prefs] = await Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(KEY + '.prefs')]);
+    if (prefs) { const p = JSON.parse(prefs) as { speak?: boolean; every?: number }; speak = p.speak ?? true; every = p.every ?? 1; }
+    if (!raw || state.status !== 'idle') return;
+    const saved = JSON.parse(raw) as { state: RunState; unit: typeof unit; background: boolean };
+    unit = saved.unit;
+    const still = Platform.OS !== 'web' && saved.background && (await Location.hasStartedLocationUpdatesAsync(RUN_TASK).catch(() => false));
+    background = still;
+    let s = saved.state;
+    if (s.status === 'running' && !still) s = pause({ ...s, resumedAt: Math.min(s.resumedAt ?? Date.now(), s.points[s.points.length - 1]?.t ?? Date.now()) }, s.points[s.points.length - 1]?.t ?? Date.now());
+    state = s;
+    listeners.forEach((l) => l(state));
+  } catch {
+    // a damaged save is ignored
+  }
+}
+void restoreRun();
+
+function savePrefs(): void { AsyncStorage.setItem(KEY + '.prefs', JSON.stringify({ speak, every })).catch(() => undefined); }
 
 function setHere(l: Location.LocationObject): void {
   here = { lat: l.coords.latitude, lon: l.coords.longitude, acc: l.coords.accuracy ?? undefined };
@@ -60,7 +99,9 @@ export function runState(): RunState { return state; }
 export function onRun(fn: (s: RunState) => void): () => void { listeners.add(fn); return () => { listeners.delete(fn); }; }
 export function onHere(fn: (p: Spot | undefined) => void): () => void { hereListeners.add(fn); return () => { hereListeners.delete(fn); }; }
 export function hereNow(): Spot | undefined { return here; }
-export function setSpoken(on: boolean): void { speak = on; }
+export function setSpoken(on: boolean): void { speak = on; savePrefs(); }
+export function voiceEvery(): number { return every; }
+export function setVoiceEvery(n: number): void { every = n; savePrefs(); }
 export function spoken(): boolean { return speak; }
 export function recordsInBackground(): boolean { return background; }
 
@@ -82,9 +123,8 @@ export async function prepareRun(): Promise<string | undefined> {
   }
 }
 
-// Start recording. Returns a sentence to show when it cannot record at all.
-export async function beginRun(units: 'km' | 'mi'): Promise<string | undefined> {
-  unit = units === 'mi' ? { name: 'mi', meters: 1609.344 } : { name: 'km', meters: 1000 };
+// Location updates on: screen-off recording (a foreground service) first, else while the app is open.
+async function startUpdates(): Promise<string | undefined> {
   try {
     const fg = await Location.getForegroundPermissionsAsync();
     if (fg.status !== 'granted' && (await Location.requestForegroundPermissionsAsync()).status !== 'granted') return NO_LOCATION;
@@ -111,6 +151,14 @@ export async function beginRun(units: 'km' | 'mi'): Promise<string | undefined> 
       return `Could not start location: ${why(e)}`;
     }
   }
+  return undefined;
+}
+
+// Start recording. Returns a sentence to show when it cannot record at all.
+export async function beginRun(units: 'km' | 'mi'): Promise<string | undefined> {
+  unit = units === 'mi' ? { name: 'mi', meters: 1609.344 } : { name: 'km', meters: 1000 };
+  const e = await startUpdates();
+  if (e) return e;
   set(start(newRun(), Date.now()));
   return undefined;
 }
@@ -122,7 +170,12 @@ export async function allowScreenOff(): Promise<boolean> {
 }
 
 export function pauseRun(): void { set(pause(state, Date.now())); }
-export function resumeRun(): void { set(start(state, Date.now())); }
+// Resuming; a run brought back after the app was closed needs location turned on again first.
+export async function resumeRun(): Promise<string | undefined> {
+  if (!watcher && !background) { const e = await startUpdates(); if (e) return e; }
+  set(start(state, Date.now()));
+  return undefined;
+}
 
 async function stopUpdates(): Promise<void> {
   watcher?.remove(); watcher = null;

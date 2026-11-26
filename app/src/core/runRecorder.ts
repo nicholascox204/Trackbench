@@ -107,11 +107,12 @@ const timeWords = (ms: number): string => {
 };
 
 // What to say when a new whole unit is reached: distance, time, average pace, and that unit's split.
-export function cueText(s: RunState, now: number, unit: 'km' | 'mi', unitMeters: number): string {
-  const n = s.splits.length;
+// every: updates come every this many units (0.5, 1, 2); the split is said only when a whole unit has just been completed.
+export function cueText(s: RunState, now: number, unit: 'km' | 'mi', unitMeters: number, every = 1): string {
+  const n = Math.round(Math.floor(s.meters / (unitMeters * every)) * every * 10) / 10;
   const word = unit === 'km' ? (n === 1 ? 'kilometre' : 'kilometres') : n === 1 ? 'mile' : 'miles';
   const avg = averagePace(s, now, unitMeters);
-  const split = s.splits[n - 1];
+  const split = Number.isInteger(n) && s.splits.length === n ? s.splits[n - 1] : undefined;
   return [`${n} ${word}`, `time ${timeWords(elapsedMs(s, now))}`, avg ? `average pace ${paceWords(avg)} per ${unit === 'km' ? 'kilometre' : 'mile'}` : '', split ? `last split ${paceWords(split.seconds)}` : ''].filter(Boolean).join('. ') + '.';
 }
 

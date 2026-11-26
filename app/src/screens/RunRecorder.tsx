@@ -10,7 +10,7 @@ import { Modal, Platform, Text, View, useWindowDimensions } from 'react-native';
 import { simplifyRoute } from '../core/gpx';
 import { averagePace, climbMeters, currentPace, elapsedMs, encodeRoute, type RunState } from '../core/runRecorder';
 import {
-  allowScreenOff, beginRun, clearRun, discardRun, finishRun, hereNow, onHere, onRun, pauseRun, prepareRun, recordsInBackground, resumeRun, runState, setSpoken, spoken,
+  allowScreenOff, beginRun, voiceEvery, setVoiceEvery, clearRun, discardRun, finishRun, hereNow, onHere, onRun, pauseRun, prepareRun, recordsInBackground, resumeRun, runState, setSpoken, spoken,
 } from '../core/runSession';
 import { logFree } from '../core/store';
 import { startOfDay } from '../core/time';
@@ -28,6 +28,8 @@ export const pace = (sec: number | undefined): string => {
   const r = Math.round(sec);
   return `${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`;
 };
+
+const VOICE = [1, 0.5, 2, 0];
 
 export function useRun(): RunState {
   const [s, setS] = useState(runState());
@@ -58,7 +60,7 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
   const { width, height } = useWindowDimensions();
   const [now, setNow] = useState(Date.now());
   const [error, setError] = useState('');
-  const [voice, setVoice] = useState(spoken());
+  const [voice, setVoice] = useState(spoken() ? voiceEvery() : 0); // 0 is off; else every this many km or miles
   const [sure, setSure] = useState(false);
   const [busy, setBusy] = useState(false);
   const [here, setHere] = useState(hereNow());
@@ -163,15 +165,15 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
 
         <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 28, gap: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
           {active ? (
-            <Tap onPress={() => { setVoice(!voice); setSpoken(!voice); }} style={{ alignSelf: 'center', paddingVertical: 4 }}>
-              <Text style={{ color: colors.muted, fontSize: 13 }}>{voice ? `Voice updates every ${word}: on` : 'Voice updates: off'}</Text>
+            <Tap onPress={() => { const next = VOICE[(VOICE.indexOf(voice) + 1) % VOICE.length]; setVoice(next); setSpoken(next > 0); if (next > 0) setVoiceEvery(next); }} style={{ alignSelf: 'center', paddingVertical: 4 }}>
+              <Text style={{ color: colors.muted, fontSize: 13 }}>{voice ? `Voice: every ${voice === 1 ? '' : voice + ' '}${voice === 1 ? word : word + 's'} · tap to change` : 'Voice: off · tap to change'}</Text>
             </Tap>
           ) : null}
           {s.status === 'idle' ? <Button label={busy ? 'Starting…' : 'Start'} onPress={go} disabled={busy || !!error && error.startsWith('Location is off')} /> : null}
           {s.status === 'running' ? <Button label="Pause" onPress={pauseRun} /> : null}
           {s.status === 'paused' ? (
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button style={{ flex: 1 }} label="Resume" onPress={resumeRun} />
+              <Button style={{ flex: 1 }} label="Resume" onPress={() => { void resumeRun().then((e) => setError(e ?? '')); }} />
               <Button style={{ flex: 1 }} variant="ghost" label="Finish" onPress={() => { void finishRun(); }} />
             </View>
           ) : null}

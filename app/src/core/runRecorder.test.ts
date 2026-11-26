@@ -66,3 +66,9 @@ test('the map fits the route in its box and covers it with tiles', () => {
   assert.ok(tiles.length >= 2 && tiles.length <= 9);
   assert.ok(v.z >= 12 && v.z <= 15, `zoom ${v.z}`);
 });
+
+test('half-unit updates say the half, and the split only on a whole unit', () => {
+  const s = runFor(6); // ~600 m
+  assert.match(cueText(s, 6 * 30000, 'km', KM, 0.5), /^0\.5 kilometres\./);
+  assert.doesNotMatch(cueText(s, 6 * 30000, 'km', KM, 0.5), /last split/);
+});
