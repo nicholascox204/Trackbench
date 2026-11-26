@@ -8,6 +8,7 @@ import { Text, TextInput, View } from 'react-native';
 import { CATEGORIES, POPULAR_COUNT, TEMPLATES, searchTemplates, type Template } from '../core/templates';
 import { Icon, Muted, Tap, TrackerIcon, colors, s } from '../ui/kit';
 import { px } from '../ui/theme';
+import { TemplatePreview } from './TemplatePreview';
 
 export function StartPicker({
   onTemplate, onScratch, have,
@@ -42,6 +43,24 @@ export function StartPicker({
       </View>
     </Tap>
   );
+  // Popular rows show how each is logged instead of a description, and end in a plus (or a check when you have it).
+  const richRow = (t: Template) => {
+    const added = have.has(t.id);
+    return (
+      <Tap key={t.id} onPress={() => onTemplate(t)}>
+        <View style={[s.row, { paddingVertical: 9, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
+          <TrackerIcon name={t.icon} size={40} />
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>
+            <TemplatePreview t={t} />
+          </View>
+          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: added ? `${colors.done}22` : colors.accentBg }}>
+            <Icon name={added ? 'checkmark' : 'add'} size={17} color={added ? colors.done : colors.accent} />
+          </View>
+        </View>
+      </Tap>
+    );
+  };
   const heading = (label: string) => (
     <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '600', marginTop: 18, marginBottom: 2 }}>{label}</Text>
   );
@@ -65,7 +84,7 @@ export function StartPicker({
         <View>
           {card('Build your own', () => onScratch())}
           {heading('Popular')}
-          {popular.map(row)}
+          {popular.map(richRow)}
           {CATEGORIES.map((c) => {
             const list = TEMPLATES.filter((t) => t.category === c);
             return list.length ? <View key={c}>{heading(c)}{list.map(row)}</View> : null;
