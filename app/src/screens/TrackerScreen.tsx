@@ -2,7 +2,7 @@
 // totals and targets, and fast logging. All configuration lives in the builder.
 
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Text, TextInput, View } from 'react-native';
+import { Keyboard, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { cleanDays, dayResult, entriesOnDay, rollingAverage } from '../core/derive';
 import { computeDay, isCalculated } from '../core/measures';
 import { pickedDayFor, rememberPickedDay } from '../core/pickedDay';
@@ -25,6 +25,9 @@ import { MonthCalendar, startOfMonth, type DayState } from '../ui/MonthCalendar'
 import { NumInput } from '../ui/NumInput';
 import { AvoidCard } from './AvoidCard';
 import { canImportRun, runFill } from '../core/runImport';
+import { decodeRoute } from '../core/runRecorder';
+import { RunRecorder, useRun } from './RunRecorder';
+import { RouteMap } from '../ui/RouteMap';
 import { bestsBefore, liftFields, oneRepMax, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
@@ -304,6 +307,10 @@ function FreeForm({
     if (lf) setDraft((p) => ({ ...p, [lf.id]: '' })); // the next entry is something new
   };
   const [runNote, setRunNote] = useState('');
+  const [recording, setRecording] = useState(false);
+  const mapW = Math.min(useWindowDimensions().width, 600) - 32;
+  const run = useRun();
+  const runLive = run.status === 'running' || run.status === 'paused' || run.status === 'done';
   const importRun = async () => {
     try {
       const DocumentPicker = await import('expo-document-picker');
@@ -336,6 +343,10 @@ function FreeForm({
         <Card tone="new" keep>
           <StepGroup>{fieldsJsx}</StepGroup>
           {canImportRun(t) ? (
+            <Button label={runLive ? (run.status === 'done' ? 'Your run is ready to save' : `Run in progress · ${(run.meters / 1000).toFixed(2)} km`) : 'Record a run'} onPress={() => setRecording(true)} />
+          ) : null}
+          {recording ? <RunRecorder t={t} settings={settings} onClose={() => setRecording(false)} /> : null}
+          {canImportRun(t) ? (
             <Tap onPress={importRun} style={{ alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 6 }}>
               <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>Fill from a run file (GPX)</Text>
             </Tap>
@@ -349,9 +360,10 @@ function FreeForm({
       ) : null}
       {todays.length > 0 && !(t.daily && editable) ? <Heading>{t.daily ? 'Saved' : 'Logged'}</Heading> : null}
       {(t.daily && editable ? [] : todays).map((e, i) => (
-        <EntryRow
-          key={e.id} first={i === 0} t={t} e={e} settings={settings} editable={editable}
-        />
+        <View key={e.id}>
+          <EntryRow first={i === 0} t={t} e={e} settings={settings} editable={editable} />
+          {typeof e.values.route === 'string' && e.values.route ? <View style={{ marginBottom: 10 }}><RouteMap pts={decodeRoute(e.values.route)} w={mapW} h={180} /></View> : null}
+        </View>
       ))}
     </View>
   );

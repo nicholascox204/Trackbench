@@ -1802,3 +1802,13 @@ Nick narrowed the parity work: notifications, history and other cross-tracker fe
 - **Sleep:** asks bedtime and wake time and works out the hours (most sleep apps ask times, and a stopwatch for sleep made little sense); the stopwatch tool is off for it.
 - **Mood and Spending:** start with a few options ("Work, Exercise, Friends..."; "Food, Groceries, Transport...") instead of an empty list.
 Not done in this pass: set types (warm-up, drop set), an exercise library, import from Strong or Hevy, a fasting clock, a refill count, photos, and live run recording.
+
+## 2026-11-26: Recording a run with a map
+
+Nick asked for live run recording, checked against the best running apps and especially Map My Run. Map My Run's free tier records the route by GPS, gives spoken updates (pace, distance, splits, how often you choose) and shows splits; training plans, deeper analysis and live tracking are in its paid tier (from its App Store listing and reviews, not tested). Built to match the free core:
+- **Record a run** on any tracker with a distance and a time (Running by default): a full screen with the live map, time, distance, current and average pace, Pause, Resume and Finish. On Android it records as a foreground service, so it carries on with the screen off; if background location is refused it says the app must stay open.
+- **Spoken updates** at each km or mile (distance, time, average pace, last split), on by default and switchable on the screen.
+- **Finish** shows the map, average pace, climb and splits; **Save run** puts distance, time and the route on the entry, and the entry shows its map. Discard asks twice.
+- GPS rules: fixes less accurate than 35 m and impossible jumps are dropped, standing still adds nothing, pauses leave out their time and the gap.
+- **Maps without a map library:** standard map tiles placed as images with the route drawn over them, so no native module or Google key is needed and it works in the web preview too. Tiles are from OpenStreetMap for now; its policy allows light use only, so a tile provider with an agreement (MapTiler, Stadia) is needed before release.
+Not matched yet: choosing how often and what the voice says, saved and planned routes, heart rate from a watch, other activity types (ride, walk), and a crash-safe save of a run in progress. Live tracking for others and training plans belong to later layers.

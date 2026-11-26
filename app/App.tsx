@@ -26,6 +26,7 @@ import { SwipeIn } from './src/ui/SwipeIn';
 import { DEFAULT_OPEN_ON, pickStart } from './src/core/startPick';
 import { forgetPickedDay } from './src/core/pickedDay';
 import { useKeyboardHeight } from './src/ui/useKeyboardHeight';
+import './src/core/runSession'; // defines the run-recording location task as the app loads
 
 // There is no hub: every tracker is a place of its own, reached from the bar along the bottom. Above the trackers,
 // Settings is one more place, at the end of the same row. (Goals and motivation are parked in _parked/.)
