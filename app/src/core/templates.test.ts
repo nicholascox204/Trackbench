@@ -60,7 +60,7 @@ test('search finds what people type', () => {
 test('rating, choice and time fields become readings; daily is one reading a day', () => {
   const sleep = draftFromAnswers(TEMPLATES.find((t) => t.id === 'sleep')!.make(), imperial);
   assert.equal(sleep.daily, true);
-  assert.deepEqual(sleep.measures.map((m) => m.calc.op), ['latest', 'latest']);
+  assert.equal(sleep.measures.filter((m) => m.calc.op === 'latest').length, 3);
   const symptoms = draftFromAnswers(TEMPLATES.find((t) => t.id === 'symptoms')!.make(), imperial);
   assert.ok(symptoms.fields.some((f) => f.type === 'choice' && (f.options?.length ?? 0) > 1));
   assert.equal(symptoms.daily, undefined);

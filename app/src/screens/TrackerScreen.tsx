@@ -24,6 +24,8 @@ import { isChanged } from '../core/dirty';
 import { MonthCalendar, startOfMonth, type DayState } from '../ui/MonthCalendar';
 import { NumInput } from '../ui/NumInput';
 import { AvoidCard } from './AvoidCard';
+import { canImportRun, runFill } from '../core/runImport';
+import { bestsBefore, liftFields, oneRepMax, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
 import { useAutoValue } from '../core/autoValue';
@@ -111,6 +113,14 @@ function RowSlot({
   const doneCount = mine.filter((e) => e.done && (e.row ?? 0) < sets).length;
   const nf = t.fields.filter((f) => f.type === 'number');
   const weekday = new Date(day).getDay();
+  const [plates, setPlates] = useState(false);
+  const lift = liftFields(t);
+  const bests = bestsBefore(t, entries, slot.id, day);
+  const wUnit = lift.weight ? fieldUnit(lift.weight, settings) : undefined;
+  const show = (base: number) => (lift.weight ? `${formatNumber(round2(toDisplay(lift.weight, base, settings)))}${wUnit ? ' ' + wUnit : ''}` : '');
+  const todayTop = Math.max(0, ...mine.map((e) => (lift.weight ? Number(e.values[lift.weight.id]) || 0 : 0)));
+  const plateBase = todayTop || bests.weight;
+  const plateUnit = wUnit === 'lb' ? 'lb' : wUnit === 'kg' ? 'kg' : undefined;
   if (open) return <SlotEditor t={t} slot={slot} weekday={weekday} settings={settings} index={index} count={count} onClose={onToggle} />;
   return (
     <Card keep style={{ padding: 14, marginBottom: 10 }}>
@@ -122,6 +132,17 @@ function RowSlot({
         <Text style={{ color: colors.muted, fontSize: 14, flex: 1 }}>{sets} {plural(terms.row.toLowerCase(), sets)}{slot.range ? ` · ${slot.range}` : ''}</Text>
         <Text style={[{ color: colors.muted, fontSize: 14, fontWeight: '600' }, doneCount === sets && { color: colors.done }]}>{doneCount}/{sets} done</Text>
       </View>
+      {lift.weight && (bests.seen || plateBase > 0) ? (
+        <View style={[s.row, { marginTop: -4, marginBottom: 10 }]}>
+          <Text style={{ color: colors.muted, fontSize: 13, flex: 1 }}>{bests.seen ? `Best ${show(bests.weight)} · est. max ${show(bests.e1rm)}` : ''}</Text>
+          {plateUnit && plateBase > 0 ? <Tap onPress={() => setPlates(!plates)} style={{ paddingLeft: 10 }}><Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{plates ? 'Hide plates' : 'Plates'}</Text></Tap> : null}
+        </View>
+      ) : null}
+      {plates && plateUnit && plateBase > 0 ? (() => {
+        const shown = round2(toDisplay(lift.weight!, plateBase, settings));
+        const p = platesFor(shown, plateUnit);
+        return <Text style={{ color: colors.text, fontSize: 13, marginTop: -4, marginBottom: 10 }}>{p.perSide.length === 0 ? `${formatNumber(shown)} ${plateUnit}: just the ${p.bar} ${plateUnit} bar` : `${formatNumber(shown)} ${plateUnit}, each side: ${p.perSide.map(formatNumber).join(' + ')}${p.left > 0 ? ` (${formatNumber(p.left)} ${plateUnit} short)` : ''} · ${p.bar} ${plateUnit} bar`}</Text>;
+      })() : null}
       <View style={[s.row, { marginBottom: 6 }]}>
         <View style={{ width: 28 }} />
         {nf.map((f) => (
@@ -135,9 +156,10 @@ function RowSlot({
         const e = mine.find((x) => x.row === r);
         const prev = t.tools.previous ? previousRow(entries, slot.id, r, day) : null;
         const done = !!e?.done;
+        const pr = recordOf(t, e, bests);
         return (
           <View key={r} style={[s.row, { marginBottom: 4 }]}>
-            <Text style={{ color: colors.muted, width: 28, fontSize: 15, fontWeight: '600' }}>{r + 1}</Text>
+            <Text accessibilityLabel={pr ? 'Personal record' : undefined} style={{ color: pr ? colors.accent : colors.muted, width: 28, fontSize: pr ? 12 : 15, fontWeight: pr ? '800' : '600' }}>{pr ? 'PR' : r + 1}</Text>
             {nf.map((f) => {
               const raw = e?.values[f.id];
               const shown = raw === undefined || raw === '' ? undefined : round2(toDisplay(f, Number(raw), settings));
@@ -281,6 +303,22 @@ function FreeForm({
     logFree(t.id, draft, day);
     if (lf) setDraft((p) => ({ ...p, [lf.id]: '' })); // the next entry is something new
   };
+  const [runNote, setRunNote] = useState('');
+  const importRun = async () => {
+    try {
+      const DocumentPicker = await import('expo-document-picker');
+      const res = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      if (res.canceled || !res.assets?.[0]) return;
+      const text = await (await fetch(res.assets[0].uri)).text();
+      const fill = runFill(t, text);
+      if (!fill) return setRunNote('That file has no route in it. Use a GPX file from your watch or running app.');
+      setDraft((p) => ({ ...p, ...fill.values }));
+      const other = fill.at !== undefined && startOfDay(fill.at) !== day;
+      setRunNote(`Filled from the file${fill.climb > 0 ? `, ${fill.climb} m of climb` : ''}.${other ? ` This run was on ${formatDay(startOfDay(fill.at!))}; pick that day above to log it there.` : ''}`);
+    } catch {
+      setRunNote('Could not read that file.');
+    }
+  };
   const fieldsJsx = t.fields.map((f) => (
         <View key={f.id} style={{ marginBottom: 12 }}>
           <FieldInput f={f} value={draft[f.id]} settings={settings} onChange={(v) => {
@@ -297,6 +335,12 @@ function FreeForm({
       {editable ? (
         <Card tone="new" keep>
           <StepGroup>{fieldsJsx}</StepGroup>
+          {canImportRun(t) ? (
+            <Tap onPress={importRun} style={{ alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 6 }}>
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>Fill from a run file (GPX)</Text>
+            </Tap>
+          ) : null}
+          {runNote ? <Text style={{ color: colors.muted, fontSize: 13, marginBottom: 10 }}>{runNote}</Text> : null}
           <Button
             label={t.daily ? (saved ? 'Saved' : 'Save today') : 'Log'} onPress={save}
             done={saved}

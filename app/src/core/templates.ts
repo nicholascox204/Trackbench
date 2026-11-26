@@ -91,11 +91,11 @@ const ALL: Template[] = [
 
   // ---- Health ----
   T('mood', 'Mood', 'happy-outline', 'Health', 'Tap a rating once a day and watch the trend.', 'mood feeling happy sad emotion mental health wellbeing', 'measurement', () => ({
-    chips: [], custom: [rating('mood', 'Mood'), multi('activities', 'What was going on', []), { ...note(), optional: true }], daily: true,
+    chips: [], custom: [rating('mood', 'Mood'), multi('activities', 'What was going on', ['Work', 'Exercise', 'Friends', 'Family', 'Outside', 'Rest']), { ...note(), optional: true }], daily: true,
   })),
-  T('sleep', 'Sleep', 'moon-outline', 'Health', 'Hours slept and how well.', 'sleep bed rest hours insomnia nap quality', 'measurement', () => ({
-    chips: [], custom: [duration('slept', 'Hours slept', { default: 450 }), rating('quality', 'Quality')], daily: true,
-    extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'slept' }, goal: 'none', goals: [],
+  T('sleep', 'Sleep', 'moon-outline', 'Health', 'Bedtime, wake time and how well you slept.', 'sleep bed rest hours insomnia nap quality', 'measurement', () => ({
+    chips: [], custom: [{ id: 'bed', name: 'Bedtime', type: 'time', default: 1380 }, { id: 'wake', name: 'Woke up', type: 'time', default: 420 }, rating('quality', 'Quality')], daily: true,
+    combos: [{ id: 'slept', name: 'Hours slept', a: 'bed', b: 'wake', fn: 'span' }], extras: { previous: true, lockPast: false, average: false }, goal: 'none', goals: [],
   })),
   T('weigh-in', 'Weigh-in', 'scale-outline', 'Health', 'One weight a day with a rolling average.', 'weight weigh body scale bodyweight loss gain', 'measurement', { daily: true }),
   T('water', 'Water', 'water-outline', 'Health', 'Tap for each glass.', 'water drink hydration glasses', 'counter', { countUnit: 'glasses' }),
@@ -135,7 +135,7 @@ const ALL: Template[] = [
 
   // ---- Money ----
   T('spending', 'Spending', 'wallet-outline', 'Money', 'Amount, category and a note per purchase.', 'spending money budget expenses purchases cash', 'time-blocks', () => ({
-    chips: [], custom: [num('amount', 'Amount', { step: 5, default: 10, unit: '$' }), choice('category', 'Category', []), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
+    chips: [], custom: [num('amount', 'Amount', { step: 5, default: 10, unit: '$' }), choice('category', 'Category', ['Food', 'Groceries', 'Transport', 'Bills', 'Fun', 'Shopping', 'Other']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
   T('savings', 'Savings', 'cash-outline', 'Money', 'Log what you put aside.', 'savings money save invest deposit', 'time-blocks', () => ({
     chips: [], custom: [num('saved', 'Saved', { step: 10, default: 20, unit: '$' })], goal: 'none', goals: [], schedule: { kind: 'whenever' },

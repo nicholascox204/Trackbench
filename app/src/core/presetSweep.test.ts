@@ -88,29 +88,27 @@ test('a shared structure comes back the same', () => {
   }
 });
 
-test('Sleep records hours and minutes, and its timer fills them', () => {
+test('Sleep asks bedtime and wake time and works out the hours', () => {
   const t = build('sleep');
-  const f = t.fields.find((x) => x.id === 'slept');
-  assert.equal(f?.type, 'duration');
-  assert.equal(t.tools.timer, true);
-  assert.equal(t.tools.timerInto, 'slept');
-  assert.equal(t.measures.find((m) => m.id === 'slept')?.calc.op, 'latest');
+  assert.deepEqual(t.fields.filter((x) => x.type === 'time').map((x) => x.id), ['bed', 'wake']);
+  assert.equal(t.measures.find((m) => m.id === 'slept')?.calc.op, 'sumExpr');
+  assert.ok(!t.tools.timer, 'no stopwatch for sleep');
 });
 
 test('the timer only fills a Duration field on a form, never a planned tracker', () => {
   const gym = build('gym-split');
   assert.equal(gym.tools.timerInto, undefined);
-  const base = answersFromTracker(build('sleep'), SETTINGS, false);
-  const onPlan = draftFromAnswers({ ...base, record: 'numbers', log: 'plan', extras: { ...base.extras, timer: true, timerInto: 'slept' } }, SETTINGS);
+  const base = answersFromTracker(build('meditate'), SETTINGS, false);
+  const onPlan = draftFromAnswers({ ...base, record: 'numbers', log: 'plan', extras: { ...base.extras, timer: true, timerInto: 'minutes' } }, SETTINGS);
   assert.equal(onPlan.tools.timerInto, undefined, 'a plan has no single field to fill');
-  const noField = draftFromAnswers({ ...base, extras: { ...base.extras, timer: true, timerInto: 'quality' } }, SETTINGS);
+  const noField = draftFromAnswers({ ...base, extras: { ...base.extras, timer: true, timerInto: 'felt' } }, SETTINGS);
   assert.equal(noField.tools.timerInto, undefined, 'only a Duration can be filled');
 });
 
 test('a countdown alone can fill a Duration field too', () => {
-  const base = answersFromTracker(build('sleep'), SETTINGS, false);
-  const only = draftFromAnswers({ ...base, extras: { ...base.extras, timer: false, countdown: true, countdownInto: 'slept' } }, SETTINGS);
-  assert.equal(only.tools.countdownInto, 'slept'); assert.equal(only.tools.timerInto, undefined);
-  const neither = draftFromAnswers({ ...base, extras: { ...base.extras, timer: false, countdown: false, timerInto: 'slept', countdownInto: 'slept' } }, SETTINGS);
+  const base = answersFromTracker(build('meditate'), SETTINGS, false);
+  const only = draftFromAnswers({ ...base, extras: { ...base.extras, timer: false, countdown: true, countdownInto: 'minutes' } }, SETTINGS);
+  assert.equal(only.tools.countdownInto, 'minutes'); assert.equal(only.tools.timerInto, undefined);
+  const neither = draftFromAnswers({ ...base, extras: { ...base.extras, timer: false, countdown: false, timerInto: 'minutes', countdownInto: 'minutes' } }, SETTINGS);
   assert.equal(neither.tools.countdownInto, undefined);
 });

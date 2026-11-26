@@ -36,10 +36,11 @@ test('a meal plan from scratch matches the meals template', () => {
 
 test('a daily weigh-in, a mood rating and a sleep log from scratch match their templates', () => {
   same('weigh-in', { record: 'numbers', chips: ['weight'], log: 'free', daily: true, extras: { previous: true, lockPast: false, average: true } });
-  same('mood', { record: 'numbers', log: 'free', daily: true, custom: [{ id: 'mood', name: 'Mood', type: 'rating', max: 5 }, { id: 'activities', name: 'What was going on', type: 'choice', multi: true, options: [] }, { id: 'note', name: 'Note', type: 'text', default: '', optional: true }], extras: { previous: true, lockPast: false, average: true } });
+  same('mood', { record: 'numbers', log: 'free', daily: true, custom: [{ id: 'mood', name: 'Mood', type: 'rating', max: 5 }, { id: 'activities', name: 'What was going on', type: 'choice', multi: true, options: ['Work', 'Exercise', 'Friends', 'Family', 'Outside', 'Rest'] }, { id: 'note', name: 'Note', type: 'text', default: '', optional: true }], extras: { previous: true, lockPast: false, average: true } });
   same('sleep', {
-    record: 'numbers', log: 'free', daily: true, extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'slept' },
-    custom: [{ id: 'slept', name: 'Hours slept', type: 'duration', unit: 'min', default: 450 }, { id: 'quality', name: 'Quality', type: 'rating', max: 5 }],
+    record: 'numbers', log: 'free', daily: true, extras: { previous: true, lockPast: false, average: false },
+    custom: [{ id: 'bed', name: 'Bedtime', type: 'time', default: 1380 }, { id: 'wake', name: 'Woke up', type: 'time', default: 420 }, { id: 'quality', name: 'Quality', type: 'rating', max: 5 }],
+    combos: [{ id: 'slept', name: 'Hours slept', a: 'bed', b: 'wake', fn: 'span' }],
   });
 });
 
