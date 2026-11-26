@@ -9,7 +9,7 @@ import type { Field, PlanDay, Slot } from './types';
 
 export type Category = 'Fitness' | 'Body' | 'Health' | 'Mind' | 'Habits' | 'Money' | 'Study' | 'Life';
 export const CATEGORIES: Category[] = ['Habits', 'Fitness', 'Body', 'Mind', 'Health', 'Money', 'Study', 'Life'];
-export const POPULAR_COUNT = 6; // the first this many by popularity sit under Popular on the start screen
+export const POPULAR_COUNT = 7; // the first this many by popularity sit under Popular on the start screen
 
 export interface Template {
   id: string;

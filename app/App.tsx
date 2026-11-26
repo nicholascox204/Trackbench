@@ -235,7 +235,7 @@ function AppInner() {
         />
       ) : null}
       {/* Screens without the bar still get a block of the theme under them, where the phone's own navigation sits, so nothing scrolls behind it */}
-      {!showBar && lift === 0 && bottomInset > 0 ? <View style={{ height: bottomInset, backgroundColor: colors.card }} /> : null}
+      {!showBar && lift === 0 && bottomInset > 0 ? <View style={{ height: bottomInset, backgroundColor: colors.bg }} /> : null}
     </View>
   );
 }
