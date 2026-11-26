@@ -2,7 +2,7 @@
 // in place under the name so changing an icon never means leaving the screen.
 
 import { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Keyboard, TextInput, View } from 'react-native';
 import { ICON_GROUPS, searchIcons } from '../core/icons';
 import { ChoiceGrid, Icon, Muted, Tap, colors, s } from './kit';
 import { EDGE } from '../ui/theme';
@@ -17,6 +17,15 @@ export function IconPicker({ value, onPick, onSearchFocus }: { value: string; on
   const GAP = 8;
   const cols = Math.max(1, Math.floor((width + GAP) / (46 + GAP)));
   const tile = width ? (width - GAP * (cols - 1)) / cols : 46;
+  // Picking from a search clears it and opens the category the icon lives in, so you see where it sits.
+  const pick = (n: string) => {
+    onPick(n);
+    if (!searching) return;
+    const g = ICON_GROUPS.findIndex((x) => x.icons.includes(n));
+    if (g >= 0) setGroup(g);
+    setQuery('');
+    Keyboard.dismiss();
+  };
   const searching = query.trim().length > 0;
   const found = searching ? searchIcons(query) : ICON_GROUPS[group].icons;
 
@@ -33,7 +42,7 @@ export function IconPicker({ value, onPick, onSearchFocus }: { value: string; on
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', opacity: width ? 1 : 0 }} onLayout={(e) => { lastWidth = e.nativeEvent.layout.width; setWidth(lastWidth); }}>
         {found.map((n, i) => (
           <Tap
-            key={n} onPress={() => onPick(n)} accessibilityLabel={n}
+            key={n} onPress={() => pick(n)} accessibilityLabel={n}
             style={{ width: tile, height: tile, borderRadius: 12, marginRight: (i + 1) % cols === 0 ? 0 : GAP, marginBottom: GAP, alignItems: 'center', justifyContent: 'center', borderWidth: EDGE, borderColor: value === n ? colors.accent : colors.border, backgroundColor: value === n ? colors.accentBg : colors.card }}
           >
             <Icon name={n} size={22} color={value === n ? colors.accent : colors.text} />
