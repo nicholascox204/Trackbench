@@ -36,6 +36,7 @@ import { px } from '../ui/theme';
 import { canRecordRun } from '../core/runImport';
 import { RunFileImport } from './RunFileImport';
 import { LiftFileImport } from './LiftFileImport';
+import { HealthImportCard } from './HealthImportCard';
 import { liftFields } from '../core/records';
 import { spanPair } from '../core/spanClock';
 
@@ -272,6 +273,7 @@ export function SetupFlow({
               {draft.input === 'plan' && a.planStyle === 'items' ? <Toggle label="Count what is left (refill reminder)" value={!!a.extras.stock} onChange={(v) => set({ extras: { ...a.extras, stock: v } })} /> : null}
               {draft.input === 'form' && spanPair(draft) ? <Toggle label={`Clock for ${spanPair(draft)!.measure.name.toLowerCase()}`} value={!!a.extras.clock} onChange={(v) => set({ extras: { ...a.extras, clock: v } })} /> : null}
             </Card>
+            {existing ? <HealthImportCard t={existing} keep={!!a.extras.health} setKeep={(v) => set({ extras: { ...a.extras, health: v } })} /> : null}
             {existing && canRecordRun(existing.fields) ? <RunFileImport t={existing} /> : null}
             {existing && existing.input === 'plan' && liftFields(existing).weight ? <LiftFileImport t={existing} settings={settings} /> : null}
           </View>

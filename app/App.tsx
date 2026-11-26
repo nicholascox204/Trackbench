@@ -7,6 +7,7 @@ import { defaultConfig } from './src/core/engine';
 import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
 import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
+import { syncHealth } from './src/core/healthRead';
 import { dismissFinishedAlerts, liveTimers, loadTimers } from './src/core/timers';
 import { initialTap, listenForegroundTaps } from './src/core/notificationTap';
 import { peekTapTarget, subscribeTap, takeTapTarget } from './src/core/tapTarget';
@@ -74,13 +75,13 @@ function AppInner() {
 
   // Opening the app (or coming back to it) stops any finished countdown's alert from ringing on.
   useEffect(() => {
-    const sub = RNAppState.addEventListener('change', (s) => { if (s === 'active') { dismissFinishedAlerts(Date.now()); if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncNow(); } else if (s === 'background' || s === 'inactive') flushOnLeave(); });
+    const sub = RNAppState.addEventListener('change', (s) => { if (s === 'active') { dismissFinishedAlerts(Date.now()); if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncHealth(); void syncNow(); } else if (s === 'background' || s === 'inactive') flushOnLeave(); });
     return () => sub.remove();
   }, []);
 
   useEffect(() => {
     startAuth();
-    Promise.resolve(loadState()).finally(() => { if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncNow(); });
+    Promise.resolve(loadState()).finally(() => { if (getState().settings.devSync) applyPresetChanges(); void syncPhoneSteps(); void syncHealth(); void syncNow(); });
     loadTimers().finally(() => setTimersReady(true)); // the opening choice looks at running timers, so it waits for them
     initialTap().finally(() => setTapChecked(true));
     return listenForegroundTaps();
