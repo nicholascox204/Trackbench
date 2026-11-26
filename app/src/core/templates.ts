@@ -74,7 +74,7 @@ function T(
 
 const ALL: Template[] = [
   // ---- Fitness ----
-  T('gym-split', 'Gym split', 'barbell-outline', 'Fitness', 'Plan lifts by day and log every set.', 'gym lifting weights strength push pull legs split workout hypertrophy', 'set-plan', () => ({
+  T('gym-split', 'Gym split', 'barbell-outline', 'Fitness', 'Lifts by day, every set logged.', 'gym lifting weights strength push pull legs split workout hypertrophy', 'set-plan', () => ({
     chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: false, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
     sample: [
       day('Push', [row('Bench Press', 4, '6-8'), row('Incline Dumbbell Press', 3, '8-10'), row('Overhead Press', 3, '8-10'), row('Lateral Raise', 3, '12-15'), row('Triceps Pushdown', 3, '10-12')]),
@@ -82,52 +82,52 @@ const ALL: Template[] = [
       day('Legs', [row('Squat', 4, '6-8'), row('Romanian Deadlift', 3, '8-10'), row('Leg Press', 3, '10-12'), row('Leg Curl', 3, '10-12'), row('Calf Raise', 4, '12-15')]),
     ],
   })),
-  T('full-body', 'Full body', 'fitness-outline', 'Fitness', 'The same list of lifts on each training day.', 'gym lifting weights full body beginner strength 5x5 workout', 'set-plan', () => ({
+  T('full-body', 'Full body', 'fitness-outline', 'Fitness', 'One list of lifts, every session.', 'gym lifting weights full body beginner strength 5x5 workout', 'set-plan', () => ({
     chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
     sample: [day('Full body', [row('Squat', 3, '5'), row('Bench Press', 3, '5'), row('Barbell Row', 3, '5'), row('Overhead Press', 3, '8'), row('Romanian Deadlift', 3, '8'), row('Plank', 3, '30-60s')])],
   })),
-  T('running', 'Running', 'footsteps-outline', 'Fitness', 'Log distance and time for each run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false } }),
+  T('running', 'Running', 'footsteps-outline', 'Fitness', 'Distance and time per run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false } }),
   T('steps', 'Steps', 'walk-outline', 'Fitness', 'Your steps, once a day.', 'steps walking walk daily movement pedometer', 'measurement', () => ({
     chips: [], custom: [num('steps', 'Steps', { step: 500, default: 6000 })], daily: true, extras: { previous: true, lockPast: false, average: true, auto: true },
     goal: 'none', goals: [],
   })),
-  T('stretching', 'Stretching', 'body-outline', 'Fitness', 'What you stretched and for how long.', 'stretch stretching mobility yoga flexibility', 'time-blocks', () => ({
+  T('stretching', 'Stretching', 'body-outline', 'Fitness', 'What you stretched, how long.', 'stretch stretching mobility yoga flexibility', 'time-blocks', () => ({
     chips: [], custom: [named('what', 'Stretch'), duration('minutes', 'Time', { step: 5, default: 10 })], goal: 'none', goals: [],
     extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
 
   // ---- Health ----
-  T('mood', 'Mood', 'happy-outline', 'Mind', 'Tap a rating once a day and watch the trend.', 'mood feeling happy sad emotion mental health wellbeing', 'measurement', () => ({
+  T('mood', 'Mood', 'happy-outline', 'Mind', 'Rate your day and see the trend.', 'mood feeling happy sad emotion mental health wellbeing', 'measurement', () => ({
     chips: [], custom: [rating('mood', 'Mood'), multi('activities', 'What was going on', ['Work', 'Exercise', 'Friends', 'Family', 'Outside', 'Rest']), { ...note(), optional: true }], daily: true,
   })),
-  T('sleep', 'Sleep', 'moon-outline', 'Mind', 'Bedtime, wake time and how well you slept.', 'sleep bed rest hours insomnia nap quality', 'measurement', () => ({
+  T('sleep', 'Sleep', 'moon-outline', 'Mind', 'Bedtime, wake time, how it went.', 'sleep bed rest hours insomnia nap quality', 'measurement', () => ({
     chips: [], custom: [{ id: 'bed', name: 'Bedtime', type: 'time', default: 1380 }, { id: 'wake', name: 'Woke up', type: 'time', default: 420 }, rating('quality', 'Quality')], daily: true,
     combos: [{ id: 'slept', name: 'Hours slept', a: 'bed', b: 'wake', fn: 'span' }], extras: { previous: true, lockPast: false, average: false }, goal: 'none', goals: [],
   })),
-  T('weigh-in', 'Weigh-in', 'scale-outline', 'Body', 'One weight a day with a rolling average.', 'weight weigh body scale bodyweight loss gain', 'measurement', { daily: true }),
+  T('weigh-in', 'Weigh-in', 'scale-outline', 'Body', 'One weight a day, averaged.', 'weight weigh body scale bodyweight loss gain', 'measurement', { daily: true }),
   T('water', 'Water', 'water-outline', 'Body', 'Tap for each glass.', 'water drink hydration glasses', 'counter', { countUnit: 'glasses' }),
-  T('medication', 'Medication', 'medkit-outline', 'Health', 'List your meds and tick each one off.', 'medication meds pills medicine prescription dose daily', 'checklist-totals', () => ({
+  T('medication', 'Medication', 'medkit-outline', 'Health', 'Tick off each med.', 'medication meds pills medicine prescription dose daily', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: true, lockPast: false, average: false },
     schedule: { kind: 'daily' }, samePlan: true, planMode: 'asigo', terms: { item: 'Medication', row: 'Round', target: 'Target' },
   })),
-  T('vitamins', 'Vitamins', 'nutrition-outline', 'Health', 'List your vitamins and tick each one off.', 'vitamins supplements dose daily', 'checklist-totals', () => ({
+  T('vitamins', 'Vitamins', 'nutrition-outline', 'Health', 'Tick off each vitamin.', 'vitamins supplements dose daily', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: true, lockPast: false, average: false },
     schedule: { kind: 'daily' }, samePlan: true, planMode: 'asigo', terms: { item: 'Vitamin', row: 'Round', target: 'Target' },
   })),
-  T('symptoms', 'Symptoms', 'thermometer-outline', 'Health', 'Log what happened, how bad, and a note.', 'symptoms headache migraine pain nausea illness health diary', 'time-blocks', () => ({
+  T('symptoms', 'Symptoms', 'thermometer-outline', 'Health', 'What happened and how bad.', 'symptoms headache migraine pain nausea illness health diary', 'time-blocks', () => ({
     chips: [], custom: [multi('symptom', 'Symptoms', ['Headache', 'Nausea', 'Fatigue', 'Pain', 'Other']), rating('severity', 'Severity', 10), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
   T('pain', 'Pain level', 'bandage-outline', 'Health', 'Rate it from 1 to 10 each day.', 'pain injury rehab recovery back knee chronic', 'measurement', () => ({
     chips: [], custom: [rating('pain', 'Pain', 10)], daily: true,
   })),
-  T('meals', 'Meal plan', 'restaurant-outline', 'Body', 'Your usual meals, ticked off as you eat.', 'meal plan meals prep food eat diet protein calories macros nutrition', 'checklist-totals'),
+  T('meals', 'Meal plan', 'restaurant-outline', 'Body', 'Your usual meals, ticked off.', 'meal plan meals prep food eat diet protein calories macros nutrition', 'checklist-totals'),
 
   // ---- Habits ----
-  T('meditate', 'Meditate', 'flower-outline', 'Mind', 'How long you sat each day, with a timer.', 'meditate meditation mindfulness calm breathe', 'measurement', () => ({
+  T('meditate', 'Meditate', 'flower-outline', 'Mind', 'Minutes sat, with a timer.', 'meditate meditation mindfulness calm breathe', 'measurement', () => ({
     chips: [], custom: [duration('minutes', 'Time', { default: 10, step: 5 }), rating('felt', 'How it felt')], daily: true, goal: 'none', goals: [],
     extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
-  T('habit', 'Daily habits', 'checkmark-circle-outline', 'Habits', 'List your habits and tick each one off.', 'habit habits routine daily check list', 'checklist-totals', () => ({
+  T('habit', 'Daily habits', 'checkmark-circle-outline', 'Habits', 'Tick off each habit daily.', 'habit habits routine daily check list', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     schedule: { kind: 'daily' }, samePlan: true, planMode: 'asigo', terms: { item: 'Habit', row: 'Round', target: 'Target' },
   })),
@@ -136,12 +136,12 @@ const ALL: Template[] = [
     chips: [], custom: [duration('minutes', 'Time read', { default: 25, step: 5 })], goal: 'none', goals: [],
     extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
-  T('no-alcohol', 'No alcohol', 'wine-outline', 'Habits', 'Count days without a drink. Log slips.', 'alcohol drinking quit sober avoid beer wine', 'check-in', { avoid: true }),
-  T('quit-smoking', 'Quit smoking', 'ban-outline', 'Habits', 'Count smoke-free days. Log slips.', 'smoking cigarettes vape nicotine quit avoid addiction', 'check-in', { avoid: true }),
-  T('no-scrolling', 'Less scrolling', 'phone-portrait-outline', 'Habits', 'Count scroll-free days. Log slips.', 'phone social media scrolling screen time avoid doomscroll', 'check-in', { avoid: true }),
+  T('no-alcohol', 'No alcohol', 'wine-outline', 'Habits', 'Days without a drink.', 'alcohol drinking quit sober avoid beer wine', 'check-in', { avoid: true }),
+  T('quit-smoking', 'Quit smoking', 'ban-outline', 'Habits', 'Smoke-free days.', 'smoking cigarettes vape nicotine quit avoid addiction', 'check-in', { avoid: true }),
+  T('no-scrolling', 'Less scrolling', 'phone-portrait-outline', 'Habits', 'Scroll-free days.', 'phone social media scrolling screen time avoid doomscroll', 'check-in', { avoid: true }),
 
   // ---- Money ----
-  T('spending', 'Spending', 'wallet-outline', 'Money', 'Amount, category and a note per purchase.', 'spending money budget expenses purchases cash', 'time-blocks', () => ({
+  T('spending', 'Spending', 'wallet-outline', 'Money', 'Each purchase, by category.', 'spending money budget expenses purchases cash', 'time-blocks', () => ({
     chips: [], custom: [num('amount', 'Amount', { step: 5, default: 10, unit: '$' }), choice('category', 'Category', ['Food', 'Groceries', 'Transport', 'Bills', 'Fun', 'Shopping', 'Other']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
   T('savings', 'Savings', 'cash-outline', 'Money', 'Log what you put aside.', 'savings money save invest deposit', 'time-blocks', () => ({
@@ -149,7 +149,7 @@ const ALL: Template[] = [
   })),
 
   // ---- Study ----
-  T('study', 'Study time', 'school-outline', 'Study', 'Subject and minutes, with a timer.', 'study homework class exam learning focus deep work', 'time-blocks', () => ({
+  T('study', 'Study time', 'school-outline', 'Study', 'Subject and minutes, timed.', 'study homework class exam learning focus deep work', 'time-blocks', () => ({
     chips: [], custom: [named('what', 'Subject'), duration('minutes', 'Time', { step: 5, default: 30 })], goal: 'none', goals: [],
     extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
@@ -163,42 +163,42 @@ const ALL: Template[] = [
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     samePlan: true, planMode: 'asigo',
   })),
-  T('pet-care', 'Pet care', 'paw-outline', 'Life', 'Feed, walk and water, ticked off daily.', 'pet dog cat animal feed walk care', 'checklist-totals', () => ({
+  T('pet-care', 'Pet care', 'paw-outline', 'Life', 'Feed, walk, water, ticked off.', 'pet dog cat animal feed walk care', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     samePlan: true, planMode: 'asigo',
   })),
-  T('plants', 'Plants', 'leaf-outline', 'Life', 'Tick off each watering, Wed and Sun.', 'plants garden water houseplants', 'check-in', { schedule: { kind: 'weekdays', days: [0, 3] } }),
+  T('plants', 'Plants', 'leaf-outline', 'Life', 'Tick off each watering.', 'plants garden water houseplants', 'check-in', { schedule: { kind: 'weekdays', days: [0, 3] } }),
 
   // ---- Added to cover what people ask for ----
-  T('food-log', 'Food log', 'fast-food-outline', 'Body', 'Log what you eat, with calories and protein.', 'food eating diet calories protein macros log meals snack', 'time-blocks', () => ({
+  T('food-log', 'Food log', 'fast-food-outline', 'Body', 'What you eat, calories, protein.', 'food eating diet calories protein macros log meals snack', 'time-blocks', () => ({
     chips: [], custom: [named('what', 'Food'), num('kcal', 'Calories', { unit: 'kcal', step: 50, default: 300 }), num('protein', 'Protein', { unit: 'g', step: 5, default: 20 })], goal: 'none', goals: [], schedule: { kind: 'daily' },
   })),
-  T('workout-log', 'Workout log', 'flame-outline', 'Fitness', 'Any workout: what, how long, how hard.', 'workout exercise cardio swim cycling bike class sport training hiit', 'time-blocks', () => ({
+  T('workout-log', 'Workout log', 'flame-outline', 'Fitness', 'What, how long, how hard.', 'workout exercise cardio swim cycling bike class sport training hiit', 'time-blocks', () => ({
     chips: [], custom: [named('what', 'Activity'), duration('minutes', 'Time', { step: 5, default: 30 }), rating('effort', 'Effort', 10)], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
-  T('time-log', 'Time log', 'timer-outline', 'Life', 'Log time spent on a project or task.', 'time tracking hours project work focus billing task', 'time-blocks', () => ({
+  T('time-log', 'Time log', 'timer-outline', 'Life', 'Time spent per project.', 'time tracking hours project work focus billing task', 'time-blocks', () => ({
     chips: [], custom: [named('what', 'Project'), duration('minutes', 'Time', { step: 15, default: 60 }), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' }, extras: { previous: true, lockPast: false, average: false, timer: true, timerInto: 'minutes' },
   })),
-  T('blood-pressure', 'Blood pressure', 'heart-outline', 'Health', 'Top and bottom number, and pulse.', 'blood pressure bp hypertension systolic diastolic pulse heart rate', 'time-blocks', () => ({
+  T('blood-pressure', 'Blood pressure', 'heart-outline', 'Health', 'Top, bottom and pulse.', 'blood pressure bp hypertension systolic diastolic pulse heart rate', 'time-blocks', () => ({
     chips: [], custom: [num('top', 'Top (systolic)', { unit: 'mmHg', step: 1, default: 120, reading: true }), num('bottom', 'Bottom (diastolic)', { unit: 'mmHg', step: 1, default: 80, reading: true }), num('pulse', 'Pulse', { unit: 'bpm', step: 1, default: 70, reading: true }), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
   T('blood-sugar', 'Blood sugar', 'pulse-outline', 'Health', 'A reading and when you took it.', 'blood sugar glucose diabetes mg dl reading insulin', 'time-blocks', () => ({
     chips: [], custom: [num('level', 'Level', { unit: 'mg/dL', step: 5, default: 100, reading: true }), choice('when', 'When', ['Fasting', 'Before meal', 'After meal', 'Bedtime']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
   T('caffeine', 'Caffeine', 'cafe-outline', 'Body', 'Tap for each cup.', 'caffeine coffee tea energy drink cups limit', 'counter', () => ({ countUnit: 'cups', goal: 'number', goals: [{ id: 'limit', measure: 'count', cmp: 'max', value: 4, value2: 4 }] })), // a starting limit, not advice: change or clear it in setup
-  T('cycle', 'Cycle', 'rose-outline', 'Health', 'Log flow by day. It does not predict.', 'period cycle menstrual flow spotting', 'time-blocks', () => ({
+  T('cycle', 'Cycle', 'rose-outline', 'Health', 'Flow by day. No predictions.', 'period cycle menstrual flow spotting', 'time-blocks', () => ({
     chips: [], custom: [choice('flow', 'Flow', ['Spotting', 'Light', 'Medium', 'Heavy']), multi('symptoms', 'Symptoms', ['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Mood swings']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
-  T('fasting', 'Fasting', 'hourglass-outline', 'Body', 'Last meal to first meal, in hours.', 'fasting intermittent fast eating window 16 8 hours', 'measurement', () => ({
+  T('fasting', 'Fasting', 'hourglass-outline', 'Body', 'Hours from last to first meal.', 'fasting intermittent fast eating window 16 8 hours', 'measurement', () => ({
     chips: [], custom: [{ id: 'last', name: 'Last meal', type: 'time', default: 1200 }, { id: 'first', name: 'First meal', type: 'time', default: 720 }],
     combos: [{ id: 'fast', name: 'Hours fasted', a: 'last', b: 'first', fn: 'span' }], daily: true, extras: { previous: true, lockPast: false, average: false },
     goal: 'none', goals: [],
   })),
-  T('challenge', '30-day challenge', 'trophy-outline', 'Habits', 'A daily tick for 30 days, then it ends.', 'challenge 30 day streak sprint cold shower no sugar reset', 'check-in', () => ({
+  T('challenge', '30-day challenge', 'trophy-outline', 'Habits', 'A daily tick for 30 days.', 'challenge 30 day streak sprint cold shower no sugar reset', 'check-in', () => ({
     window: { from: dayKeyOf(startOfDay(Date.now())), until: dayKeyOf(addDays(startOfDay(Date.now()), 29)) },
   })),
-  T('bills', 'Bills', 'receipt-outline', 'Money', 'Tick it off when paid, once a month.', 'bills rent pay payment monthly subscription utilities due', 'check-in', { schedule: { kind: 'monthly', day: 1 } }),
-  T('balance', 'Balance', 'wallet-outline', 'Money', 'A weekly balance: savings, debt, an account.', 'balance net worth debt savings account bank loan', 'measurement', () => ({
+  T('bills', 'Bills', 'receipt-outline', 'Money', 'Tick off when paid, monthly.', 'bills rent pay payment monthly subscription utilities due', 'check-in', { schedule: { kind: 'monthly', day: 1 } }),
+  T('balance', 'Balance', 'wallet-outline', 'Money', 'A balance, checked weekly.', 'balance net worth debt savings account bank loan', 'measurement', () => ({
     chips: [], custom: [{ ...num('balance', 'Balance', { unit: '$', step: 100, default: 0 }), reading: true }], daily: true, extras: { previous: true, lockPast: false, average: false },
     goal: 'none', goals: [], schedule: { kind: 'weekdays', days: [0] },
   })),

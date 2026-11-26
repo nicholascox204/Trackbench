@@ -1,6 +1,6 @@
 // The first screen of adding a tracker: search, Build your own, then every template under a heading. Popular first (the top
 // few by popularity, repeated in their categories so each category is complete), then every category, so scrolling shows what kinds exist without tapping a filter. Searching
-// flattens it into one list. Templates you already have say so. A search that finds nothing offers to build it yourself,
+// flattens it into one list. Templates you already have end in a check instead of a plus. A search that finds nothing offers to build it yourself,
 // with the name already typed.
 
 import { useState } from 'react';
@@ -8,7 +8,6 @@ import { Text, TextInput, View } from 'react-native';
 import { CATEGORIES, POPULAR_COUNT, TEMPLATES, searchTemplates, type Template } from '../core/templates';
 import { Icon, Muted, Tap, TrackerIcon, colors, s } from '../ui/kit';
 import { px } from '../ui/theme';
-import { TemplatePreview } from './TemplatePreview';
 
 export function StartPicker({
   onTemplate, onScratch, have,
@@ -28,31 +27,16 @@ export function StartPicker({
       </View>
     </Tap>
   );
-  const row = (t: Template) => (
-    <Tap key={t.id} onPress={() => onTemplate(t)}>
-      <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
-        <TrackerIcon name={t.icon} size={40} />
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <View style={s.row}>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{t.name}</Text>
-            {have.has(t.id) ? <Text style={{ color: colors.muted, fontSize: 12, marginLeft: 8 }}>Added</Text> : null}
-          </View>
-          <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={2}>{t.blurb}</Text>
-        </View>
-        <Icon name="chevron-forward" size={18} color={colors.muted} />
-      </View>
-    </Tap>
-  );
-  // Popular rows show how each is logged instead of a description, and end in a plus (or a check when you have it).
-  const richRow = (t: Template) => {
+  // Every template row is the same: icon, name, one line on what it is, and a plus (a check when you already have it).
+  const row = (t: Template) => {
     const added = have.has(t.id);
     return (
-      <Tap key={t.id} onPress={() => onTemplate(t)}>
-        <View style={[s.row, { paddingVertical: 9, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
+      <Tap key={t.id} onPress={() => onTemplate(t)} accessibilityLabel={added ? `${t.name}, added` : t.name}>
+        <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
           <TrackerIcon name={t.icon} size={40} />
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>
-            <TemplatePreview t={t} />
+            <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>{t.blurb}</Text>
           </View>
           <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: added ? `${colors.done}22` : colors.accentBg }}>
             <Icon name={added ? 'checkmark' : 'add'} size={17} color={added ? colors.done : colors.accent} />
@@ -84,7 +68,7 @@ export function StartPicker({
         <View>
           {card('Build your own', () => onScratch())}
           {heading('Popular')}
-          {popular.map(richRow)}
+          {popular.map(row)}
           {CATEGORIES.map((c) => {
             const list = TEMPLATES.filter((t) => t.category === c);
             return list.length ? <View key={c}>{heading(c)}{list.map(row)}</View> : null;
