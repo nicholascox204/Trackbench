@@ -4,7 +4,7 @@
 
 import type { Entry, Slot, Tracker } from './types';
 
-export interface LiftSet { at: number; exercise: string; set: number; weight?: number; reps?: number; warm?: boolean } // weight in kg
+export interface LiftSet { at: number; exercise: string; set: number; weight?: number; reps?: number; warm?: boolean; kind?: 'D' | 'F' } // weight in kg
 export interface LiftFile { app: 'Strong' | 'Hevy'; sets: LiftSet[]; unit: 'kg' | 'lb' | 'unknown' }
 
 // A small CSV reader: commas or semicolons, quoted fields with "" inside.
@@ -84,7 +84,9 @@ export function readLiftFile(text: string, assume: 'kg' | 'lb' = 'kg'): LiftFile
     const weight = raw === undefined ? undefined : Math.round((inKg ? raw : raw * LB) * 100) / 100;
     const warm = iType >= 0 ? (r[iType] ?? '').toLowerCase().includes('warm') : setCell.toUpperCase() === 'W';
     const reps = num(r, iReps);
-    sets.push({ at, exercise, set: num(r, iSet) ?? 0, ...(weight !== undefined ? { weight } : {}), ...(reps !== undefined ? { reps } : {}), ...(warm ? { warm } : {}) });
+    const type = iType >= 0 ? (r[iType] ?? '').toLowerCase() : setCell.toUpperCase();
+    const kind = type.includes('drop') || type === 'D' ? 'D' : type.includes('fail') || type === 'F' ? 'F' : undefined;
+    sets.push({ at, exercise, set: num(r, iSet) ?? 0, ...(weight !== undefined ? { weight } : {}), ...(reps !== undefined ? { reps } : {}), ...(warm ? { warm } : {}), ...(kind ? { kind } : {}) });
   }
   return { app: hevy ? 'Hevy' : 'Strong', sets, unit };
 }
@@ -121,7 +123,8 @@ export function liftEntries(t: Tracker, file: LiftFile, existing: Entry[], makeI
     const values: Entry['values'] = {};
     if (weight && s.weight !== undefined) values[weight.id] = s.weight;
     if (reps && s.reps !== undefined) values[reps.id] = s.reps;
-    if (s.warm) values.warm = 1;
+    if (s.warm) values.kind = 'W';
+    if (s.kind) values.kind = s.kind;
     entries.push({ id: makeId(), trackerId: t.id, at: s.at, slotId, row, done: true, values });
   }
   return { entries, matched: [...matched], unmatched: [...unmatched] };

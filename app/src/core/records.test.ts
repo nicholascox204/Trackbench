@@ -48,3 +48,16 @@ test('a warm-up set is never a record and never sets the bar', () => {
   assert.equal(b.weight, 60, 'the heavy warm-up is left out');
   assert.equal(recordOf(t, { ...set(1, 70, 5), values: { weight: 70, reps: 5, warm: 1 } }, b), null);
 });
+
+import { nextKind, setKind } from './records';
+
+test('tapping a set number cycles warm-up, drop set, to failure, and back; old warm-ups still read as warm-ups', () => {
+  const e = (values: Entry['values']): Entry => ({ id: 'x', trackerId: 't', at: 0, done: true, values });
+  assert.equal(nextKind(e({})).kind, 'W');
+  assert.equal(nextKind(e({ kind: 'W' })).kind, 'D');
+  assert.equal(nextKind(e({ kind: 'D' })).kind, 'F');
+  assert.equal(nextKind(e({ kind: 'F' })).kind, '');
+  assert.equal(setKind(e({ warm: 1 })), 'W');
+  const b = bestsBefore(t, [{ ...set(0, 60, 8), values: { weight: 60, reps: 8, kind: 'F' } }], 'bench', day(1));
+  assert.equal(b.weight, 60, 'a set to failure counts like a working set');
+});

@@ -19,8 +19,20 @@ export function liftFields(t: Tracker): { weight?: Field; reps?: Field } {
   };
 }
 
-// A warm-up set: marked by tapping its number. It is logged like any set but never counts as a record or toward one.
-export const isWarmUp = (e: Entry | undefined): boolean => !!e && !!e.values.warm;
+// A set's kind, chosen by tapping its number: a working set (its number), W warm-up, D drop set, F to failure. A warm-up is
+// logged like any set but never counts as a record or toward one; drop and failure sets count like working sets.
+export type SetKind = 'W' | 'D' | 'F';
+export const SET_KINDS: (SetKind | '')[] = ['', 'W', 'D', 'F'];
+export const SET_KIND_NAME: Record<SetKind, string> = { W: 'Warm-up', D: 'Drop set', F: 'To failure' };
+export function setKind(e: Entry | undefined): SetKind | '' {
+  if (!e) return '';
+  const k = e.values.kind;
+  if (k === 'W' || k === 'D' || k === 'F') return k;
+  return e.values.warm ? 'W' : '';
+}
+export const isWarmUp = (e: Entry | undefined): boolean => setKind(e) === 'W';
+// The next kind when its number is tapped; `warm` is cleared, as `kind` now holds it.
+export const nextKind = (e: Entry | undefined): { kind: SetKind | ''; warm: '' } => ({ kind: SET_KINDS[(SET_KINDS.indexOf(setKind(e)) + 1) % SET_KINDS.length], warm: '' });
 
 export interface Bests { weight: number; e1rm: number; seen: boolean }
 

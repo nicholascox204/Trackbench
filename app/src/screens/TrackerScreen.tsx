@@ -31,7 +31,7 @@ import { RunCard, useRun } from './RunRecorder';
 import { SpanClockCard } from './SpanClockCard';
 import { stockLeft, stockText } from '../core/stock';
 import { RouteMap } from '../ui/RouteMap';
-import { bestsBefore, isWarmUp, liftFields, platesFor, recordOf } from '../core/records';
+import { SET_KIND_NAME, bestsBefore, liftFields, nextKind, platesFor, recordOf, setKind } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
 import { useAutoValue } from '../core/autoValue';
@@ -163,11 +163,11 @@ function RowSlot({
         const prev = t.tools.previous ? previousRow(entries, slot.id, r, day) : null;
         const done = !!e?.done;
         const pr = recordOf(t, e, bests);
-        const warm = isWarmUp(e);
+        const kind = setKind(e);
         return (
           <View key={r} style={[s.row, { marginBottom: 4 }]}>
-            <Tap disabled={!editable} accessibilityLabel={warm ? 'Warm-up set, tap to make it a working set' : 'Set number, tap to mark as a warm-up'} onPress={() => setRow(t.id, day, slot.id, r, { values: { warm: warm ? '' : 1 } })} style={{ width: 28, paddingVertical: 10 }}>
-              <Text accessibilityLabel={pr ? 'Personal record' : undefined} style={{ color: pr ? colors.accent : warm ? colors.accent : colors.muted, fontSize: pr || warm ? 12 : 15, fontWeight: pr || warm ? '800' : '600', opacity: warm ? 0.7 : 1 }}>{pr ? 'PR' : warm ? 'W' : r + 1}</Text>
+            <Tap disabled={!editable} accessibilityLabel={kind ? `${SET_KIND_NAME[kind]}, tap to change` : 'Set number, tap for warm-up, drop set or to failure'} onPress={() => setRow(t.id, day, slot.id, r, { values: nextKind(e) })} style={{ width: 28, paddingVertical: 10 }}>
+              <Text accessibilityLabel={pr ? 'Personal record' : undefined} style={{ color: pr || kind ? colors.accent : colors.muted, fontSize: pr || kind ? 12 : 15, fontWeight: pr || kind ? '800' : '600', opacity: kind === 'W' ? 0.7 : 1 }}>{pr ? 'PR' : kind || r + 1}</Text>
             </Tap>
             {nf.map((f) => {
               const raw = e?.values[f.id];

@@ -12,7 +12,8 @@ import { averagePace, climbMeters, currentPace, elapsedMs, encodeRoute, type Run
 import {
   allowScreenOff, beginRun, voiceEvery, setVoiceEvery, clearRun, discardRun, finishRun, hereNow, onHere, onRun, pauseRun, prepareRun, recordsInBackground, resumeRun, runState, setSpoken, spoken,
 } from '../core/runSession';
-import { logFree } from '../core/store';
+import { logFree, useAppState } from '../core/store';
+import { sameRoute } from '../core/routes';
 import { startOfDay } from '../core/time';
 import { fieldUnit } from '../core/units';
 import type { Settings, Tracker } from '../core/types';
@@ -72,6 +73,9 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
   const climb = (m: number) => (unit === 'mi' ? `${Math.round(m * 3.28084)} ft` : `${m} m`);
   const active = s.status === 'running' || s.status === 'paused';
   useAwake(active);
+  const { state: app } = useAppState();
+  const same = s.status === 'done' && dist && time ? sameRoute(s.points, s.meters / 1000, app.entries.filter((e) => e.trackerId === t.id), dist.id, time.id) : { count: 0 };
+  const thisMin = elapsedMs(s, now) / 60000;
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
   useEffect(() => onHere(setHere), []);
   useEffect(() => { if (runState().status === 'idle') void prepareRun().then((e) => setError(e ?? '')); }, []);
@@ -86,6 +90,7 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
     const values: Record<string, number | string> = { route: encodeRoute(simplifyRoute(s.points)) };
     if (dist) values[dist.id] = Math.round(s.meters) / 1000; // held in km
     if (time) values[time.id] = Math.max(1, Math.round(elapsedMs(s, now) / 60000));
+    values.secs = Math.round(elapsedMs(s, now) / 1000); // the exact time, so runs on the same route compare to the second
     logFree(t.id, values, startOfDay(s.points[0]?.t ?? Date.now()));
     clearRun();
     onClose();
@@ -150,6 +155,12 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
 
           {error ? <Note>{error}</Note> : null}
           {s.status === 'idle' && !error && signal ? <Note>{signal}</Note> : null}
+          {same.count > 0 && same.best ? (
+            <View style={{ marginTop: 16, padding: 12, borderRadius: 12, backgroundColor: colors.raised }}>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{thisMin < same.best.minutes ? 'Your fastest on this route' : `${clock((thisMin - same.best.minutes) * 60000)} off your best on this route`}</Text>
+              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{`You have run it ${same.count} time${same.count === 1 ? '' : 's'} before. Best ${clock(same.best.minutes * 60000)}, on ${new Date(same.best.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}.`}</Text>
+            </View>
+          ) : null}
           {s.status === 'done' && s.meters < 50 ? <Note>This run is very short. Save it anyway, or discard it.</Note> : null}
           {active && !recordsInBackground() && Platform.OS !== 'web' ? (
             <View style={{ alignItems: 'center' }}>
