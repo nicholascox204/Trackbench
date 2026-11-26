@@ -42,7 +42,7 @@ test('a tracker carries its own target (what a good day is); anything beyond tha
     assert.ok(lifting ? d.success.mode === 'plan' : d.success.mode === 'logged' || d.success.mode === 'clean', `${t.id} counts a day by its starting target`);
     assert.ok((d.goals ?? []).every((g) => g.id === 'sched'), `${t.id} has no goal of its own, only the one its rhythm implies`);
   }
-  for (const id of ['habit', 'running', 'spending', 'gym-split']) assert.ok(!summaryLines(tpl(id), settings).some((l) => l.label === 'Goals') && summaryLines(tpl(id), settings).some((l) => l.label === 'Target'), `${id} summary has a Target row and no Goals row`);
+  for (const id of ['habit', 'running', 'spending', 'gym-split']) assert.ok(!summaryLines(tpl(id), settings).some((l) => l.label === 'Goals') && !summaryLines(tpl(id), settings).some((l) => l.label === 'Target'), `${id} summary has no Goals or Target row (goals live apart from setup)`);
 });
 
 test('names: empty and already used are problems, case and spaces ignored', () => {

@@ -1865,3 +1865,7 @@ Left for Nick as judgement calls: Chores, Pet care and Language carry example li
 ## 2026-11-26: No example lists
 
 Asked whether Chores, Pet care and Language should start with their example items, Nick said no: he does not want example lists at all. The entry part should be set for the person, and if it is not clear how to fill a list without an example, that is a failure of the tools, not a reason for sample content. The unused example lists were removed from those three presets; plans keep starting empty.
+
+## 2026-11-26: Target leaves setup; restore moves to Settings; the bar pins Overview, New and Settings
+
+Nick decided goals and progress will be reworked later as something that deals with the data after the fact, separate from setup, so the Target row is gone from the setup summary (the Target screen and the progress engine stay in the code for that rework, and a preset's own target such as Caffeine's limit still applies). Restoring deleted trackers no longer appears on the new-tracker screen; it already lives in Settings. The bottom bar now pins Overview, New and Settings at the right end behind a thin divider, so they are always one tap away, and only the trackers scroll. The cost: on a narrow phone about two or three trackers show at once instead of five.

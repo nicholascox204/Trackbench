@@ -494,8 +494,8 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
     : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count')
     : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
   lines.push({ label: 'You log', value: logging, step: 'record' });
-  // A plain check-in can only count a tap, so its target says nothing new; an avoid tracker's (a day with nothing logged) does.
-  if (!(a.record === 'done' && !a.avoid)) lines.push({ label: 'Target', value: targetText(a, draft, settings), step: 'target' }); // what makes a good day: where progress is measured from
+  // No Target row: goals and progress are worked out after the fact, apart from setup (decided 2026-11-26). A preset's own
+  // target (Caffeine at most 4) still applies; the Target screen stays in the code for when goals are reworked. // what makes a good day: where progress is measured from
 
   // What it shows: the numbers it works out, and the small things shown beside your entries.
   const hasLatest = draft.measures.some((m) => m.calc.op === 'latest');

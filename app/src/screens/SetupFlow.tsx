@@ -28,7 +28,6 @@ import { RecordStep } from './RecordStep';
 import { BackButton, ScreenHeader } from '../ui/kit';
 import { Dropdown } from '../ui/Dropdown';
 import { NameCard } from './NameCard';
-import { DeletedList } from './DeletedList';
 import { StartPicker } from './StartPicker';
 import type { Template } from '../core/templates';
 import { Button, Card, Chip, Icon, Muted, Option, Stepper, Toggle, colors, s, topPad, Tap, Scroll, useTopPad } from '../ui/kit';
@@ -231,7 +230,6 @@ export function SetupFlow({
         </Text>
 
         {/* 1 start: templates, or build your own */}
-        {step === 'start' && !editing && state.trackers.length === 0 ? <DeletedList onRestored={cancel} /> : null}
         {step === 'start' ? <StartPicker onTemplate={pickTemplate} onScratch={() => pickStart('blank')} /> : null}
 
         {/* 2 record: when building your own it also holds the name, so it is one screen */}

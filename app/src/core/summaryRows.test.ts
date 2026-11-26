@@ -2,7 +2,7 @@
 // how past days are set, with no empty or broken text, and what a preset calculates appears under "It shows".
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { draftFromAnswers, summaryLines } from './setup';
+import { draftFromAnswers, summaryLines, targetText } from './setup';
 import { refreshPatch } from './presetRefresh';
 import { TEMPLATES } from './templates';
 import type { Settings, Tracker } from './types';
@@ -61,20 +61,13 @@ test('a tracker made from a template can be rebuilt from it as it is now, keepin
   assert.equal(refreshPatch({ ...t, templateId: undefined }, SETTINGS), null, 'a tracker with no template is left alone');
 });
 
-test("every preset says what a good day is, in a Target row right after what it logs (a plain check-in has none: a tap is all it counts)", () => {
-  for (const t of TEMPLATES) {
-    const rows = summaryLines(t.make(), SETTINGS);
-    if (t.make().record === "done" && !t.make().avoid) { assert.ok(!rows.some((r) => r.label === "Target"), t.id + ": no Target row"); continue; }
-    assert.equal(rows[1].label, "Target", t.id + ": second row");
-    assert.ok(rows[1].value.trim().length > 3, t.id + ": target reads \"" + rows[1].value + "\"");
-    assert.equal(rows[1].step, "target", t.id + ": opens the target screen");
-  }
+test("setup has no Target row: goals are worked out after the fact, apart from setup", () => {
+  for (const t of TEMPLATES) assert.ok(!summaryLines(t.make(), SETTINGS).some((r) => r.label === "Target"), t.id);
 });
 
-test("targets read the way they are set", () => {
-  const row = (id: string) => summaryLines(TEMPLATES.find((x) => x.id === id)!.make(), SETTINGS).find((r) => r.label === "Target")!.value;
-  assert.equal(row("caffeine"), "At most 4 cups a day", "caffeine keeps its limit, with the counter's own word");
-  assert.equal(row("water"), "Any entry counts", "water has no target yet (a starting one is still to be decided)");
-  assert.equal(row("no-alcohol"), "A day with nothing logged", "an avoid tracker is a clean day");
-  assert.match(row("gym-split"), /plan/i, "a planned tracker says it is about finishing the plan");
+test("targets still read the way they are set (for when goals come back)", () => {
+  const row = (id: string) => { const a = TEMPLATES.find((x) => x.id === id)!.make(); return targetText(a, draftFromAnswers(a, SETTINGS), SETTINGS); };
+  assert.equal(row("caffeine"), "At most 4 cups a day");
+  assert.equal(row("no-alcohol"), "A day with nothing logged");
+  assert.match(row("gym-split"), /plan/i);
 });

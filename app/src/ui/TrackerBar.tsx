@@ -1,4 +1,5 @@
-// The bottom bar. Every tracker is a place you can be, one tap away, and "New" and "Settings" sit at the end of the same row.
+// The bottom bar. Every tracker is a place you can be, one tap away. Overview, New and Settings are pinned at the right end and never
+// scroll away, so they are always one tap from anywhere; only the trackers scroll.
 // Each place is as wide as its name needs (the name is measured, and the highlight is exactly that wide), and the space between one
 // place and the next is the same everywhere. When everything fits the row is centred and the gaps open up a little; when it does not
 // the row scrolls and an arrow shows in the margin on whichever side has more. Each tracker shows whether you have logged today (a green
@@ -41,8 +42,11 @@ export function TrackerBar({
   const labels = [...trackers.map((t) => t.name), 'Overview', 'New', 'Settings'];
   const unmeasured = [...new Set(labels.filter((l) => !labelWidth.has(l)))];
   const boxOf = (name: string): number => Math.max(MIN_BOX, Math.ceil(labelWidth.get(name) ?? name.length * 6) + 2 + 2 * PAD);
-  const widths = labels.map(boxOf);
-  const avail = screenW - 2 * NAV.edge;
+  const widths = trackers.map((t) => boxOf(t.name));
+  const pinW = ['Overview', 'New', 'Settings'].map(boxOf);
+  const PIN_GAP = 2;
+  const pinnedW = pinW.reduce((a, b) => a + b, 0) + PIN_GAP * 2 + 10; // the three pinned places, their gaps and the divider
+  const avail = Math.max(60, screenW - 2 * NAV.edge - pinnedW);
   const total = widths.reduce((a, b) => a + b, 0);
   const fits = total + GAP * (widths.length - 1) <= avail;
   const gap = fits && widths.length > 1 ? Math.min(Math.max(GAP, (avail - total) / (widths.length - 1)), 22) : GAP; // equal everywhere
@@ -180,29 +184,32 @@ export function TrackerBar({
               </Tap>
             );
           })}
-          <Tap onPress={() => { close(); onOverview(); }} style={{ width: widths[trackers.length], height: NAV.height, marginRight: gap, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ alignItems: 'center', paddingVertical: 3 }}>
-              <Icon name="stats-chart-outline" size={NAV.icon + 2} color={overviewOpen ? colors.accent : colors.muted} />
-              <Text style={{ color: overviewOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: overviewOpen ? '800' : '600', marginTop: 2 }}>Overview</Text>
-            </View>
-          </Tap>
-          <Tap onPress={() => { close(); onAdd(); }} style={{ width: widths[trackers.length + 1], height: NAV.height, marginRight: gap, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ alignItems: 'center', paddingVertical: 3 }}>
-              <Icon name="add-circle-outline" size={NAV.icon + 2} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 10, lineHeight: 12, fontWeight: '600', marginTop: 2 }}>New</Text>
-            </View>
-          </Tap>
-          <Tap onPress={() => { close(); onSettings(); }} style={{ width: widths[trackers.length + 2], height: NAV.height, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ alignItems: 'center', paddingVertical: 3 }}>
-              <Icon name="settings-outline" size={NAV.icon + 2} color={settingsOpen ? colors.accent : colors.muted} />
-              <Text style={{ color: settingsOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: settingsOpen ? '800' : '600', marginTop: 2 }}>Settings</Text>
-            </View>
-          </Tap>
         </ScrollView>
 
         <View style={{ width: NAV.edge, alignItems: 'center' }} pointerEvents="none">
           {moreRight ? <Icon name="chevron-forward" size={16} color={colors.accent} /> : null}
         </View>
+        {/* pinned: always here, whatever the trackers are scrolled to */}
+        <View style={{ width: px(1), alignSelf: 'stretch', marginVertical: 10, marginRight: 9, backgroundColor: colors.border }} />
+        <Tap onPress={() => { close(); onOverview(); }} style={{ width: pinW[0], height: NAV.height, marginRight: PIN_GAP, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ alignItems: 'center', paddingVertical: 3 }}>
+            <Icon name="stats-chart-outline" size={NAV.icon + 2} color={overviewOpen ? colors.accent : colors.muted} />
+            <Text style={{ color: overviewOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: overviewOpen ? '800' : '600', marginTop: 2 }}>Overview</Text>
+          </View>
+        </Tap>
+        <Tap onPress={() => { close(); onAdd(); }} style={{ width: pinW[1], height: NAV.height, marginRight: PIN_GAP, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ alignItems: 'center', paddingVertical: 3 }}>
+            <Icon name="add-circle-outline" size={NAV.icon + 2} color={colors.accent} />
+            <Text style={{ color: colors.accent, fontSize: 10, lineHeight: 12, fontWeight: '600', marginTop: 2 }}>New</Text>
+          </View>
+        </Tap>
+        <Tap onPress={() => { close(); onSettings(); }} style={{ width: pinW[2], height: NAV.height, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ alignItems: 'center', paddingVertical: 3 }}>
+            <Icon name="settings-outline" size={NAV.icon + 2} color={settingsOpen ? colors.accent : colors.muted} />
+            <Text style={{ color: settingsOpen ? colors.accent : colors.muted, fontSize: 10, lineHeight: 12, fontWeight: settingsOpen ? '800' : '600', marginTop: 2 }}>Settings</Text>
+          </View>
+        </Tap>
+        <View style={{ width: 4 }} />
       </View>
     </View>
   );
