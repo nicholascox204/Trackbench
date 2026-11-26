@@ -33,6 +33,8 @@ import type { Template } from '../core/templates';
 import { Button, Card, Chip, Icon, Muted, Option, Stepper, Toggle, colors, s, topPad, Tap, Scroll, useTopPad } from '../ui/kit';
 import { SmallButton } from '../ui/kit';
 import { px } from '../ui/theme';
+import { canRecordRun } from '../core/runImport';
+import { RunFileImport } from './RunFileImport';
 
 const QUESTIONS: Record<StepKey, string> = {
   start: 'What do you want to track?',
@@ -262,7 +264,9 @@ export function SetupFlow({
               <Toggle label="Countdown" value={!!a.extras.countdown} onChange={(v) => set({ extras: { ...a.extras, countdown: v } })} />
               {a.extras.countdown ? intoPicker('countdownInto') : null}
               {stepsFieldIn(draft.fields) ? <Toggle label="Steps from my phone" value={a.extras.auto ?? counterAvailable()} onChange={(v) => set({ extras: { ...a.extras, auto: v } })} /> : null}
+              {draft.input === 'form' && canRecordRun(draft.fields) ? <Toggle label="Record runs with GPS" value={!!a.extras.gps} onChange={(v) => set({ extras: { ...a.extras, gps: v } })} /> : null}
             </Card>
+            {existing && canRecordRun(existing.fields) ? <RunFileImport t={existing} /> : null}
           </View>
         ) : null}
 

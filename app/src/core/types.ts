@@ -220,7 +220,7 @@ export interface Tracker {
   plan: PlanVersion[];
   schedule?: Schedule; // when it is expected; unset means derived from the plan, else every day
   window?: ScheduleWindow; // only active between these dates
-  tools: { previous: boolean; lockPast: boolean; countdown?: boolean; timer?: boolean; timerInto?: string; countdownInto?: string }; // countdown: set a time and count down; timer: count up. Both sit on the page
+  tools: { previous: boolean; lockPast: boolean; countdown?: boolean; timer?: boolean; timerInto?: string; countdownInto?: string; gps?: boolean }; // gps: a Record a run button that records the route with the phone's GPS // countdown: set a time and count down; timer: count up. Both sit on the page
   terms?: Terms;
   planStyle?: 'sets' | 'items'; // planned trackers: each item is filled in each time (like sets), or ticked with its own numbers (like a meal)
   goals?: GoalDef[]; // quests added on the tracker page

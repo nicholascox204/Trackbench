@@ -2,13 +2,15 @@
 // The run's start sets the entry's time, so a run imported later lands on the day it happened.
 
 import { parseGpx, runStats } from './gpx';
-import type { Tracker } from './types';
+import type { Field, Tracker } from './types';
 
 export interface RunFill { values: Record<string, number>; at?: number; meters: number; minutes: number; climb: number }
 
-export function canImportRun(t: Tracker): boolean {
-  return t.fields.some((f) => f.unitKind === 'distance') && t.fields.some((f) => f.type === 'duration');
+// A tracker can take a run when it records a distance and a time.
+export function canRecordRun(fields: Field[]): boolean {
+  return fields.some((f) => f.unitKind === 'distance') && fields.some((f) => f.type === 'duration');
 }
+export const canImportRun = (t: Tracker): boolean => canRecordRun(t.fields);
 
 export function runFill(t: Tracker, gpxText: string): RunFill | undefined {
   const pts = parseGpx(gpxText);

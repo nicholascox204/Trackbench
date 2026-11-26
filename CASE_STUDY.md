@@ -1812,3 +1812,9 @@ Nick asked for live run recording, checked against the best running apps and esp
 - GPS rules: fixes less accurate than 35 m and impossible jumps are dropped, standing still adds nothing, pauses leave out their time and the gap.
 - **Maps without a map library:** standard map tiles placed as images with the route drawn over them, so no native module or Google key is needed and it works in the web preview too. Tiles are from OpenStreetMap for now; its policy allows light use only, so a tile provider with an agreement (MapTiler, Stadia) is needed before release.
 Not matched yet: choosing how often and what the voice says, saved and planned routes, heart rate from a watch, other activity types (ride, walk), and a crash-safe save of a run in progress. Live tracking for others and training plans belong to later layers.
+
+## 2026-11-26: Imports live in setup; tracker screens stay simple
+
+Testing on his phone, Nick found the run screen stuck on "Finding your location" with no permission prompt. The screen showed that message before Start was pressed, and nothing asked for location until then. Now opening the run screen asks for location straight away and shows where you are before you start, and every failure shows a plain sentence. Screen-off recording is tried first and falls back to recording while the app is open; on that fallback, a link asks for "Allow all the time" for the next run.
+
+He also set a principle: a tracker's own screen stays functional and simple. Features people do not need are fine as long as they do not get in the way and are easy to switch off, and imports belong in setup. So "Fill from a run file" left the tracker screen and became **Import runs** in the tracker's Tools step (several GPX files at once, each added on the day it was run, with its map). **Record runs with GPS** is now a tool toggle like the stopwatch, on by default for Running and listed in the summary's Tools row.

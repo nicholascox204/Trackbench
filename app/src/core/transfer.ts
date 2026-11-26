@@ -179,7 +179,7 @@ export function parseStructure(text: string): ParseResult<TrackerDraft> {
     derived: derived as TrackerDraft['derived'],
     success: t.success as TrackerDraft['success'],
     plan: planDays ? [{ from: dayKeyOf(Date.now()), days: planDays, ...(t.planSame === true ? { same: true } : {}), ...(t.planRotation === true ? { rotation: true } : {}) }] : [],
-    tools: { previous: tools.previous !== false, lockPast: tools.lockPast === true, ...(tools.countdown === true ? { countdown: true } : {}), ...(tools.timer === true ? { timer: true } : {}), ...(tools.countdown === true && typeof tools.countdownInto === 'string' && fields.some((f) => f.id === tools.countdownInto && canTimerFill(f as Field)) ? { countdownInto: tools.countdownInto } : {}), ...(tools.timer === true && typeof tools.timerInto === 'string' && fields.some((f) => f.id === tools.timerInto && canTimerFill(f as Field)) ? { timerInto: tools.timerInto } : {}) },
+    tools: { previous: tools.previous !== false, lockPast: tools.lockPast === true, ...(tools.countdown === true ? { countdown: true } : {}), ...(tools.timer === true ? { timer: true } : {}), ...(tools.countdown === true && typeof tools.countdownInto === 'string' && fields.some((f) => f.id === tools.countdownInto && canTimerFill(f as Field)) ? { countdownInto: tools.countdownInto } : {}), ...(tools.timer === true && typeof tools.timerInto === 'string' && fields.some((f) => f.id === tools.timerInto && canTimerFill(f as Field)) ? { timerInto: tools.timerInto } : {}), ...(tools.gps === true ? { gps: true } : {}) },
   };
   const schedule = readSchedule(t.schedule);
   if (schedule) draft.schedule = schedule;

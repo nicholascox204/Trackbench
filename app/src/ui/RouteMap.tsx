@@ -7,12 +7,12 @@ import { colors } from './kit';
 
 const HEADERS = { 'User-Agent': 'Trackbench/1.0 (route map)' }; // the tile servers ask apps to name themselves
 
-export function RouteMap({ pts, w, h, live }: { pts: { lat: number; lon: number }[]; w: number; h: number; live?: boolean }) {
+export function RouteMap({ pts, w, h, live, empty }: { pts: { lat: number; lon: number }[]; w: number; h: number; live?: boolean; empty?: string }) {
   const v = fitView(pts, w, h, 28, live ? 17 : 17);
   if (!v || pts.length === 0) {
     return (
       <View style={{ width: w, height: h, borderRadius: 12, backgroundColor: colors.raised, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.muted, fontSize: 14 }}>{live ? 'Finding your location…' : 'No route'}</Text>
+        <Text style={{ color: colors.muted, fontSize: 14 }}>{empty ?? (live ? 'Finding your location…' : 'No route')}</Text>
       </View>
     );
   }

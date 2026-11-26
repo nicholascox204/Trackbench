@@ -24,7 +24,7 @@ import { isChanged } from '../core/dirty';
 import { MonthCalendar, startOfMonth, type DayState } from '../ui/MonthCalendar';
 import { NumInput } from '../ui/NumInput';
 import { AvoidCard } from './AvoidCard';
-import { canImportRun, runFill } from '../core/runImport';
+import { canImportRun } from '../core/runImport';
 import { decodeRoute } from '../core/runRecorder';
 import { RunRecorder, useRun } from './RunRecorder';
 import { RouteMap } from '../ui/RouteMap';
@@ -306,26 +306,10 @@ function FreeForm({
     logFree(t.id, draft, day);
     if (lf) setDraft((p) => ({ ...p, [lf.id]: '' })); // the next entry is something new
   };
-  const [runNote, setRunNote] = useState('');
   const [recording, setRecording] = useState(false);
   const mapW = Math.min(useWindowDimensions().width, 600) - 32;
   const run = useRun();
   const runLive = run.status === 'running' || run.status === 'paused' || run.status === 'done';
-  const importRun = async () => {
-    try {
-      const DocumentPicker = await import('expo-document-picker');
-      const res = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
-      if (res.canceled || !res.assets?.[0]) return;
-      const text = await (await fetch(res.assets[0].uri)).text();
-      const fill = runFill(t, text);
-      if (!fill) return setRunNote('That file has no route in it. Use a GPX file from your watch or running app.');
-      setDraft((p) => ({ ...p, ...fill.values }));
-      const other = fill.at !== undefined && startOfDay(fill.at) !== day;
-      setRunNote(`Filled from the file${fill.climb > 0 ? `, ${fill.climb} m of climb` : ''}.${other ? ` This run was on ${formatDay(startOfDay(fill.at!))}; pick that day above to log it there.` : ''}`);
-    } catch {
-      setRunNote('Could not read that file.');
-    }
-  };
   const fieldsJsx = t.fields.map((f) => (
         <View key={f.id} style={{ marginBottom: 12 }}>
           <FieldInput f={f} value={draft[f.id]} settings={settings} onChange={(v) => {
@@ -342,16 +326,10 @@ function FreeForm({
       {editable ? (
         <Card tone="new" keep>
           <StepGroup>{fieldsJsx}</StepGroup>
-          {canImportRun(t) ? (
+          {(t.tools.gps && canImportRun(t)) || runLive ? (
             <Button label={runLive ? (run.status === 'done' ? 'Your run is ready to save' : `Run in progress · ${(run.meters / 1000).toFixed(2)} km`) : 'Record a run'} onPress={() => setRecording(true)} />
           ) : null}
           {recording ? <RunRecorder t={t} settings={settings} onClose={() => setRecording(false)} /> : null}
-          {canImportRun(t) ? (
-            <Tap onPress={importRun} style={{ alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 6 }}>
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>Fill from a run file (GPX)</Text>
-            </Tap>
-          ) : null}
-          {runNote ? <Text style={{ color: colors.muted, fontSize: 13, marginBottom: 10 }}>{runNote}</Text> : null}
           <Button
             label={t.daily ? (saved ? 'Saved' : 'Save today') : 'Log'} onPress={save}
             done={saved}

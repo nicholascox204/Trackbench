@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Text, View, useWindowDimensions } from 'react-native';
 import { averagePace, climbMeters, currentPace, elapsedMs, encodeRoute, type RunState } from '../core/runRecorder';
-import { beginRun, clearRun, discardRun, finishRun, onRun, pauseRun, recordsInBackground, resumeRun, runState, setSpoken, spoken } from '../core/runSession';
+import { allowScreenOff, beginRun, clearRun, discardRun, finishRun, hereNow, onHere, onRun, pauseRun, prepareRun, recordsInBackground, resumeRun, runState, setSpoken, spoken } from '../core/runSession';
 import { logFree } from '../core/store';
 import { startOfDay } from '../core/time';
 import { fieldUnit } from '../core/units';
@@ -36,7 +36,11 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
   const time = t.fields.find((f) => f.type === 'duration');
   const unit: 'km' | 'mi' = dist && fieldUnit(dist, settings) === 'mi' ? 'mi' : 'km';
   const unitM = unit === 'mi' ? 1609.344 : 1000;
+  const [here, setHere] = useState(hereNow());
+  const [askedOff, setAskedOff] = useState(false);
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  useEffect(() => onHere(setHere), []);
+  useEffect(() => { if (runState().status === 'idle') void prepareRun().then((e) => setError(e ?? '')); }, []);
 
   const go = async () => { setError(''); const e = await beginRun(unit); if (e) setError(e); };
   const save = () => {
@@ -66,7 +70,7 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
           <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>{s.status === 'done' ? 'Your run' : 'Record a run'}</Text>
           <Tap onPress={onClose} style={{ padding: 8 }}><Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>{s.status === 'running' || s.status === 'paused' ? 'Hide' : 'Close'}</Text></Tap>
         </View>
-        <RouteMap pts={s.points} w={w} h={mapH} live={s.status !== 'done'} />
+        <RouteMap pts={s.points.length > 0 ? s.points : here ? [here] : []} w={w} h={mapH} live={s.status !== 'done'} empty={error ? 'No location yet' : undefined} />
         <View style={{ flexDirection: 'row', marginTop: 16 }}>
           {stat('Time', clock(ms))}
           {stat(unit === 'mi' ? 'Miles' : 'Kilometres', (s.meters / unitM).toFixed(2))}
@@ -83,7 +87,12 @@ export function RunRecorder({ t, settings, onClose }: { t: Tracker; settings: Se
         ) : null}
 
         {error ? <Text style={{ color: colors.muted, fontSize: 14, marginTop: 12 }}>{error}</Text> : null}
-        {s.status === 'running' && !recordsInBackground() ? <Text style={{ ...small, marginTop: 10 }}>Keep Trackbench open: background location is off, so the run only records while the app is on screen.</Text> : null}
+        {s.status === 'running' && !recordsInBackground() ? (
+          <View style={{ marginTop: 10 }}>
+            <Text style={small}>Keep Trackbench open: this run only records while the app is on screen.</Text>
+            {askedOff ? null : <Tap onPress={() => { setAskedOff(true); void allowScreenOff(); }} style={{ paddingVertical: 6 }}><Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>Allow recording with the screen off (from your next run)</Text></Tap>}
+          </View>
+        ) : null}
 
         <View style={{ flex: 1 }} />
         {s.status === 'idle' || s.status === 'done' ? null : (
