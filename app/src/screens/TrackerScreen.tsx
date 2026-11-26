@@ -27,6 +27,7 @@ import { AvoidCard } from './AvoidCard';
 import { canImportRun } from '../core/runImport';
 import { decodeRoute } from '../core/runRecorder';
 import { RunCard, useRun } from './RunRecorder';
+import { SpanClockCard } from './SpanClockCard';
 import { RouteMap } from '../ui/RouteMap';
 import { bestsBefore, liftFields, oneRepMax, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
@@ -323,6 +324,7 @@ function FreeForm({
   return (
     <View>
       {editable && ((t.tools.gps && canImportRun(t)) || runLive) ? <RunCard t={t} settings={settings} /> : null}
+      {editable && t.tools.clock ? <SpanClockCard t={t} /> : null}
       {editable && t.tools.gps && canImportRun(t) ? <Text style={{ color: colors.muted, fontSize: 13, marginBottom: 6 }}>Or add one by hand</Text> : null}
       {editable ? (
         <Card tone="new" keep>

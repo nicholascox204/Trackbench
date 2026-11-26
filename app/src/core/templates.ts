@@ -37,7 +37,7 @@ const named = (id: string, name: string): Field => ({ id, name, type: 'text', la
 
 // Which starting points switch on the Countdown (a set time, like a rest between sets) or the Timer (counts up, like a session).
 // Any custom tracker can switch the same two on in Extras; nothing here is only reachable from a template.
-export const TEMPLATE_TOOLS: Record<string, { countdown?: boolean; timer?: boolean; gps?: boolean }> = {
+export const TEMPLATE_TOOLS: Record<string, { countdown?: boolean; timer?: boolean; gps?: boolean; clock?: boolean }> = {
   'gym-split': { countdown: true },
   'full-body': { countdown: true },
   'workout-log': { countdown: true },
@@ -45,7 +45,9 @@ export const TEMPLATE_TOOLS: Record<string, { countdown?: boolean; timer?: boole
   meditate: { countdown: true, timer: true },
   study: { countdown: true, timer: true },
   practice: { countdown: true, timer: true },
-  running: { gps: true }, // recording the run times it; the stopwatch is still in Tools for anyone who wants it
+  running: { gps: true },
+  fasting: { clock: true },
+  sleep: { clock: true }, // recording the run times it; the stopwatch is still in Tools for anyone who wants it
   reading: { timer: true },
   language: { timer: true },
   'time-log': { timer: true },
