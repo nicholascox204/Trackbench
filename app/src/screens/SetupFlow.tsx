@@ -35,6 +35,8 @@ import { SmallButton } from '../ui/kit';
 import { px } from '../ui/theme';
 import { canRecordRun } from '../core/runImport';
 import { RunFileImport } from './RunFileImport';
+import { LiftFileImport } from './LiftFileImport';
+import { liftFields } from '../core/records';
 import { spanPair } from '../core/spanClock';
 
 const QUESTIONS: Record<StepKey, string> = {
@@ -269,6 +271,7 @@ export function SetupFlow({
               {draft.input === 'form' && spanPair(draft) ? <Toggle label={`Clock for ${spanPair(draft)!.measure.name.toLowerCase()}`} value={!!a.extras.clock} onChange={(v) => set({ extras: { ...a.extras, clock: v } })} /> : null}
             </Card>
             {existing && canRecordRun(existing.fields) ? <RunFileImport t={existing} /> : null}
+            {existing && existing.input === 'plan' && liftFields(existing).weight ? <LiftFileImport t={existing} settings={settings} /> : null}
           </View>
         ) : null}
 

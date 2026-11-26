@@ -6,10 +6,11 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { suggestExercises } from '../core/exercises';
 import { liftFields } from '../core/records';
+import { importSlotId } from '../core/liftImport';
 import { Text, TextInput, View } from 'react-native';
 import { WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
 import { scheduleOf } from '../core/schedule';
-import { mutatePlanDay, updateTracker } from '../core/store';
+import { getState, mutatePlanDay, updateTracker } from '../core/store';
 import { DEFAULT_TERMS, plural, termsOf } from '../core/terms';
 import type { Entry, PlanDay, Settings, Slot, Tracker } from '../core/types';
 import { defaultStep, fieldUnit, formatNumber, fromDisplay, round2, toDisplay } from '../core/units';
@@ -167,15 +168,18 @@ export function AddSlot({
   const hints = lifting ? suggestExercises(name, [...new Set(t.plan.flatMap((v) => v.days.flatMap((d) => d.slots.map((x) => x.name))).filter(Boolean))]) : [];
 
   const addNew = (init: Partial<Slot>) => {
-    const id = newId();
+    const id = init.id ?? newId();
     mutatePlanDay(t.id, weekday, (d) => {
-      d.slots.push(rowKind ? { id, name: '', sets: 3, ...init } : { id, name: '', values: {}, ...init });
+      d.slots.push(rowKind ? { name: '', sets: 3, ...init, id } : { name: '', values: {}, ...init, id });
     });
     return id;
   };
   const addNamed = () => {
     if (!name.trim()) return;
-    const id = addNew(rowKind ? { name: name.trim(), sets, ...(range.trim() ? { range: range.trim() } : {}) } : { name: name.trim(), values: { ...values } });
+    // An exercise whose history was imported (from Strong or Hevy) under its name takes that id, so its sets are its history.
+    const imported = importSlotId(name.trim());
+    const known = rowKind && getState().entries.some((e) => e.trackerId === t.id && e.slotId === imported) && !t.plan.some((v) => v.days.some((d) => d.slots.some((x) => x.id === imported)));
+    const id = addNew(rowKind ? { ...(known ? { id: imported } : {}), name: name.trim(), sets, ...(range.trim() ? { range: range.trim() } : {}) } : { name: name.trim(), values: { ...values } });
     setName('');
     setValues({});
     input.current?.blur(); // adding one closes the keyboard; the next one starts when you press Add again

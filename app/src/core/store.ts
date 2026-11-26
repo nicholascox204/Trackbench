@@ -503,6 +503,14 @@ export function saveDaily(trackerId: string, values: Entry['values'], day: numbe
   setState({ ...state, entries: state.entries.map((e) => (e.id === existing.id ? { ...e, values: { ...e.values, ...values } } : e)) });
 }
 
+// Entries brought in from a file (an import), added in one go.
+export function addEntries(entries: Entry[]): void {
+  if (entries.length === 0) return;
+  setState({ ...state, entries: [...state.entries, ...entries] });
+}
+
+export function newEntryId(): string { return makeId(); }
+
 export function logFree(trackerId: string, values: Entry['values'] = {}, day: number = startOfDay(Date.now())): void {
   const entry: Entry = { id: makeId(), trackerId, at: atFor(day), done: true, values };
   setState({ ...state, entries: [...state.entries, entry] });
