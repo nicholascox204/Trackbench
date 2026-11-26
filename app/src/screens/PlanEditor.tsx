@@ -4,6 +4,8 @@
 // language practice, rehab or anything else.
 
 import { useRef, useState, type ComponentRef } from 'react';
+import { suggestExercises } from '../core/exercises';
+import { liftFields } from '../core/records';
 import { Text, TextInput, View } from 'react-native';
 import { WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
 import { scheduleOf } from '../core/schedule';
@@ -161,6 +163,8 @@ export function AddSlot({
   const [open, setOpen] = useState(first); // an empty day opens the card; otherwise it is a slim button until you need it
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const rowKind = t.planStyle ? t.planStyle === 'sets' : t.measures.some((m) => m.id === 'sets') || day.slots.some(isRowSlot);
+  const lifting = rowKind && !!liftFields(t).weight; // suggestions from the exercise library while typing a name
+  const hints = lifting ? suggestExercises(name, [...new Set(t.plan.flatMap((v) => v.days.flatMap((d) => d.slots.map((x) => x.name))).filter(Boolean))]) : [];
 
   const addNew = (init: Partial<Slot>) => {
     const id = newId();
@@ -203,6 +207,11 @@ export function AddSlot({
         ref={input} style={[s.input, { marginBottom: 10 }]} value={name} onChangeText={setName} onSubmitEditing={() => input.current?.blur()}
         returnKeyType="done" placeholder={`${terms.item} name`} placeholderTextColor={colors.muted}
       />
+      {lifting && hints.length > 0 ? (
+        <View style={[s.wrap, { marginTop: -4, marginBottom: 8 }]}>
+          {hints.map((h) => <Chip key={h.name} label={h.muscle ? `${h.name} · ${h.muscle}` : h.name} active={false} onPress={() => setName(h.name)} />)}
+        </View>
+      ) : null}
       {rowKind ? (
         <View style={{ marginBottom: 12 }}>
           <View style={[s.row, { justifyContent: 'space-between', marginBottom: 8 }]}>

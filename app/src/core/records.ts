@@ -19,6 +19,9 @@ export function liftFields(t: Tracker): { weight?: Field; reps?: Field } {
   };
 }
 
+// A warm-up set: marked by tapping its number. It is logged like any set but never counts as a record or toward one.
+export const isWarmUp = (e: Entry | undefined): boolean => !!e && !!e.values.warm;
+
 export interface Bests { weight: number; e1rm: number; seen: boolean }
 
 // The best done before a day for one exercise (planned slot). Values are base units.
@@ -27,7 +30,7 @@ export function bestsBefore(t: Tracker, entries: Entry[], slotId: string, day: n
   const out: Bests = { weight: 0, e1rm: 0, seen: false };
   if (!weight) return out;
   for (const e of entries) {
-    if (e.slotId !== slotId || !e.done || startOfDay(e.at) >= day) continue;
+    if (e.slotId !== slotId || !e.done || isWarmUp(e) || startOfDay(e.at) >= day) continue;
     const w = Number(e.values[weight.id]); const r = reps ? Number(e.values[reps.id]) : 1;
     if (!(w > 0)) continue;
     out.seen = true;
@@ -41,7 +44,7 @@ export type RecordKind = 'weight' | 'e1rm';
 
 // Whether a done set beats the earlier bests: the heaviest weight first, else the estimated max.
 export function recordOf(t: Tracker, e: Entry | undefined, bests: Bests): RecordKind | null {
-  if (!e?.done || !bests.seen) return null;
+  if (!e?.done || !bests.seen || isWarmUp(e)) return null;
   const { weight, reps } = liftFields(t);
   if (!weight) return null;
   const w = Number(e.values[weight.id]); const r = reps ? Number(e.values[reps.id]) : 1;

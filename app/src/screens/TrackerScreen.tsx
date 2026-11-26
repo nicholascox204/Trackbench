@@ -29,7 +29,7 @@ import { decodeRoute } from '../core/runRecorder';
 import { RunCard, useRun } from './RunRecorder';
 import { SpanClockCard } from './SpanClockCard';
 import { RouteMap } from '../ui/RouteMap';
-import { bestsBefore, liftFields, oneRepMax, platesFor, recordOf } from '../core/records';
+import { bestsBefore, isWarmUp, liftFields, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
 import { useAutoValue } from '../core/autoValue';
@@ -161,9 +161,12 @@ function RowSlot({
         const prev = t.tools.previous ? previousRow(entries, slot.id, r, day) : null;
         const done = !!e?.done;
         const pr = recordOf(t, e, bests);
+        const warm = isWarmUp(e);
         return (
           <View key={r} style={[s.row, { marginBottom: 4 }]}>
-            <Text accessibilityLabel={pr ? 'Personal record' : undefined} style={{ color: pr ? colors.accent : colors.muted, width: 28, fontSize: pr ? 12 : 15, fontWeight: pr ? '800' : '600' }}>{pr ? 'PR' : r + 1}</Text>
+            <Tap disabled={!editable} accessibilityLabel={warm ? 'Warm-up set, tap to make it a working set' : 'Set number, tap to mark as a warm-up'} onPress={() => setRow(t.id, day, slot.id, r, { values: { warm: warm ? '' : 1 } })} style={{ width: 28, paddingVertical: 10 }}>
+              <Text accessibilityLabel={pr ? 'Personal record' : undefined} style={{ color: pr ? colors.accent : warm ? colors.accent : colors.muted, fontSize: pr || warm ? 12 : 15, fontWeight: pr || warm ? '800' : '600', opacity: warm ? 0.7 : 1 }}>{pr ? 'PR' : warm ? 'W' : r + 1}</Text>
+            </Tap>
             {nf.map((f) => {
               const raw = e?.values[f.id];
               const shown = raw === undefined || raw === '' ? undefined : round2(toDisplay(f, Number(raw), settings));

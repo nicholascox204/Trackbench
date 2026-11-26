@@ -41,3 +41,10 @@ test('plates load heaviest first on each side, and say what cannot be made', () 
   assert.deepEqual(platesFor(20, 'kg').perSide, []);
   assert.equal(platesFor(101, 'kg').left, 1);
 });
+
+test('a warm-up set is never a record and never sets the bar', () => {
+  const warm: Entry = { ...set(0, 100, 5), values: { weight: 100, reps: 5, warm: 1 } };
+  const b = bestsBefore(t, [set(0, 60, 8), warm], 'bench', day(1));
+  assert.equal(b.weight, 60, 'the heavy warm-up is left out');
+  assert.equal(recordOf(t, { ...set(1, 70, 5), values: { weight: 70, reps: 5, warm: 1 } }, b), null);
+});
