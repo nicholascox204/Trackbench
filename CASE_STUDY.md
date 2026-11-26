@@ -1841,3 +1841,11 @@ Nick asked for everything left on the list, to test later himself. Built, each a
 - **Count what is left** on Medication and Vitamins: set "On hand now" on an item, each tick takes one away, and the item says "5 left, refill soon" at seven or fewer.
 - **Photos** on form trackers (on for Journal and Weigh-in): take or choose a photo, kept in the app's own folder on the phone. Not synced or exported yet, which the switch's label says.
 Not built from the parity list: saved and planned routes, heart rate from a watch, set types beyond warm-up (drop sets, failure), supersets.
+
+## 2026-11-26: Wearables through Health Connect, and the last of the list
+
+Nick said the hands-off way of working (I build a batch, he tests later) works better than long design back-and-forth, which had drained his motivation on the data layer. He asked to cover the remaining items and look for wearable integrations.
+- **Wearables:** rather than one integration per brand, Health Connect on Android is the shared store that Samsung Health, Fitbit, Google Fit, Withings, Oura and Garmin's link write into, and steps already came from it. It now also brings in **weight** (weigh-in, the latest each day), **sleep** (bed and wake time, on the day you woke; naps under an hour left out), **runs** from a watch (distance, time; walks left out), **blood pressure** and **blood sugar** (with fasting or before or after a meal when the meter says). It lives in each tracker's setup: allow, bring in the last 30 days, and "Keep bringing it in" when the app opens. A day logged by hand is never overwritten, and nothing is brought in twice. Not yet: routes and heart rate from watch runs, resting heart rate, and iPhone (Apple Health would be the same idea).
+- **Lifting:** tapping a set's number cycles warm-up, drop set, to failure. Imports from Hevy and Strong keep those kinds. Supersets left out for now: they change how a plan is laid out, which is a bigger design question than a set label.
+- **Runs on the same route:** a finished run is compared with earlier runs that started and ended within 150 m and were about as long ("Your fastest on this route", or how far off your best). Runs now keep their exact seconds for this.
+The new Health Connect permissions need a new phone build.
