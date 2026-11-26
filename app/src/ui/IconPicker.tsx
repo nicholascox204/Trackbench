@@ -37,7 +37,7 @@ export function IconPicker({ value, onPick, onSearchFocus }: { value: string; on
         placeholder="Search icons" placeholderTextColor={colors.muted}
       />
       {searching ? null : (
-        <View style={{ marginBottom: 2 }}><ChoiceGrid options={ICON_GROUPS.map((g, i) => ({ key: String(i), label: g.name }))} value={String(group)} onPick={(k) => setGroup(Number(k))} /></View>
+        <View style={{ marginBottom: 2 }}><ChoiceGrid options={ICON_GROUPS.map((g, i) => ({ key: String(i), label: g.name }))} value={String(group)} onPick={(k) => setGroup(Number(k))} cols={4} /></View>
       )}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', opacity: width ? 1 : 0 }} onLayout={(e) => { lastWidth = e.nativeEvent.layout.width; setWidth(lastWidth); }}>
         {found.map((n, i) => (
