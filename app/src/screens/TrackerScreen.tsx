@@ -2,7 +2,8 @@
 // totals and targets, and fast logging. All configuration lives in the builder.
 
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Image, Keyboard, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { pickPhoto } from '../core/photos';
 import { cleanDays, dayResult, entriesOnDay, rollingAverage } from '../core/derive';
 import { computeDay, isCalculated } from '../core/measures';
 import { pickedDayFor, rememberPickedDay } from '../core/pickedDay';
@@ -276,6 +277,7 @@ function FreeForm({
   const autoId = autoStepsField(t); // filled by the phone: it starts at what the phone has counted, never at the preset's starting number
   const init = (): Record<string, number | string> => {
     const v: Record<string, number | string> = {};
+    if (typeof mine?.values.photo === 'string' && mine.values.photo) v.photo = mine.values.photo;
     for (const f of t.fields) {
       const own = mine?.values[f.id];
       if (own !== undefined && own !== '') { v[f.id] = own; continue; }
@@ -312,8 +314,10 @@ function FreeForm({
     if (t.daily) return saveDaily(t.id, draft, day);
     logFree(t.id, draft, day);
     if (lf) setDraft((p) => ({ ...p, [lf.id]: '' })); // the next entry is something new
+    if (!t.daily && draft.photo) setDraft((p) => { const n = { ...p }; delete n.photo; return n; }); // a photo belongs to the entry it was logged with
   };
   const mapW = Math.min(useWindowDimensions().width, 600) - 32;
+  const [photoNote, setPhotoNote] = useState('');
   const run = useRun();
   const runLive = run.status === 'running' || run.status === 'paused' || run.status === 'done';
   const fieldsJsx = t.fields.map((f) => (
@@ -335,6 +339,22 @@ function FreeForm({
       {editable ? (
         <Card tone="new" keep>
           <StepGroup>{fieldsJsx}</StepGroup>
+          {t.tools.photos ? (
+            <View style={{ marginBottom: 12 }}>
+              {typeof draft.photo === 'string' && draft.photo ? (
+                <View style={{ alignSelf: 'flex-start' }}>
+                  <Image source={{ uri: draft.photo }} style={{ width: 120, height: 160, borderRadius: 10, backgroundColor: colors.raised }} />
+                  <Tap onPress={() => setDraft((p) => { const n = { ...p }; delete n.photo; return n; })} style={{ paddingVertical: 6 }}><Text style={{ color: colors.muted, fontSize: 13 }}>Remove photo</Text></Tap>
+                </View>
+              ) : (
+                <View style={[s.row, { gap: 8 }]}>
+                  <SmallButton icon="camera-outline" label="Take photo" onPress={() => { void pickPhoto('camera').then((r) => (r && 'uri' in r ? setDraft((p) => ({ ...p, photo: r.uri })) : r && setPhotoNote(r.error))); }} />
+                  <SmallButton icon="image-outline" label="Choose photo" onPress={() => { void pickPhoto('library').then((r) => (r && 'uri' in r ? setDraft((p) => ({ ...p, photo: r.uri })) : r && setPhotoNote(r.error))); }} />
+                </View>
+              )}
+              {photoNote ? <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6 }}>{photoNote}</Text> : null}
+            </View>
+          ) : null}
           <Button
             label={t.daily ? (saved ? 'Saved' : 'Save today') : 'Log'} onPress={save} variant={t.tools.gps && canImportRun(t) ? 'ghost' : 'primary'}
             done={saved}
@@ -345,6 +365,7 @@ function FreeForm({
       {(t.daily && editable ? [] : todays).map((e, i) => (
         <View key={e.id}>
           <EntryRow first={i === 0} t={t} e={e} settings={settings} editable={editable} />
+          {typeof e.values.photo === 'string' && e.values.photo ? <Image source={{ uri: e.values.photo }} style={{ width: 96, height: 128, borderRadius: 8, marginBottom: 10, backgroundColor: colors.raised }} /> : null}
           {typeof e.values.route === 'string' && e.values.route ? <View style={{ marginBottom: 10 }}><RouteMap pts={decodeRoute(e.values.route)} w={mapW} h={180} /></View> : null}
         </View>
       ))}

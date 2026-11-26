@@ -1829,3 +1829,15 @@ Nick saw Record a run and Log overlapping and, since he does not run or use runn
 - **Running no longer starts with the stopwatch,** because recording the run times it; it stays in Tools.
 - **Map fix:** on the web the map tiles were drawn under the map's background; the native phone was not affected.
 Checked end to end in the web preview with a simulated GPS route: start, live route and numbers, pause, finish, summary, save, and the saved entry showing its map. Not checked: a real outdoor run, voice updates, and recording with the screen locked.
+
+## 2026-11-26: The rest of the tracking-quality list
+
+Nick asked for everything left on the list, to test later himself. Built, each as a Tools switch in setup where it adds anything to the screen (on by default only where the preset clearly wants it), following the rule that a tracker screen stays simple:
+- **Runs:** a run in progress is saved as it goes and comes back after the app closes (paused, unless the phone was still recording it); voice updates every half, one or two km or miles, or off (tap the line on the run screen to change it). Activity types (ride, walk) were left out on purpose: in a multi-tracker app a walk is its own tracker.
+- **Clock for fasting and sleep:** "Last meal now" then "First meal now" (or "Bedtime now", "Woke up now") with the time between running live; it fills the day's entry. It works for any tracker that works out hours between two times.
+- **Warm-up sets:** tap a set's number to mark it W; warm-ups never count as records.
+- **Exercise library:** about 100 common exercises with their muscle group, suggested while typing a name; your own names come first, so an exercise's history stays under one name.
+- **Import from Strong or Hevy** (in setup): reads either app's CSV export, puts each set on its day under the exercise of the same name, keeps warm-ups, skips Strong's rest-timer rows, converts pounds, and adds nothing on a second import. Exercises not in the plan keep their history and join it when an exercise of that name is added.
+- **Count what is left** on Medication and Vitamins: set "On hand now" on an item, each tick takes one away, and the item says "5 left, refill soon" at seven or fewer.
+- **Photos** on form trackers (on for Journal and Weigh-in): take or choose a photo, kept in the app's own folder on the phone. Not synced or exported yet, which the switch's label says.
+Not built from the parity list: saved and planned routes, heart rate from a watch, set types beyond warm-up (drop sets, failure), supersets.
