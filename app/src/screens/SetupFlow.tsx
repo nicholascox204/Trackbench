@@ -132,8 +132,8 @@ export function SetupFlow({
     done(id);
   }
 
-  function pickStart(id: string) {
-    const start = { ...answersFromPreset(id), name: '', system: hasSystem };
+  function pickStart(id: string, name = '') {
+    const start = { ...answersFromPreset(id), name: name.slice(0, LIMITS.trackerName), system: hasSystem };
     base.current = start;
     setA(start);
     setIdx(1);
@@ -230,7 +230,7 @@ export function SetupFlow({
         </Text>
 
         {/* 1 start: templates, or build your own */}
-        {step === 'start' ? <StartPicker onTemplate={pickTemplate} onScratch={() => pickStart('blank')} /> : null}
+        {step === 'start' ? <StartPicker onTemplate={pickTemplate} onScratch={(n) => pickStart('blank', n)} have={new Set(state.trackers.map((t) => t.templateId).filter((x): x is string => !!x))} /> : null}
 
         {/* record: what you log, opened from the summary */}
         {step === 'record' ? (
