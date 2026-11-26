@@ -268,6 +268,7 @@ export function SetupFlow({
               {a.extras.countdown ? intoPicker('countdownInto') : null}
               {stepsFieldIn(draft.fields) ? <Toggle label="Steps from my phone" value={a.extras.auto ?? counterAvailable()} onChange={(v) => set({ extras: { ...a.extras, auto: v } })} /> : null}
               {draft.input === 'form' && canRecordRun(draft.fields) ? <Toggle label="Record runs with GPS" value={!!a.extras.gps} onChange={(v) => set({ extras: { ...a.extras, gps: v } })} /> : null}
+              {draft.input === 'plan' && a.planStyle === 'items' ? <Toggle label="Count what is left (refill reminder)" value={!!a.extras.stock} onChange={(v) => set({ extras: { ...a.extras, stock: v } })} /> : null}
               {draft.input === 'form' && spanPair(draft) ? <Toggle label={`Clock for ${spanPair(draft)!.measure.name.toLowerCase()}`} value={!!a.extras.clock} onChange={(v) => set({ extras: { ...a.extras, clock: v } })} /> : null}
             </Card>
             {existing && canRecordRun(existing.fields) ? <RunFileImport t={existing} /> : null}

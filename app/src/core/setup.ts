@@ -94,7 +94,7 @@ export interface Answers {
   goals: Goal[]; // used when goal is 'number'
   finishPlan: boolean; // a good day also needs most of the plan done
   extraTargets: Target[]; // other targets carried over from a preset or an existing tracker
-  extras: { previous: boolean; lockPast: boolean; average: boolean; auto?: boolean; countdown?: boolean; timer?: boolean; timerInto?: string; countdownInto?: string; gps?: boolean; clock?: boolean };
+  extras: { previous: boolean; lockPast: boolean; average: boolean; auto?: boolean; countdown?: boolean; timer?: boolean; timerInto?: string; countdownInto?: string; gps?: boolean; clock?: boolean; stock?: boolean };
   system: boolean;
 }
 
@@ -183,7 +183,7 @@ export function answersFromTracker(t: Tracker, settings: Settings, hasSystem: bo
     goals,
     finishPlan: t.success.mode === 'plan' || (t.success.mode === 'targets' && t.success.planMinPct !== undefined),
     extraTargets: t.targets.filter((x) => !goalSet.has(x.id)),
-    extras: { previous: t.tools.previous, lockPast: t.tools.lockPast, average: t.derived.length > 0, ...autoOf(t), ...(t.tools.countdown ? { countdown: true } : {}), ...(t.tools.timer ? { timer: true } : {}), ...(t.tools.timerInto ? { timerInto: t.tools.timerInto } : {}), ...(t.tools.countdownInto ? { countdownInto: t.tools.countdownInto } : {}), ...(t.tools.gps ? { gps: true } : {}), ...(t.tools.clock ? { clock: true } : {}) },
+    extras: { previous: t.tools.previous, lockPast: t.tools.lockPast, average: t.derived.length > 0, ...autoOf(t), ...(t.tools.countdown ? { countdown: true } : {}), ...(t.tools.timer ? { timer: true } : {}), ...(t.tools.timerInto ? { timerInto: t.tools.timerInto } : {}), ...(t.tools.countdownInto ? { countdownInto: t.tools.countdownInto } : {}), ...(t.tools.gps ? { gps: true } : {}), ...(t.tools.clock ? { clock: true } : {}), ...(t.tools.stock ? { stock: true } : {}) },
     planStyle: t.planStyle ?? (t.measures.some((m) => m.id === 'sets') ? 'sets' : 'items'),
     combos: t.measures.filter((m) => m.calc.op === 'sumProduct' || m.calc.op === 'sumExpr' || m.calc.op === 'ratio').map((m) => ({
       id: m.id, name: m.name, a: (m.calc as { a: string }).a, b: (m.calc as { b: string }).b,
@@ -380,7 +380,7 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
     plan,
     schedule: scheduleFromAnswers(a),
     ...(a.window ? { window: a.window } : {}),
-    tools: { previous: a.extras.previous, lockPast: a.extras.lockPast, ...(a.extras.countdown ? { countdown: true } : {}), ...(a.extras.timer ? { timer: true } : {}), ...(a.extras.timer && a.extras.timerInto && fields.some((f) => f.id === a.extras.timerInto && canTimerFill(f)) && input === 'form' ? { timerInto: a.extras.timerInto } : {}), ...(a.extras.countdown && a.extras.countdownInto && fields.some((f) => f.id === a.extras.countdownInto && canTimerFill(f)) && input === 'form' ? { countdownInto: a.extras.countdownInto } : {}), ...(a.extras.gps && input === 'form' && canRecordRun(fields) ? { gps: true } : {}), ...(a.extras.clock && input === 'form' && spanPair({ fields, measures }) ? { clock: true } : {}) },
+    tools: { previous: a.extras.previous, lockPast: a.extras.lockPast, ...(a.extras.countdown ? { countdown: true } : {}), ...(a.extras.timer ? { timer: true } : {}), ...(a.extras.timer && a.extras.timerInto && fields.some((f) => f.id === a.extras.timerInto && canTimerFill(f)) && input === 'form' ? { timerInto: a.extras.timerInto } : {}), ...(a.extras.countdown && a.extras.countdownInto && fields.some((f) => f.id === a.extras.countdownInto && canTimerFill(f)) && input === 'form' ? { countdownInto: a.extras.countdownInto } : {}), ...(a.extras.gps && input === 'form' && canRecordRun(fields) ? { gps: true } : {}), ...(a.extras.clock && input === 'form' && spanPair({ fields, measures }) ? { clock: true } : {}), ...(a.extras.stock && input === 'plan' && a.planStyle === 'items' ? { stock: true } : {}) },
     ...(a.terms ? { terms: a.terms } : {}),
     ...(goalsOut.length > 0 || existing?.goals ? { goals: goalsOut } : {}),
     ...(input === 'plan' ? { planStyle: a.planStyle } : {}),
@@ -501,6 +501,7 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   if (a.extras.countdown) tools.push(`countdown${into(draft.tools.countdownInto)}`);
   if (a.extras.auto && stepsFieldIn(draft.fields)) tools.push('steps from phone');
   if (draft.tools.gps) tools.push('record runs with GPS');
+  if (draft.tools.stock) tools.push('count what is left');
   if (draft.tools.clock) tools.push(`clock for ${spanPair(draft)?.measure.name.toLowerCase() ?? 'the times'}`);
   lines.push({ label: 'Tools', value: tools.length ? cap(tools.join(', ')) : 'None', step: 'tools' });
 

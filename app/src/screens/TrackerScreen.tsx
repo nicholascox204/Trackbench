@@ -28,6 +28,7 @@ import { canImportRun } from '../core/runImport';
 import { decodeRoute } from '../core/runRecorder';
 import { RunCard, useRun } from './RunRecorder';
 import { SpanClockCard } from './SpanClockCard';
+import { stockLeft, stockText } from '../core/stock';
 import { RouteMap } from '../ui/RouteMap';
 import { bestsBefore, isWarmUp, liftFields, platesFor, recordOf } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
@@ -219,6 +220,7 @@ function ItemRow({
   const e = entries.find((x) => x.slotId === slot.id && x.row === undefined && startOfDay(x.at) === day && x.done);
   const variant = e?.variant;
   const values = variant !== undefined && slot.variants?.[variant] ? slot.variants[variant].values : slot.values;
+  const left = t.tools.stock ? stockText(stockLeft(slot, entries)) : undefined;
   if (open) return <SlotEditor t={t} slot={slot} weekday={new Date(day).getDay()} settings={settings} index={index} count={count} onClose={onToggle} />;
   return (
     <View style={{ marginBottom: 6 }}>
@@ -238,7 +240,8 @@ function ItemRow({
           <Text style={{ color: e ? colors.muted : colors.text, fontSize: 14 }}>
             {slot.name}{variant !== undefined && slot.variants?.[variant] ? ` · ${slot.variants[variant].label}` : ''}
           </Text>
-          <Text style={s.muted}>{itemNumbers(t, values, settings)}</Text>
+          {itemNumbers(t, values, settings) ? <Text style={s.muted}>{itemNumbers(t, values, settings)}</Text> : null}
+          {left ? <Text style={{ color: left.low ? colors.accent : colors.muted, fontSize: 12, fontWeight: left.low ? '700' : '400', marginTop: 2 }}>{left.text}</Text> : null}
         </View>
       </Tap>
       {canEdit ? <EditButton onPress={onToggle} /> : null}

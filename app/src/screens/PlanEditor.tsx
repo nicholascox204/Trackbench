@@ -7,6 +7,7 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { suggestExercises } from '../core/exercises';
 import { liftFields } from '../core/records';
 import { importSlotId } from '../core/liftImport';
+import { stockLeft } from '../core/stock';
 import { Text, TextInput, View } from 'react-native';
 import { WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
 import { scheduleOf } from '../core/schedule';
@@ -77,6 +78,12 @@ export function SlotEditor({
               </View>
             ))}
           </StepGroup>
+          {t.tools.stock ? (
+            <View style={[s.row, { justifyContent: 'space-between', marginBottom: 12 }]}>
+              <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>On hand now</Text>
+              <Stepper value={stockLeft(slot, getState().entries) ?? 0} min={0} max={999} width={48} onChange={(v) => patch((x) => { x.stock = { count: Math.round(v), at: Date.now() }; })} />
+            </View>
+          ) : null}
           {slot.variants && slot.variants.length > 0 ? <Muted>Alternatives cannot be edited here yet.</Muted> : null}
         </View>
       )}
