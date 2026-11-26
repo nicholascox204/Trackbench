@@ -8,8 +8,8 @@ import { addDays, startOfDay } from './time';
 import type { Field, PlanDay, Slot } from './types';
 
 export type Category = 'Fitness' | 'Body' | 'Health' | 'Mind' | 'Habits' | 'Money' | 'Study' | 'Life';
-export const CATEGORIES: Category[] = ['Fitness', 'Body', 'Health', 'Mind', 'Habits', 'Money', 'Study', 'Life'];
-export const POPULAR_COUNT = 8; // the first this many by popularity sit under Popular on the start screen
+export const CATEGORIES: Category[] = ['Habits', 'Fitness', 'Body', 'Mind', 'Health', 'Money', 'Study', 'Life'];
+export const POPULAR_COUNT = 10; // the first this many by popularity sit under Popular on the start screen
 
 export interface Template {
   id: string;
@@ -207,11 +207,13 @@ const ALL: Template[] = [
 // The order people see, a rough guess at how many would want each, most first. It is deliberately one flat list: groups
 // by category would let a rarely used template under a popular heading outrank a common one. Revisit with real picks
 // from testers, and when sharing makes the list long enough to need structure.
+// One ranking drives both Popular (the first POPULAR_COUNT) and the order inside every category, so the likeliest pick
+// leads wherever you look. Broad, everyday trackers first; narrow or condition-specific ones later.
 export const POPULARITY: string[] = [
-  'habit', 'gym-split', 'water', 'sleep', 'mood', 'weigh-in', 'steps', 'reading', 'running', 'workout-log', 'meditate',
-  'spending', 'food-log', 'study', 'journal', 'full-body', 'meals', 'medication', 'stretching', 'vitamins', 'no-alcohol', 'caffeine',
-  'no-scrolling', 'quit-smoking', 'savings', 'bills', 'balance', 'time-log', 'practice', 'chores', 'language', 'pet-care', 'plants',
-  'blood-pressure', 'blood-sugar', 'symptoms', 'pain', 'cycle', 'fasting', 'challenge',
+  'habit', 'water', 'sleep', 'mood', 'weigh-in', 'workout-log', 'steps', 'spending', 'reading', 'meditate',
+  'gym-split', 'running', 'journal', 'food-log', 'medication', 'savings', 'no-alcohol', 'quit-smoking', 'vitamins',
+  'caffeine', 'study', 'fasting', 'full-body', 'stretching', 'no-scrolling', 'bills', 'language', 'practice', 'chores',
+  'meals', 'blood-pressure', 'time-log', 'challenge', 'symptoms', 'cycle', 'pet-care', 'balance', 'blood-sugar', 'plants', 'pain',
 ];
 const rank = (id: string): number => { const i = POPULARITY.indexOf(id); return i < 0 ? 999 : i; };
 export const TEMPLATES: Template[] = [...ALL].sort((a, b) => rank(a.id) - rank(b.id));

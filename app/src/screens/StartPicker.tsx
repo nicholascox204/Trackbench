@@ -1,5 +1,5 @@
 // The first screen of adding a tracker: search, Build your own, then every template under a heading. Popular first (the top
-// few by popularity), then the rest by category, so scrolling shows what kinds exist without tapping a filter. Searching
+// few by popularity, repeated in their categories so each category is complete), then every category, so scrolling shows what kinds exist without tapping a filter. Searching
 // flattens it into one list. Templates you already have say so. A search that finds nothing offers to build it yourself,
 // with the name already typed.
 
@@ -47,7 +47,6 @@ export function StartPicker({
   );
 
   const popular = TEMPLATES.slice(0, POPULAR_COUNT);
-  const rest = TEMPLATES.slice(POPULAR_COUNT);
 
   return (
     <View style={{ marginTop: 6 }}>
@@ -68,7 +67,7 @@ export function StartPicker({
           {heading('Popular')}
           {popular.map(row)}
           {CATEGORIES.map((c) => {
-            const list = rest.filter((t) => t.category === c);
+            const list = TEMPLATES.filter((t) => t.category === c);
             return list.length ? <View key={c}>{heading(c)}{list.map(row)}</View> : null;
           })}
         </View>
