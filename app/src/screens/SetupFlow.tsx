@@ -216,15 +216,14 @@ export function SetupFlow({
   }
   // The very first start has no bar: the system back goes to the name and look, and the room goes to the list.
   const firstStart = isStart && !existing && state.trackers.length === 0;
+  const showHeader = !!existing || (isStart && state.trackers.length > 0);
   const unchanged = editing && isSummary && !dirty; // nothing to save yet
 
   return (
     <View style={s.screen}>
-      {firstStart ? null : <ScreenHeader
-        label={existing ? existing.name : state.trackers.length > 0 ? 'Cancel' : ''} onBack={existing || state.trackers.length > 0 ? leave : undefined}
-        right={<View style={s.row}>{(detour || isStart || steps.length < 2 ? [] : steps).map((k, i) => (<View key={k} style={{ width: 8, height: 8, borderRadius: 4, marginLeft: 5, backgroundColor: i === idx ? colors.accent : colors.border }} />))}</View>}
-      />}
-      <Scroll resetKey={step} focusToTop={searchFocused} contentContainerStyle={[s.content, { paddingTop: firstStart ? top : 12, paddingBottom: isStart ? SCROLL.basePadding : SCROLL.footerPadding }]} keyboardShouldPersistTaps="handled">
+      {/* New trackers show no header once past the start screen: Back sits at the bottom. The start screen has no bottom bar, so it keeps Cancel. */}
+      {showHeader ? <ScreenHeader label={existing ? existing.name : 'Cancel'} onBack={leave} /> : null}
+      <Scroll resetKey={step} focusToTop={searchFocused} contentContainerStyle={[s.content, { paddingTop: showHeader ? 12 : top, paddingBottom: isStart ? SCROLL.basePadding : SCROLL.footerPadding }]} keyboardShouldPersistTaps="handled">
         {firstStart && Platform.OS === 'ios' ? <BackButton label="Name and look" onPress={() => toWelcome?.()} /> : null}
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
           {editing && step === 'summary' ? 'Your tracker' : step === 'options' ? (draft.fields.some((f) => f.unitKind) ? 'Past days and units' : 'Past days') : QUESTIONS[step]}

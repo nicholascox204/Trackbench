@@ -1877,3 +1877,7 @@ Picking a template opened the summary ("Here is your tracker": How often, You lo
 ## 2026-11-26: Chips that fill their line (icon categories first)
 
 Wrapped chips left ragged right edges, with a different gap on each line depending on word lengths. Considered dropping the icon categories (about 220 icons is too long to browse without them) and a single sideways-scrolling row (hides most categories off screen). Chose Nick's idea: chips on each line stretch to reach the edge, so every line ends flush and the extra room is shared out. It is a `fill` option on Chip, tried first on the icon categories (now 4, 4, 3 across three even lines); if it holds up, it becomes the standard wherever chips wrap. Also fixed the icon tile's arrow badge being clipped while pressed, and left the caret showing after the keyboard is lowered, since that is standard Android behaviour.
+
+## 2026-11-26: Setup loses its top bar; icon grid fills the width
+
+The progress dots at the top of setup were left over from a multi-step flow; with every tracker now opening on one summary they meant nothing, and they showed outside the first-run flow too. Cancel at the top duplicated Back at the bottom. Both are gone for new trackers once past the start screen; the start screen keeps Cancel because it has no bottom bar, and editing an existing tracker keeps its name bar. The icon grid now works out how many tiles of about 46 points fit and stretches them so the row ends flush, instead of fixed tiles that left a gap one column short on some phones.
