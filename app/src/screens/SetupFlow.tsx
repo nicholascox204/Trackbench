@@ -17,6 +17,7 @@ import { SCROLL } from '../constants';
 import { LIMITS } from '../constants/layout';
 import { isChanged } from '../core/dirty';
 import { removeTracker, saveSetup, useAppState } from '../core/store';
+import { getState } from '../core/store';
 import { exportReadable, exportStructure } from '../core/transfer';
 import { measureUnit } from '../core/units';
 import type { Field, FieldType, Tracker } from '../core/types';
@@ -34,9 +35,11 @@ import { Button, Card, Chip, Icon, Muted, Option, Stepper, Toggle, colors, s, to
 import { SmallButton } from '../ui/kit';
 import { px } from '../ui/theme';
 import { canRecordRun } from '../core/runImport';
+import { bringOptions } from '../core/setup';
 import { RunFileImport } from './RunFileImport';
 import { LiftFileImport } from './LiftFileImport';
 import { HealthImportCard } from './HealthImportCard';
+import { bringIn } from '../core/healthRead';
 import { liftFields } from '../core/records';
 import { spanPair } from '../core/spanClock';
 
@@ -46,6 +49,7 @@ const QUESTIONS: Record<StepKey, string> = {
   target: 'Target',
   shows: 'What it shows',
   tools: 'Tools',
+  bring: 'Bring in',
   options: 'Options',
   summary: 'Here is your tracker',
 };
@@ -125,6 +129,8 @@ export function SetupFlow({
 
   function finish() {
     const id = saveSetup(draft, a.system, existing?.id);
+    // A new tracker set to bring readings in from Health Connect starts with the last 30 days.
+    if (!existing && draft.tools.health) { const t = getState().trackers.find((x) => x.id === id); if (t) void bringIn(t, 30); }
     done(id);
   }
 
@@ -267,15 +273,26 @@ export function SetupFlow({
               {a.extras.timer ? intoPicker('timerInto') : null}
               <Toggle label="Countdown" value={!!a.extras.countdown} onChange={(v) => set({ extras: { ...a.extras, countdown: v } })} />
               {a.extras.countdown ? intoPicker('countdownInto') : null}
-              {stepsFieldIn(draft.fields) ? <Toggle label="Steps from my phone" value={a.extras.auto ?? counterAvailable()} onChange={(v) => set({ extras: { ...a.extras, auto: v } })} /> : null}
               {draft.input === 'form' && canRecordRun(draft.fields) ? <Toggle label="Record runs with GPS" value={!!a.extras.gps} onChange={(v) => set({ extras: { ...a.extras, gps: v } })} /> : null}
-              {draft.input === 'form' ? <Toggle label="Photos (kept on this phone)" value={!!a.extras.photos} onChange={(v) => set({ extras: { ...a.extras, photos: v } })} /> : null}
-              {draft.input === 'plan' && a.planStyle === 'items' ? <Toggle label="Count what is left (refill reminder)" value={!!a.extras.stock} onChange={(v) => set({ extras: { ...a.extras, stock: v } })} /> : null}
+              {draft.input === 'form' ? <Toggle label="Photos" value={!!a.extras.photos} onChange={(v) => set({ extras: { ...a.extras, photos: v } })} /> : null}
+              {draft.input === 'plan' && a.planStyle === 'items' ? <Toggle label="Count what is left" value={!!a.extras.stock} onChange={(v) => set({ extras: { ...a.extras, stock: v } })} /> : null}
               {draft.input === 'form' && spanPair(draft) ? <Toggle label={`Clock for ${spanPair(draft)!.measure.name.toLowerCase()}`} value={!!a.extras.clock} onChange={(v) => set({ extras: { ...a.extras, clock: v } })} /> : null}
             </Card>
-            {existing ? <HealthImportCard t={existing} keep={!!a.extras.health} setKeep={(v) => set({ extras: { ...a.extras, health: v } })} /> : null}
+          </View>
+        ) : null}
+
+        {/* bring in: the phone's steps, Health Connect, and files from other apps */}
+        {step === 'bring' ? (
+          <View style={{ marginTop: 6 }}>
+            {stepsFieldIn(draft.fields) ? (
+              <Card style={{ paddingVertical: 4 }}>
+                <Toggle label="Steps from my phone" value={a.extras.auto ?? counterAvailable()} onChange={(v) => set({ extras: { ...a.extras, auto: v } })} />
+              </Card>
+            ) : null}
+            <HealthImportCard t={existing ?? ({ ...draft, id: 'new', systemId: null, createdAt: 0 } as Tracker)} saved={!!existing} keep={!!a.extras.health} setKeep={(v) => set({ extras: { ...a.extras, health: v } })} />
             {existing && canRecordRun(existing.fields) ? <RunFileImport t={existing} /> : null}
             {existing && existing.input === 'plan' && liftFields(existing).weight ? <LiftFileImport t={existing} settings={settings} /> : null}
+            {!existing && bringOptions(draft).files ? <Text style={{ color: colors.muted, fontSize: 13, marginTop: 10 }}>Files from other apps can be brought in here once the tracker is saved.</Text> : null}
           </View>
         ) : null}
 

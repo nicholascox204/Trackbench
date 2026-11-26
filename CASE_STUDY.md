@@ -1849,3 +1849,15 @@ Nick said the hands-off way of working (I build a batch, he tests later) works b
 - **Lifting:** tapping a set's number cycles warm-up, drop set, to failure. Imports from Hevy and Strong keep those kinds. Supersets left out for now: they change how a plan is laid out, which is a bigger design question than a set label.
 - **Runs on the same route:** a finished run is compared with earlier runs that started and ended within 150 m and were about as long ("Your fastest on this route", or how far off your best). Runs now keep their exact seconds for this.
 The new Health Connect permissions need a new phone build.
+
+## 2026-11-26: Review of all 40 presets for UI consistency, and a clearer setup
+
+Nick asked for a hands-off review of every preset (including the 24 he had already been through) with a focus on UI and consistency, plus a look at whether setup could be more intuitive. I reviewed by screen type rather than one by one, since the 40 presets share a handful of screens (forms logged as you go, one value a day, check-ins, checklists, sets, counters, avoid trackers), walking each in the web preview with the example data and checking every preset's summary with a script. Fixes were made in the shared screens, so every preset using them gets them:
+- **Nothing logged reads as nothing:** the day's numbers card showed "0 mmHg" or "0 m" before anything was logged, which reads as a real zero; it now shows a dash.
+- **Check-ins that are not due say so:** a monthly Bills tracker on the 26th said "To do"; it now says "Not due today" (and can still be marked done).
+- **Numbers people write:** converted weights showed as 181.88 lb or 44.73 lb; converted units now show one decimal.
+- **Plates only for barbell lifts:** the plate calculator no longer appears on pull-ups, dumbbell or cable work.
+- **One filled button per screen:** the fasting and sleep clock's start button is now outlined, so Save today stays the main action, matching the run card.
+- **Summary rows say only what matters:** a plain check-in no longer shows a Target row (a tap is all it can count); lists with no numbers (Medication, Vitamins) no longer show "Previous numbers"; toggle labels lost their parentheses ("Count what is left", "Photos"), following the no-subtext rule.
+- **Setup: Tools and Bring in are separate.** Tools are things on the tracker's own screen (stopwatch, countdown, run recording, clock, photos, count what is left). Bring in is where numbers can come from besides typing: steps from the phone, Health Connect, and files from other apps (GPX runs, Strong or Hevy). It is its own summary row, and Health Connect can now be switched on while creating a tracker, which brings in the last 30 days when it is saved.
+Left for Nick as judgement calls: Chores, Pet care and Language carry example lists that are never used, because plans start empty by an earlier decision; reading trackers (Weigh-in, Blood pressure, Blood sugar, Pain) still say "Any entry counts" until the watch option is settled; Bills is one tap for all bills rather than a list with due dates.

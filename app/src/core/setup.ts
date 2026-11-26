@@ -12,6 +12,15 @@ import { DEFAULT_TERMS, plural, SETS_TERMS } from './terms';
 import { fieldUnit, formatNumber, measureFromDisplay, measureToDisplay, measureUnit, round2, unitForSystem } from './units';
 import { canRecordRun } from './runImport';
 import { spanPair } from './spanClock';
+import { HEALTH_LABEL, healthKind, type HealthKind } from './healthImport';
+
+// What a tracker can take in besides typing: the phone's steps, a kind of Health Connect reading, and files (runs, lifting history).
+export function bringOptions(draft: TrackerDraft): { steps: boolean; health?: HealthKind; files: boolean; any: boolean } {
+  const steps = !!stepsFieldIn(draft.fields);
+  const health = healthKind(draft as unknown as Tracker);
+  const files = canRecordRun(draft.fields) || (draft.input === 'plan' && draft.fields.some((f) => f.unitKind === 'weight'));
+  return { steps, ...(health ? { health } : {}), files, any: steps || !!health || files };
+}
 import type {
   Field, InputKind, Measure, PlanDay, PlanVersion, Schedule, ScheduleWindow, Settings, SuccessRule, Target, Tracker, TrackerDraft, UnitKind, Terms, GoalDef,
 } from './types';
@@ -469,7 +478,7 @@ export function planWords(a: Answers): string {
 
 // The rows on the summary: what you log, what it shows, its tools and its options, each with its current contents. Rows that do not
 // apply to a tracker are left out. Each opens the screen where it is set.
-export type SummaryStep = 'record' | 'target' | 'shows' | 'tools' | 'options';
+export type SummaryStep = 'record' | 'target' | 'shows' | 'tools' | 'bring' | 'options';
 
 export function summaryLines(a: Answers, settings: Settings, editing = false): { label: string; value: string; step: SummaryStep }[] {
   void editing;
@@ -485,27 +494,36 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
     : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count')
     : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
   lines.push({ label: 'You log', value: logging, step: 'record' });
-  lines.push({ label: 'Target', value: targetText(a, draft, settings), step: 'target' }); // what makes a good day: where progress is measured from
+  // A plain check-in can only count a tap, so its target says nothing new; an avoid tracker's (a day with nothing logged) does.
+  if (!(a.record === 'done' && !a.avoid)) lines.push({ label: 'Target', value: targetText(a, draft, settings), step: 'target' }); // what makes a good day: where progress is measured from
 
   // What it shows: the numbers it works out, and the small things shown beside your entries.
   const hasLatest = draft.measures.some((m) => m.calc.op === 'latest');
   const shows: string[] = a.combos.map((c) => c.name);
   if (hasLatest && a.extras.average) shows.push('3-day average');
-  if (a.record === 'numbers' && a.extras.previous) shows.push('previous numbers');
-  if (a.record === 'numbers' || a.combos.length > 0 || hasLatest) lines.push({ label: 'It shows', value: shows.length ? cap(shows.join(' · ')) : 'Nothing extra', step: 'shows' });
+  const hasNumbers = draft.fields.some((f) => f.type !== 'text');
+  if (a.record === 'numbers' && hasNumbers && a.extras.previous) shows.push('previous numbers');
+  if ((a.record === 'numbers' && hasNumbers) || a.combos.length > 0 || hasLatest) lines.push({ label: 'It shows', value: shows.length ? cap(shows.join(' · ')) : 'Nothing extra', step: 'shows' });
 
   // Tools.
   const tools: string[] = [];
   const into = (id: string | undefined): string => (id ? ` into ${draft.fields.find((f) => f.id === id)?.name ?? 'a field'}` : '');
   if (a.extras.timer) tools.push(`stopwatch${into(draft.tools.timerInto)}`);
   if (a.extras.countdown) tools.push(`countdown${into(draft.tools.countdownInto)}`);
-  if (a.extras.auto && stepsFieldIn(draft.fields)) tools.push('steps from phone');
   if (draft.tools.gps) tools.push('record runs with GPS');
   if (draft.tools.stock) tools.push('count what is left');
   if (draft.tools.photos) tools.push('photos');
-  if (draft.tools.health) tools.push('from Health Connect');
   if (draft.tools.clock) tools.push(`clock for ${spanPair(draft)?.measure.name.toLowerCase() ?? 'the times'}`);
   lines.push({ label: 'Tools', value: tools.length ? cap(tools.join(', ')) : 'None', step: 'tools' });
+
+  // Bring in: where numbers can come from besides typing them (the phone, Health Connect, another app's export).
+  const bring = bringOptions(draft);
+  if (bring.any) {
+    const on: string[] = [];
+    if (bring.steps && a.extras.auto) on.push('steps from your phone');
+    if (bring.health && a.extras.health) on.push(`${HEALTH_LABEL[bring.health]} from Health Connect`);
+    lines.push({ label: 'Bring in', value: on.length ? cap(on.join(', ')) : 'Off', step: 'bring' });
+  }
 
   // Past days (and units, where the tracker has numbers with units): named for what is in it, and it says how things are set.
   const hasUnits = draft.fields.some((f) => f.unitKind);
@@ -526,7 +544,7 @@ export function previewText(a: Answers, settings: Settings): string {
 }
 
 // Which screens this person sees, in order. Simple trackers skip most of them.
-export type StepKey = 'start' | 'record' | 'target' | 'shows' | 'tools' | 'options' | 'summary';
+export type StepKey = 'start' | 'record' | 'target' | 'shows' | 'tools' | 'bring' | 'options' | 'summary';
 // A starting point already answers what is recorded and how, so it goes straight to the summary: start, summary. Building
 // your own is three screens: start, one screen for the name and what is entered, summary. Everything else (days, goals,
 // extras) is one tap from the summary, where it has a sensible default. Editing opens on the summary.

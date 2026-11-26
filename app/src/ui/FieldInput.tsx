@@ -228,7 +228,7 @@ function FieldInputBody({
     <View style={[s.row, { justifyContent: bare ? 'flex-start' : 'space-between' }]}>
       {bare ? null : <Text style={{ color: colors.text, fontSize: 15, width: 90 }}>{f.name}</Text>}
       <Stepper
-        value={round2(toDisplay(f, Number(value ?? 0), settings))}
+        value={f.unitKind ? Math.round(toDisplay(f, Number(value ?? 0), settings) * 10) / 10 : round2(toDisplay(f, Number(value ?? 0), settings))}
         onChange={(v) => onChange(fromDisplay(f, v, settings))}
         step={defaultStep(f, settings)}
         suffix={fieldUnit(f, settings)}

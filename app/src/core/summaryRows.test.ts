@@ -39,14 +39,14 @@ test('a list that is the same every day says what is ticked, not that it is the 
   assert.equal(rows('vitamins'), 'Tick off each vitamin');
 });
 
-test('Steps from my phone is a tool: on for the Steps preset, saved as the source, and named in the Tools row', () => {
+test('Steps from my phone is under Bring in: on for the Steps preset, saved as the source, and named in that row', () => {
   const a = TEMPLATES.find((x) => x.id === 'steps')!.make();
   assert.equal(a.extras.auto, true);
   assert.deepEqual(draftFromAnswers(a, SETTINGS).sources, { steps: 'sensor' });
-  assert.equal(summaryLines(a, SETTINGS).find((r) => r.label === 'Tools')?.value, 'Steps from phone');
+  assert.equal(summaryLines(a, SETTINGS).find((r) => r.label === 'Bring in')?.value, 'Steps from your phone');
   const off = { ...a, extras: { ...a.extras, auto: false } };
   assert.deepEqual(draftFromAnswers(off, SETTINGS).sources, { steps: 'manual' });
-  assert.equal(summaryLines(off, SETTINGS).find((r) => r.label === 'Tools')?.value, 'None');
+  assert.equal(summaryLines(off, SETTINGS).find((r) => r.label === 'Bring in')?.value, 'Off');
   assert.equal(draftFromAnswers(TEMPLATES.find((x) => x.id === 'weigh-in')!.make(), SETTINGS).sources, undefined, 'a tracker without Steps has no source');
 });
 
@@ -61,9 +61,10 @@ test('a tracker made from a template can be rebuilt from it as it is now, keepin
   assert.equal(refreshPatch({ ...t, templateId: undefined }, SETTINGS), null, 'a tracker with no template is left alone');
 });
 
-test("every preset says what a good day is, in a Target row right after what it logs", () => {
+test("every preset says what a good day is, in a Target row right after what it logs (a plain check-in has none: a tap is all it counts)", () => {
   for (const t of TEMPLATES) {
     const rows = summaryLines(t.make(), SETTINGS);
+    if (t.make().record === "done" && !t.make().avoid) { assert.ok(!rows.some((r) => r.label === "Target"), t.id + ": no Target row"); continue; }
     assert.equal(rows[1].label, "Target", t.id + ": second row");
     assert.ok(rows[1].value.trim().length > 3, t.id + ": target reads \"" + rows[1].value + "\"");
     assert.equal(rows[1].step, "target", t.id + ": opens the target screen");

@@ -61,3 +61,10 @@ test('tapping a set number cycles warm-up, drop set, to failure, and back; old w
   const b = bestsBefore(t, [{ ...set(0, 60, 8), values: { weight: 60, reps: 8, kind: 'F' } }], 'bench', day(1));
   assert.equal(b.weight, 60, 'a set to failure counts like a working set');
 });
+
+import { usesBar } from './records';
+
+test('plates are offered for barbell lifts only', () => {
+  for (const n of ['Bench Press', 'Squat', 'Deadlift', 'Barbell Row', 'Overhead Press']) assert.equal(usesBar(n), true, n);
+  for (const n of ['Pull-Up', 'Dumbbell Row', 'Lat Pulldown', 'Cable Fly', 'Incline Dumbbell Press']) assert.equal(usesBar(n), false, n);
+});

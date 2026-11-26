@@ -7,7 +7,7 @@ import { allowHealth, bringIn, healthLink, type HealthLink } from '../core/healt
 import type { Tracker } from '../core/types';
 import { Card, SmallButton, Toggle, colors } from '../ui/kit';
 
-export function HealthImportCard({ t, keep, setKeep }: { t: Tracker; keep: boolean; setKeep: (v: boolean) => void }) {
+export function HealthImportCard({ t, saved = true, keep, setKeep }: { t: Tracker; saved?: boolean; keep: boolean; setKeep: (v: boolean) => void }) {
   const kind = healthKind(t);
   const [link, setLink] = useState<HealthLink | null>(null);
   const [note, setNote] = useState('');
@@ -31,8 +31,8 @@ export function HealthImportCard({ t, keep, setKeep }: { t: Tracker; keep: boole
       ) : null}
       {link === 'allowed' ? (
         <View>
-          <View style={{ alignSelf: 'flex-start', marginBottom: 4 }}><SmallButton label="Bring in the last 30 days" onPress={() => { void bring(); }} /></View>
-          <Toggle label="Keep bringing it in" value={keep} onChange={setKeep} />
+          {saved ? <View style={{ alignSelf: 'flex-start', marginBottom: 4 }}><SmallButton label="Bring in the last 30 days" onPress={() => { void bring(); }} /></View> : null}
+          <Toggle label={saved ? 'Keep bringing it in' : 'Bring it in'} value={keep} onChange={setKeep} />
         </View>
       ) : null}
       {note ? <Text style={{ color: colors.muted, fontSize: 13, marginTop: 8 }}>{note}</Text> : null}

@@ -35,7 +35,7 @@ export function SpanClockCard({ t }: { t: Tracker }) {
   return (
     <Card keep style={{ padding: 14, marginBottom: 12 }}>
       {start === undefined ? (
-        <Button label={`${p.from.name} now`} onPress={begin} />
+        <Button variant="ghost" label={`${p.from.name} now`} onPress={begin} />
       ) : (
         <View>
           <Text style={{ color: colors.text, fontSize: 40, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{hm(now - start)}</Text>

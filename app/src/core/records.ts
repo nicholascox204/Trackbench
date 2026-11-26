@@ -67,6 +67,12 @@ export function recordOf(t: Tracker, e: Entry | undefined, bests: Bests): Record
 
 // ---------- plates ----------
 
+// Whether an exercise is done with a barbell (so the plate calculator applies), from its name.
+export function usesBar(name: string): boolean {
+  if (/dumbbell|cable|machine|pull-?up|chin-?up|pulldown|push-?up|dip|kettlebell|band|smith/i.test(name)) return false;
+  return /barbell|bench|squat|deadlift|overhead press|military|row|clean|snatch|jerk|hip thrust|good morning|rack pull|shrug|curl|skull/i.test(name);
+}
+
 export const PLATE_SETS = {
   kg: { bar: 20, plates: [25, 20, 15, 10, 5, 2.5, 1.25] },
   lb: { bar: 45, plates: [45, 35, 25, 10, 5, 2.5] },

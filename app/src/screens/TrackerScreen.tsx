@@ -31,7 +31,7 @@ import { RunCard, useRun } from './RunRecorder';
 import { SpanClockCard } from './SpanClockCard';
 import { stockLeft, stockText } from '../core/stock';
 import { RouteMap } from '../ui/RouteMap';
-import { SET_KIND_NAME, bestsBefore, liftFields, nextKind, platesFor, recordOf, setKind } from '../core/records';
+import { SET_KIND_NAME, bestsBefore, liftFields, nextKind, platesFor, recordOf, setKind, usesBar } from '../core/records';
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
 import { useAutoValue } from '../core/autoValue';
@@ -107,6 +107,9 @@ function WeekStrip({
   );
 }
 
+// A set's number as people write it: 82.5, 185, not 181.88 from a unit conversion.
+const tidy = (n: number): number => Math.round(n * 10) / 10;
+
 function RowSlot({
   t, slot, day, entries, editable, settings, canEdit, open, onToggle, index, count,
 }: {
@@ -126,7 +129,7 @@ function RowSlot({
   const show = (base: number) => (lift.weight ? `${formatNumber(round2(toDisplay(lift.weight, base, settings)))}${wUnit ? ' ' + wUnit : ''}` : '');
   const todayTop = Math.max(0, ...mine.map((e) => (lift.weight ? Number(e.values[lift.weight.id]) || 0 : 0)));
   const plateBase = todayTop || bests.weight;
-  const plateUnit = wUnit === 'lb' ? 'lb' : wUnit === 'kg' ? 'kg' : undefined;
+  const plateUnit = (wUnit === 'lb' ? 'lb' : wUnit === 'kg' ? 'kg' : undefined) && usesBar(slot.name) ? (wUnit as 'kg' | 'lb') : undefined; // only barbell lifts load plates
   if (open) return <SlotEditor t={t} slot={slot} weekday={weekday} settings={settings} index={index} count={count} onClose={onToggle} />;
   return (
     <Card keep style={{ padding: 14, marginBottom: 10 }}>
@@ -171,7 +174,7 @@ function RowSlot({
             </Tap>
             {nf.map((f) => {
               const raw = e?.values[f.id];
-              const shown = raw === undefined || raw === '' ? undefined : round2(toDisplay(f, Number(raw), settings));
+              const shown = raw === undefined || raw === '' ? undefined : tidy(toDisplay(f, Number(raw), settings));
               const pv = prev?.values[f.id];
               return (
                 <View key={f.id} style={{ flex: 1, paddingHorizontal: 4 }}>
@@ -179,7 +182,7 @@ function RowSlot({
                     value={shown}
                     disabled={!editable}
                     style={{ height: 42, fontSize: 17, fontWeight: '600', borderRadius: 10 }}
-                    placeholder={pv !== undefined ? String(round2(toDisplay(f, Number(pv), settings))) : ''}
+                    placeholder={pv !== undefined ? String(tidy(toDisplay(f, Number(pv), settings))) : ''}
                     onCommit={(v) => setRow(t.id, day, slot.id, r, { values: { [f.id]: v === undefined ? '' : fromDisplay(f, v, settings) } })}
                   />
                 </View>
@@ -553,7 +556,7 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
               ? shownMeasures.map((m) => (
                   <View key={m.id} style={[s.row, { justifyContent: 'space-between' }]}>
                     <Text style={{ color: colors.text, fontSize: 14 }}>{m.name}</Text>
-                    <Text style={s.muted}>{formatMeasure(t, m, measures[m.id] ?? 0, settings)}</Text>
+                    <Text style={s.muted}>{doneNow ? formatMeasure(t, m, measures[m.id] ?? 0, settings) : '–'}</Text>{/* nothing logged yet reads as nothing, not as a reading of 0 */}
                   </View>
                 ))
               : null}
@@ -668,7 +671,7 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
                 </View>
               ) : (
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700' }}>
-                {doneNow ? 'Done' : 'To do'}
+                {doneNow ? 'Done' : ['weekdays', 'interval', 'monthly'].includes(sched.kind) && !isDueOn(sched, day) ? 'Not due today' : 'To do'}
               </Text>
               )
               )}
