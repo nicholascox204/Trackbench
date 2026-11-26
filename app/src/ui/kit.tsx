@@ -292,16 +292,35 @@ export function BackButton({ label, onPress }: { label: string; onPress: () => v
   );
 }
 
-// fill: chips on a line stretch to reach the edge, so wrapped lines end flush instead of ragged.
-export function Chip({ label, active, onPress, onLongPress, disabled, fill }: { label: string; active?: boolean; onPress: () => void; onLongPress?: () => void; disabled?: boolean; fill?: boolean }) {
+export function Chip({ label, active, onPress, onLongPress, disabled }: { label: string; active?: boolean; onPress: () => void; onLongPress?: () => void; disabled?: boolean }) {
   return (
     <Tap
       onPress={onPress} onLongPress={onLongPress}
       disabled={disabled}
-      style={[s.chip, fill && { flexGrow: 1, alignItems: 'center' }, active && { backgroundColor: colors.accent, borderColor: colors.accent }, disabled && { opacity: 0.4 }]}
+      style={[s.chip, active && { backgroundColor: colors.accent, borderColor: colors.accent }, disabled && { opacity: 0.4 }]}
     >
       <Text style={[s.chipText, active && { color: colors.onAccent }]}>{label}</Text>
     </Tap>
+  );
+}
+
+// A choice among equals: every option the same size in a fixed number of columns, label centred, so no option looks bigger
+// or more important than another. Widths are shares of the row, worked out in layout, so nothing jumps after it appears.
+export function ChoiceGrid({ options, value, onPick, cols = 3 }: { options: { key: string; label: string }[]; value?: string; onPick: (key: string) => void; cols?: number }) {
+  const GAP = 8;
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -GAP / 2 }}>
+      {options.map((o) => {
+        const on = o.key === value;
+        return (
+          <View key={o.key} style={{ width: `${100 / cols}%`, paddingHorizontal: GAP / 2, marginBottom: GAP }}>
+            <Tap onPress={() => onPick(o.key)} style={[s.chip, { alignSelf: 'stretch', marginRight: 0, marginBottom: 0, alignItems: 'center', paddingHorizontal: 6 }, on && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
+              <Text numberOfLines={1} style={[s.chipText, on && { color: colors.onAccent }]}>{o.label}</Text>
+            </Tap>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 

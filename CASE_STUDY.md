@@ -1881,3 +1881,7 @@ Wrapped chips left ragged right edges, with a different gap on each line dependi
 ## 2026-11-26: Setup loses its top bar; icon grid fills the width
 
 The progress dots at the top of setup were left over from a multi-step flow; with every tracker now opening on one summary they meant nothing, and they showed outside the first-run flow too. Cancel at the top duplicated Back at the bottom. Both are gone for new trackers once past the start screen; the start screen keeps Cancel because it has no bottom bar, and editing an existing tracker keeps its name bar. The icon grid now works out how many tiles of about 46 points fit and stretches them so the row ends flush, instead of fixed tiles that left a gap one column short on some phones.
+
+## 2026-11-26: Equal-width choice grid replaces stretched pills
+
+Stretched pills still read as a ranking (a long word got a wider button), and the icon grid visibly stretched for a moment as it opened. Chose an equal-width grid for choices among equals: a fixed number of columns, every cell the same size, label centred, widths set as shares of the row so the layout is right on the first frame with nothing measured. Icon categories are three across. The icon grid still needs the real width to pick its column count, so it stays hidden until that is known once and remembers it, so it never appears small and then grows. Candidate standard for every place chips wrap; to be applied spot by spot as the setup pass reaches them.
