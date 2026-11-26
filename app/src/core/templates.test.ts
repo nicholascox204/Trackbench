@@ -28,11 +28,9 @@ test('every template builds a sound tracker', () => {
     assert.ok(d.name.trim().length > 0, tp.id);
     assert.equal(new Set(d.fields.map((f) => f.id)).size, d.fields.length, `${tp.id} field ids`);
     for (const tg of d.targets) assert.ok(d.measures.some((m) => m.id === tg.measure) || tg.measure === 'count', `${tp.id} target ${tg.measure}`);
-    // a plan starts empty (you enter your own); the example is there when asked for
+    // a plan starts empty: you enter your own (no example lists, decided 2026-11-26)
     if (d.input === 'plan') {
       assert.ok(d.plan[0].days.every((x) => x.slots.length === 0), `${tp.id} starts empty`);
-      const withExample = draftFromAnswers({ ...a, planMode: 'example' }, imperial);
-      assert.ok(withExample.plan[0].days.some((x) => x.slots.length > 0), `${tp.id} has an example`);
     }
   }
 });

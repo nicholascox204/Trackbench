@@ -155,19 +155,16 @@ const ALL: Template[] = [
   T('practice', 'Practice', 'musical-notes-outline', 'Study', 'Minutes, and what you practiced.', 'practice instrument piano guitar singing music skill', 'time-blocks', () => ({ chips: [], custom: [named('what', 'What'), duration('minutes', 'Time', { step: 5, default: 25 }), note()], goal: 'none', goals: [], extras: { previous: true, lockPast: false, average: false } })),
   T('language', 'Language', 'language-outline', 'Study', 'A short daily routine of rounds.', 'language spanish french vocabulary duolingo speaking listening learning', 'set-plan', () => ({
     chips: ['minutes'], combos: [], schedule: { kind: 'daily' }, samePlan: true, planMode: 'asigo', terms: { item: 'Skill', row: 'Round', target: 'Goal' },
-    sample: [day('Daily practice', [row('Vocabulary', 3, '20 words'), row('Listening', 2, '10 min'), row('Speaking', 2, '5 min')])],
   })),
 
   // ---- Life ----
   T('chores', 'Chores', 'home-outline', 'Life', 'A list to tick off each day.', 'chores cleaning house dishes laundry tidy household', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     samePlan: true, planMode: 'asigo',
-    sample: [day('Chores', [item('Dishes'), item('Tidy up'), item('Laundry'), item('Take out trash')])],
   })),
   T('pet-care', 'Pet care', 'paw-outline', 'Life', 'Feed, walk and water, ticked off daily.', 'pet dog cat animal feed walk care', 'checklist-totals', () => ({
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     samePlan: true, planMode: 'asigo',
-    sample: [day('Pet care', [item('Morning feed'), item('Walk'), item('Fresh water'), item('Evening feed')])],
   })),
   T('plants', 'Plants', 'leaf-outline', 'Life', 'Tick off each watering, Wed and Sun.', 'plants garden water houseplants', 'check-in', { schedule: { kind: 'weekdays', days: [0, 3] } }),
 
