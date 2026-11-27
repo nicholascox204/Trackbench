@@ -2179,3 +2179,7 @@ Testing on the Preview app turned up three faults behind "slow, and it opens on 
 - **The "still restoring" mark lived in settings**, which travel to the account. It now stays on the phone only.
 
 Sign-out was slow because it ran a full sync (send and fetch) and waited on two network sign-outs. Now it sends only what has not reached the account (usually nothing, so it is immediate), signs out on the phone without waiting for the network, and clears. Restores fetch 1,000 rows per request instead of 500.
+
+## 2026-11-27 — The restore screen stayed up after the restore had finished
+
+Moving the "still restoring" mark out of settings (so it would not sync) also took it out of the app state that screens watch, so clearing it redrew nothing: the trackers were in, but the spinner stayed until something else changed, which looked like a restore of several minutes. The restore screen and the app now watch the restore's own state directly.

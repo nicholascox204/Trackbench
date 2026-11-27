@@ -2,14 +2,13 @@
 // stuck with a way out. It never just waits.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { abandonRestore, getRestorePhase, restoreAccount, useAppState } from '../core/store';
+import { abandonRestore, restoreAccount, useRestorePhase } from '../core/store';
 import { Button, colors, s } from '../ui/kit';
 
 const SLOW_AFTER = 8000;
 
 export function RestoreScreen() {
-  useAppState(); // redraw when the restore moves on
-  const phase = getRestorePhase();
+  const phase = useRestorePhase(); // redraws as the restore moves on
   const [slow, setSlow] = useState(false);
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {

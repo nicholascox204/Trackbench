@@ -5,7 +5,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
 import { RestoreScreen } from './src/screens/RestoreScreen';
-import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isRestoring, loadState, restoreAccount, restoreNeedsStart, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
+import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isRestoring, useRestorePhase, loadState, restoreAccount, restoreNeedsStart, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
 import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { syncHealth } from './src/core/healthRead';
@@ -67,7 +67,8 @@ function AppInner() {
   const browserSkip = Platform.OS === 'web' && __DEV__ && !!state.settings.skippedSignIn;
   const needsAccount = !(cloudConfigured && session.loading) && !session.userId && !browserSkip;
   // Signed in, trackers still coming down: hold on the restore screen. Picks up again if the app was closed midway.
-  const holding = !!session.userId && isRestoring();
+  const restorePhase = useRestorePhase();
+  const holding = !!session.userId && restorePhase !== 'off';
   useEffect(() => { if (loaded && session.userId && restoreNeedsStart()) void restoreAccount(); }, [loaded, session.userId, isRestoring()]);
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });

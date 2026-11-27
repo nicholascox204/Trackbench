@@ -151,6 +151,9 @@ function setPending(on: boolean): void {
 }
 export const getRestorePhase = (): RestorePhase => (pending ? (restorePhase === 'off' ? 'busy' : restorePhase) : 'off');
 export const isRestoring = (): boolean => pending;
+// For screens: redraws whenever the restore starts, moves on or ends. (The main app state does not change when it does,
+// so watching that alone left the spinner up after the trackers were in.)
+export function useRestorePhase(): RestorePhase { return useSyncExternalStore(subscribe, getRestorePhase); }
 const RESTORE_LIMIT = 30000;
 // How long the last restore took, step by step, shown in Settings so a slow one can be pinned down on the phone itself.
 let restoreTiming = '';
