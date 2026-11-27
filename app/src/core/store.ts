@@ -190,6 +190,18 @@ export async function restoreAccount(): Promise<void> {
       mark('prepare');
       const done = await Promise.race([syncNow().then(() => true), wait(RESTORE_LIMIT).then(() => false)]);
       if (!done || cloud.getCloudStatus().phase === 'error') throw new Error('restore');
+      // Always finish by showing exactly what is now on the phone. The sync's own reload gives up when the app changes
+      // meanwhile (signing in sets settings), which left the trackers saved but not shown, so the app opened on setup.
+      if (db) {
+        scheduleSave();
+        await saving;
+        const r = await load(db);
+        state = fromStored(r.state);
+        snap = r.snapshot;
+        version++;
+        listeners.forEach((l) => l());
+        mark('show');
+      }
       restorePhase = 'off';
       if (timer) restoreTiming = `${((Date.now() - timer.start) / 1000).toFixed(1)}s in all: ${timer.steps.join(', ')}`;
       console.log('[restore]', restoreTiming);

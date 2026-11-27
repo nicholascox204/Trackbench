@@ -2183,3 +2183,7 @@ Sign-out was slow because it ran a full sync (send and fetch) and waited on two 
 ## 2026-11-27 — The restore screen stayed up after the restore had finished
 
 Moving the "still restoring" mark out of settings (so it would not sync) also took it out of the app state that screens watch, so clearing it redrew nothing: the trackers were in, but the spinner stayed until something else changed, which looked like a restore of several minutes. The restore screen and the app now watch the restore's own state directly.
+
+## 2026-11-27 — Sign-in opened on "What do you want to track"
+
+It looked like Google treating sign-in as sign-up, but the app never distinguishes the two and already shows setup only when there are no trackers. The real cause: after the restore, the sync re-reads the phone's database into the app, but gives up when the app changes during that read, and signing in itself changes settings. The trackers were saved but never shown, so the app saw none and opened setup; reopening showed them. A restore now always ends with a full re-read, so setup appears only for an account that really has no trackers (a new one included).
