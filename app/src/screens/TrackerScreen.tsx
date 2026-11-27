@@ -36,7 +36,7 @@ import { SET_KIND_NAME, bestsBefore, liftFields, nextKind, platesFor, recordOf, 
 import { HealthCard, stepsFieldOf } from './HealthCard';
 import { autoStepsField } from '../core/healthSync';
 import { useAutoValue } from '../core/autoValue';
-import { AddSlot, DayHeader, EditButton, RotationPicker, SlotEditor, listName, plural, termsOf } from './PlanEditor';
+import { AddSlot, DayHeader, EditButton, ListBar, SlotEditor, listName, plural, termsOf } from './PlanEditor';
 import { EDGE, px } from '../ui/theme';
 
 const dotColors = () => ({ hit: colors.done, some: colors.accent, none: colors.border });
@@ -607,8 +607,8 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
           onPick={(d) => { setDay(d); rememberPickedDay(id, d); setOffset(Math.round((mondayOf(d) - mondayOf(today)) / (7 * 86400000))); setOpenId(null); }}
         />
         {stepsFieldOf(t) && day <= today ? <HealthCard t={t} day={day} entries={entries} /> : null}
-        {t.input === 'plan' && !offDay && version?.rotation && day <= today ? <RotationPicker t={t} day={day} entries={state.entries} current={listIndex} /> : null}
-        {t.input === 'plan' && !offDay ? <DayHeader t={t} weekday={weekdayOfDay} editable={canEdit} /> : null}
+        {t.input === 'plan' && !offDay && version?.rotation && day <= today ? <ListBar t={t} day={day} entries={state.entries} current={listIndex} canEdit={canEdit} /> : null}
+        {t.input === 'plan' && !offDay && !version?.rotation ? <DayHeader t={t} weekday={weekdayOfDay} editable={canEdit} /> : null}
         {!editable && day <= today ? <Muted style={{ marginBottom: 8, textAlign: 'center' }}>Past days are locked for this tracker (change in Build).</Muted> : null}
 
         {/* body by input kind */}
@@ -618,7 +618,7 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
             <Muted style={{ marginBottom: 12 }}>{WEEKDAYS[new Date(day).getDay()]} is not a day you set for {t.name}. To use this day, add it in Setup.</Muted>
             <Button label="Open setup" variant="ghost" onPress={setup} />
           </Card>
-        ) : t.input === 'plan' ? (
+        ) : t.input === 'plan' && version?.rotation && version.days.length === 0 ? null : t.input === 'plan' ? (
           !planDay || planDay.slots.length === 0 ? (
             <View>
               {listDays(t, fromToday ? today : day).length === 0 && canEdit ? (

@@ -50,11 +50,13 @@ test('doing a different list than the suggested one carries the rotation on from
   assert.equal(nextList(t, day(2), entries), 0, 'after Legs comes Push');
 });
 
-test('the days of a rotation can only be a number of times or whenever', () => {
+test('picking from a set of lists keeps whatever rhythm was chosen, and can start with no lists', () => {
   const a = { ...answersFromPreset('set-plan'), rotation: ['A', 'B'], schedule: { kind: 'weekdays' as const, days: [1, 3, 5] } };
-  assert.equal(scheduleFromAnswers(a).kind, 'whenever');
-  assert.equal(scheduleFromAnswers({ ...a, schedule: { kind: 'times', n: 3, per: 'week' } }).kind, 'times');
-  assert.equal(scheduleFromAnswers({ ...a, rotation: [] }).kind, 'weekdays', 'no rotation: untouched');
+  assert.equal(scheduleFromAnswers(a).kind, 'weekdays', 'the days are not rewritten');
+  const none = draftFromAnswers({ ...answersFromPreset('set-plan'), name: 'Lifts', rotation: [], pickLists: true }, SETTINGS);
+  const v = none.plan[none.plan.length - 1];
+  assert.equal(v.rotation, true);
+  assert.equal(v.days.length, 0, 'no lists until one is made on the tracker');
 });
 
 test('editing a rotation brings its lists back, and keeps what was built in them', () => {
@@ -71,5 +73,5 @@ test('editing a rotation brings its lists back, and keeps what was built in them
 test('the summary says the lists are chosen each time', () => {
   const t = rotation();
   const line = planWords(answersFromTracker(t, SETTINGS, false));
-  assert.ok(line.startsWith('Pick a list each time (Push, Pull, Legs)'), line);
+  assert.ok(line.startsWith('Pick from a set of lists (Push, Pull, Legs)'), line);
 });

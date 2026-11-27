@@ -12,7 +12,7 @@ import { Text, TextInput, View } from 'react-native';
 import { MAX_LISTS, WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
 import { startOfDay } from '../core/time';
 import { scheduleOf } from '../core/schedule';
-import { getState, mutatePlanDay, savePlanDays, updateTracker } from '../core/store';
+import { addList, getState, mutatePlanDay, removeList, updateTracker } from '../core/store';
 import { DEFAULT_TERMS, plural, termsOf } from '../core/terms';
 import type { Entry, PlanDay, Settings, Slot, Tracker } from '../core/types';
 import { defaultStep, fieldUnit, formatNumber, fromDisplay, round2, toDisplay } from '../core/units';
@@ -122,27 +122,77 @@ export function EditButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// A rotation: today's lists as chips, the suggested one marked. One tap picks the list for the day; once you log something the day
-// shows the list you logged, and you can still tap another to do a second one.
-export function RotationPicker({ t, day, entries, current }: { t: Tracker; day: number; entries: Entry[]; current: number }) {
+// Lists to pick from: the lists as chips (the next one in turn marked) and a dashed New list chip; the picked list's name
+// below it, typed in place, with Remove. With no lists yet it is one card: Make your first list.
+export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [confirm, setConfirm] = useState(false);
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
+  const editing = canEdit && day >= startOfDay(Date.now());
   const next = nextList(t, day, entries);
-  const today = day >= startOfDay(Date.now());
-  const cur = versionFor(t.plan, Date.now()) ?? v;
+  const create = () => {
+    const n = name.trim();
+    if (!n) return;
+    const at = addList(t.id, n);
+    updateTracker(t.id, { rotationPick: { day, index: at } });
+    setName(''); setAdding(false); setConfirm(false);
+  };
+  const nameBox = (first: boolean) => (
+    <View style={[s.row, { gap: 8 }]}>
+      <TextInput
+        style={[s.input, { flex: 1 }]} value={name} onChangeText={setName} onSubmitEditing={create} autoFocus={!first} maxLength={24}
+        placeholder="Name it" placeholderTextColor={colors.hint} returnKeyType="done"
+      />
+      <Button label="Create" onPress={create} disabled={!name.trim()} />
+    </View>
+  );
+  if (v.days.length === 0) {
+    if (!editing) return null;
+    return (
+      <Card keep style={{ marginBottom: 12 }}>
+        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Make your first list</Text>
+        {nameBox(true)}
+      </Card>
+    );
+  }
+  const picked = v.days[current];
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
-      {v.days.map((d, i) => (
-        <Chip
-          key={i} label={`${d.label.trim() || `List ${i + 1}`}${i === next ? ' · next' : ''}`} active={i === current}
-          onPress={() => updateTracker(t.id, { rotationPick: { day, index: i } })}
-        />
-      ))}
-      {/* How many lists is set here, not in setup: add one, or drop the one picked while it is still empty. Changes apply from today. */}
-      {today && v.days.length < MAX_LISTS ? <Chip label="+ List" onPress={() => savePlanDays(t.id, [...cur.days, { label: '', slots: [] }])} /> : null}
-      {today && cur.days.length > 2 && (cur.days[current]?.slots.length ?? 1) === 0 ? (
-        <Chip label="Remove this list" onPress={() => { savePlanDays(t.id, cur.days.filter((_, i) => i !== current)); updateTracker(t.id, { rotationPick: { day, index: 0 } }); }} />
+    <View style={{ marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {v.days.map((d, i) => (
+          <Chip
+            key={i} label={`${d.label.trim() || `List ${i + 1}`}${i === next && v.days.length > 1 ? ' · next' : ''}`} active={i === current}
+            onPress={() => { setConfirm(false); updateTracker(t.id, { rotationPick: { day, index: i } }); }}
+          />
+        ))}
+        {editing && v.days.length < MAX_LISTS && !adding ? (
+          <Tap onPress={() => setAdding(true)} accessibilityLabel="New list"
+            style={[s.chip, { flexDirection: 'row', alignItems: 'center', borderStyle: 'dashed', backgroundColor: 'transparent' }]}>
+            <Icon name="add" size={15} color={colors.text} />
+            <Text style={[s.chipText, { marginLeft: 4 }]}>New list</Text>
+          </Tap>
+        ) : null}
+      </View>
+      {adding ? (
+        <View style={{ marginTop: 4, marginBottom: 8 }}>
+          {nameBox(false)}
+          <Button label="Cancel" variant="ghost" onPress={() => { setAdding(false); setName(''); }} style={{ marginTop: 6 }} />
+        </View>
       ) : null}
+      {editing && picked ? (
+        <View style={[s.row, { marginTop: 4 }]}>
+          <TextInput
+            style={[s.input, { flex: 1, fontSize: 18, fontWeight: '700' }]} value={picked.label} maxLength={24}
+            onChangeText={(val) => mutatePlanDay(t.id, current, (d) => { d.label = val; })}
+            placeholder="List name" placeholderTextColor={colors.hint}
+          />
+          <Tap onPress={() => (confirm ? (removeList(t.id, current), setConfirm(false)) : setConfirm(true))} accessibilityLabel="Remove this list" style={{ paddingHorizontal: 10, paddingVertical: 8 }}>
+            <Text style={{ color: confirm ? colors.danger : colors.muted, fontSize: 14, fontWeight: '600' }}>{confirm ? 'Tap again' : 'Remove'}</Text>
+          </Tap>
+        </View>
+      ) : picked?.label ? <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>{picked.label}</Text> : null}
     </View>
   );
 }

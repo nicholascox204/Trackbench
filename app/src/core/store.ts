@@ -467,6 +467,22 @@ export function savePlanDays(trackerId: string, days: PlanDay[], same?: boolean)
   });
 }
 
+// Lists to pick from, made and removed on the tracker. Like every plan change they apply from today; past days keep theirs.
+export function addList(trackerId: string, name: string): number {
+  const t = state.trackers.find((x) => x.id === trackerId);
+  const v = t ? versionFor(t.plan, Date.now()) : null;
+  if (!t || !v) return 0;
+  savePlanDays(trackerId, [...JSON.parse(JSON.stringify(v.days)), { label: name.trim(), slots: [] }]);
+  return v.days.length;
+}
+export function removeList(trackerId: string, index: number): void {
+  const t = state.trackers.find((x) => x.id === trackerId);
+  const v = t ? versionFor(t.plan, Date.now()) : null;
+  if (!t || !v) return;
+  savePlanDays(trackerId, JSON.parse(JSON.stringify(v.days)).filter((_: unknown, i: number) => i !== index));
+  updateTracker(trackerId, { rotationPick: undefined });
+}
+
 // Create a tracker from the setup flow, or update one when editing.
 // Add options to a choice field as it is now (a past day may show an older setup, which is never written back).
 export function addFieldOptions(trackerId: string, fieldId: string, options: string[]): void {

@@ -75,7 +75,7 @@ export function Dropdown({
                     <Text style={{ color: colors.text, fontSize: 15, fontWeight: on ? '700' : '500', textAlign: right ? 'right' : 'left' }}>{o.label}</Text>
                     {o.sub ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2, textAlign: right ? 'right' : 'left' }}>{o.sub}</Text> : null}
                   </View>
-                  <View style={{ width: mark, alignItems: 'center' }}><Icon name={on ? 'checkmark-circle' : 'ellipse-outline'} size={mark} color={on ? colors.accent : colors.hint} /></View>
+                  <View style={{ width: mark, alignItems: 'center' }}><Icon name={on ? 'checkmark-circle' : 'ellipse-outline'} size={mark} color={on ? colors.accent : colors.border} /></View>
                 </Tap>
               );
             })}

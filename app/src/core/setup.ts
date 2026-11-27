@@ -86,7 +86,8 @@ export interface Answers {
   planMode: 'asigo' | 'example'; // start empty and add as you go (the default), or start from an example
   dayNames: Record<number, string>; // what each training day is called (Push, Pull...), optional
   samePlan: boolean; // one list for every training day
-  rotation: string[]; // the names of lists taken in turn (Push, Pull, Legs), not tied to weekdays; empty is off
+  rotation: string[]; // the names of lists to pick from (Push, Pull, Legs), not tied to weekdays
+  pickLists?: boolean; // pick from a set of lists; it can start with none, made on the tracker
   startGoals: GoalDef[]; // goals over time chosen while setting up, saved with the tracker
   planStyle: 'sets' | 'items'; // planned items are filled in each time, or ticked with their own numbers
   combos: Combo[]; // numbers built from two fields
@@ -191,7 +192,7 @@ export function answersFromTracker(t: Tracker, settings: Settings, hasSystem: bo
     record: t.input === 'check' ? 'done' : t.input === 'tap' ? 'count' : 'numbers',
     chips, custom,
     log: t.input === 'plan' ? 'plan' : 'free',
-    schedule: sched, ...(t.window ? { window: t.window } : {}), planMode: 'asigo', dayNames: latest ? Object.fromEntries(latest.days.map((d, i) => [i, d.label] as const).filter(([, l]) => l)) : {}, samePlan: !!(t.plan.length && versionFor(t.plan, Date.now())?.same), rotation: latest?.rotation ? latest.days.map((d) => d.label) : [],
+    schedule: sched, ...(t.window ? { window: t.window } : {}), planMode: 'asigo', dayNames: latest ? Object.fromEntries(latest.days.map((d, i) => [i, d.label] as const).filter(([, l]) => l)) : {}, samePlan: !!(t.plan.length && versionFor(t.plan, Date.now())?.same), rotation: latest?.rotation ? latest.days.map((d) => d.label) : [], pickLists: !!latest?.rotation,
     goal: goals.length > 0 ? 'number' : 'none',
     goals,
     finishPlan: t.success.mode === 'plan' || (t.success.mode === 'targets' && t.success.planMinPct !== undefined),
@@ -334,7 +335,7 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
 
   // The plan.
   let plan: PlanVersion[] = existing?.plan ?? [];
-  if (input === 'plan' && a.rotation.length >= 2) {
+  if (input === 'plan' && picksLists(a)) {
     // Lists taken in turn: just the lists, in order. Lists already built are kept by position, so changing layout loses nothing.
     const today = dayKeyOf(Date.now());
     const cur0 = existing?.plan.length ? versionFor(existing.plan, Date.now()) : null;
@@ -406,10 +407,11 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
   };
 }
 
+// Picking from a set of lists: chosen in setup (it may have none yet), or an older tracker with lists taken in turn.
+export const picksLists = (a: Pick<Answers, 'rotation' | 'pickLists'>): boolean => !!a.pickLists || a.rotation.length >= 2;
+
 // The schedule to store: the one the person chose, tidied.
 export function scheduleFromAnswers(a: Answers): Schedule {
-  // Lists taken in turn belong to no particular day: it can only be a number of times, or whenever.
-  if (a.rotation.length >= 2 && a.schedule.kind !== 'times' && a.schedule.kind !== 'whenever') return { kind: 'whenever' };
   return normalizeSchedule(a.schedule);
 }
 
@@ -504,7 +506,7 @@ export function nameProblem(name: string, others: string[]): '' | 'empty' | 'tak
 
 // How a plan's lists are described: one list shared by every day, or a list for each day (with the days' names if they have them).
 export function planWords(a: Answers): string {
-  if (a.rotation.length >= 2) return `Pick a list each time (${a.rotation.map((n) => n.trim()).filter(Boolean).join(', ') || `${a.rotation.length} lists`})`;
+  if (picksLists(a)) return `Pick from a set of lists (${a.rotation.map((n) => n.trim()).filter(Boolean).join(', ') || `${a.rotation.length} lists`})`;
   if (a.samePlan) return 'The same list each time';
   const order = a.schedule.kind === 'blocks' ? weekdaysOf(a.schedule) : [1, 2, 3, 4, 5, 6, 0].filter((d) => weekdaysOf(a.schedule).includes(d));
   const named = order.map((d) => (a.dayNames[d] ?? '').trim()).filter(Boolean).join(', ');
@@ -513,7 +515,7 @@ export function planWords(a: Answers): string {
 
 // How a list works, in a few words for the summary.
 function listsWord(a: Answers): string {
-  return a.rotation.length >= 2 ? 'pick a list each time' : a.samePlan ? 'the same list each time' : 'a list per weekday';
+  return picksLists(a) ? 'pick from a set of lists' : a.samePlan ? 'the same list each time' : 'a list per weekday';
 }
 
 // The rows on the summary: what you log, what it shows, its tools and its options, each with its current contents. Rows that do not
@@ -585,7 +587,7 @@ export function previewText(a: Answers, settings: Settings): string {
   if (a.record === 'done') parts.push('done or not');
   else if (a.record === 'count') parts.push('tap +1');
   else parts.push([...CHIPS.filter((c) => a.chips.includes(c.id)).map((c) => c.name.toLowerCase()), ...a.custom.map((f) => f.name.toLowerCase())].join(' · ') || 'pick what you record');
-  if (a.record === 'numbers' && a.log === 'plan') parts.push(a.rotation.length >= 2 ? 'plan, choosing each time' : a.schedule.kind === 'blocks' ? `plan, blocks of ${a.schedule.n} days` : `plan ${daysLabel(weekdaysOf(a.schedule))}`);
+  if (a.record === 'numbers' && a.log === 'plan') parts.push(picksLists(a) ? 'plan, choosing each time' : a.schedule.kind === 'blocks' ? `plan, blocks of ${a.schedule.n} days` : `plan ${daysLabel(weekdaysOf(a.schedule))}`);
   return parts.join(' · ');
 }
 

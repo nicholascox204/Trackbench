@@ -7,7 +7,7 @@
 import { useState, type ReactNode } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { FIXED, KINDS, applyMeasure, measuresKey } from '../core/fieldKinds';
-import { CHIPS, chipField, type Answers, type ComboFn } from '../core/setup';
+import { CHIPS, chipField, picksLists, type Answers, type ComboFn } from '../core/setup';
 import type { Field, Settings } from '../core/types';
 import { DEFAULT_TERMS } from '../core/terms';
 import { systemDefaultUnit, defaultStep } from '../core/units';
@@ -280,16 +280,16 @@ export function RecordStep({
     { key: 'avoid', label: 'Avoiding something' },
   ];
   // How a list works: the same list each time, a list per weekday (only where the rhythm is weekly), or pick a list each
-  // time. How many lists to pick from is set on the tracker, where they are named and filled.
-  const turns = a.rotation.length >= 2;
+  // time. The lists themselves are made, named and removed on the tracker; it starts with none.
+  const turns = picksLists(a);
   const lists = turns ? 'turns' : a.samePlan ? 'same' : 'each';
   const weekly = WEEKLY.includes(a.schedule.kind);
   const LISTS: DropdownOption[] = [
     { key: 'same', label: 'The same list each time' },
     ...(weekly ? [{ key: 'each', label: 'A list per weekday' }] : []),
-    { key: 'turns', label: 'Pick a list each time' },
+    { key: 'turns', label: 'Pick from a set of lists' },
   ];
-  const chooseLists = (k: string) => set(k === 'same' ? { samePlan: true, rotation: [] } : k === 'each' ? { samePlan: false, rotation: [] } : { samePlan: false, rotation: turns ? a.rotation : ['', '', ''] });
+  const chooseLists = (k: string) => set(k === 'same' ? { samePlan: true, rotation: [], pickLists: false } : k === 'each' ? { samePlan: false, rotation: [], pickLists: false } : { samePlan: false, pickLists: true });
   const listsControl = (
     <View style={{ marginTop: 14 }}>
       <Dropdown compact flush label="Lists" value={LISTS.find((o) => o.key === lists)?.label ?? LISTS[0].label} options={LISTS} selected={lists} onSelect={chooseLists} />

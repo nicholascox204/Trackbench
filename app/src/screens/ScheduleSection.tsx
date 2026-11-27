@@ -4,7 +4,7 @@
 import { Text, View } from 'react-native';
 import { dayKeyOf } from '../core/plan';
 import { normalizeSchedule } from '../core/schedule';
-import type { Answers } from '../core/setup';
+import { picksLists, type Answers } from '../core/setup';
 import type { Schedule } from '../core/types';
 import { Card, colors } from '../ui/kit';
 import { Dropdown, type DropdownOption } from '../ui/Dropdown';
@@ -44,7 +44,7 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
   // How often never changes the lists, except where a list per weekday no longer has weekdays: then it is one list.
   const choose = (kind: string) => {
     const next = normalizeSchedule(startFor(kind as Kind, sc, todayKey));
-    const perWeekday = planned && !a.samePlan && a.rotation.length < 2;
+    const perWeekday = planned && !a.samePlan && !picksLists(a);
     set({ schedule: next, ...(perWeekday && !WEEKLY.includes(next.kind) ? { samePlan: true } : {}) });
   };
 

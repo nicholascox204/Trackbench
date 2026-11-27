@@ -2064,3 +2064,13 @@ Also:
 - **The summary row says how the list works** (Following a plan, pick a list each time: Weight, Reps).
 - **Unselected dropdown options show an empty circle,** so every row ends in a mark and the list reads as a set of choices.
 - **Kept on purpose: the word "list"** for a checklist of one. "Each time" and the tracker's "Add your first habit" carry a list of one well enough, and a different word for one item would split one idea in two.
+
+## 2026-11-27: Picking from a set of lists, made on the tracker
+- **Option three is now "Pick from a set of lists".** It also no longer forces the schedule to "whenever" at save. That hidden rule was another quiet rewrite of the days.
+- **It starts with no lists** rather than three unnamed ones. The tracker opens on "Make your first list", the same pattern as "Add your first habit".
+- **The tracker's list controls were rebuilt into one bar:**
+  - the lists as chips, with "· next" on the one due in turn, and a dashed "New list" chip that asks for a name;
+  - the picked list's name editable in place, with Remove (tap again to confirm).
+
+  This replaced unnamed "List 1/2/3" chips, a separate name box and a "+ List" / "Remove this list" pair that only appeared sometimes.
+- **The empty circles in dropdowns now use the border colour,** so they read as faint.
