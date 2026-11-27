@@ -1,5 +1,4 @@
-// "You log". Named for what you will see when logging: a checkbox, a counter, or an entry. A checkbox asks one box or a
-// checklist; an entry asks one a day or any number, and for any number, whether each is named as you go or picked from a list.
+// "You log by". Five things people do: tick things off, count something, write down details, follow a plan, avoid something.
 // Then the things you fill in, one row each, and Calculations.
 // Every number can measure something that follows the person's units (weight, distance, height or length, liquid volume)
 // or carry a fixed label (minutes, calories, money, their own). That one "Measures" setting replaces the separate presets
@@ -257,20 +256,35 @@ export function RecordStep({
   const shortcuts = planned && a.planStyle === 'sets' ? CHIPS.filter((c) => (c.id === 'weight' || c.id === 'reps') && !has(c.id)) : [];
 
   const numberFields = fields.filter((f) => f.type === 'number');
-  // How you log it: three things you do, then the forks each one needs. The biggest fork is whether entries are
-  // made up on the spot or picked from a list you set ahead, so it is asked out loud, never tucked in a menu.
-  type Top = 'tick' | 'count' | 'fill';
-  const top: Top = a.record === 'count' ? 'count' : a.record === 'done' || (mode === 'plan' && a.planStyle === 'items') ? 'tick' : 'fill';
-  const pickTop = (t: Top) => {
-    if (t === top) return;
-    if (t === 'tick') return set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
-    if (t === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
-    set({ record: 'numbers', avoid: false, log: 'free', daily: true, finishPlan: false });
+  // You log by: five things people actually do. Ticking off is one box (the tracker itself) until you list things, then a
+  // checklist; a plan is a list worked through with details; details are one a day or any number.
+  type Way = 'tick' | 'count' | 'details' | 'plan' | 'avoid';
+  const way: Way = a.record === 'count' ? 'count' : a.record === 'done' ? (a.avoid ? 'avoid' : 'tick')
+    : mode === 'plan' ? (a.planStyle === 'items' ? 'tick' : 'plan') : 'details';
+  const ticks = a.ticks ?? [];
+  // The list decides the shape: nothing listed ticks the tracker itself, anything listed makes a checklist.
+  const setTicks = (next: { id: string; name: string }[]) => {
+    if (next.length === 0) return set({ ticks: [], record: 'done', avoid: false, log: 'free', daily: false });
+    set({ ticks: next, record: 'numbers', avoid: false, planStyle: 'items', samePlan: true, finishPlan: false });
+    if (mode !== 'plan') setMode('plan');
   };
-  const tickList = top === 'tick' && mode === 'plan';
-  const pickTick = (list: boolean) => (list ? (set({ record: 'numbers', avoid: false, planStyle: 'items' }), setMode('plan')) : set({ record: 'done', log: 'free', daily: false }));
-  const fillOften: 'daily' | 'each' = mode === 'daily' ? 'daily' : 'each';
-  const fillFrom: 'new' | 'list' = mode === 'plan' ? 'list' : 'new';
+  const [tickDraft, setTickDraft] = useState('');
+  const addTick = () => { const n = tickDraft.trim(); if (!n) return; setTicks([...ticks, { id: newId(), name: n }]); setTickDraft(''); };
+  const pickWay = (w: Way) => {
+    if (w === way) return;
+    if (w === 'tick') return ticks.length ? setTicks(ticks) : set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
+    if (w === 'avoid') return set({ record: 'done', avoid: true, goals: [], goal: 'none', log: 'free', daily: false, finishPlan: false });
+    if (w === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
+    if (w === 'plan') { set({ record: 'numbers', avoid: false, planStyle: 'sets' }); return setMode('plan'); }
+    set({ record: 'numbers', avoid: false }); setMode('daily');
+  };
+  const WAYS: { key: Way; label: string }[] = [
+    { key: 'tick', label: 'Ticking things off' },
+    { key: 'count', label: 'Counting something' },
+    { key: 'details', label: 'Writing down details' },
+    { key: 'plan', label: 'Following a plan' },
+    { key: 'avoid', label: 'Avoiding something' },
+  ];
   const label = (t: string) => <Text style={{ color: colors.muted, fontSize: 12, marginTop: 14, marginBottom: 6 }}>{t}</Text>;
   const term = (k: 'item' | 'row', t: string) => (
     <View>
@@ -281,37 +295,44 @@ export function RecordStep({
       />
     </View>
   );
+  const tickList = way === 'tick' && mode === 'plan';
   // The heading over the fields says, as a sentence, when they are filled in.
   const enterHeading = tickList ? `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`
     : mode === 'plan' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in`
     : mode === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
+  const row = (name: string, ghost: boolean, onRemove?: () => void, key?: string) => (
+    <View key={key} style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: colors.border }]}>
+      <Icon name="square-outline" size={20} color={ghost ? colors.hint : colors.accent} />
+      <Text numberOfLines={1} style={{ flex: 1, marginLeft: 10, color: ghost ? colors.hint : colors.text, fontSize: 15 }}>{name}</Text>
+      {onRemove ? <Tap onPress={onRemove} accessibilityLabel={`Remove ${name}`}><Icon name="close" size={18} color={colors.muted} /></Tap> : null}
+    </View>
+  );
   return (
     <View style={{ marginTop: 6 }}>
-      <ChoiceGrid cols={3} value={top} onPick={(k) => pickTop(k as Top)}
-        options={[{ key: 'tick', label: 'A checkbox' }, { key: 'count', label: 'A counter' }, { key: 'fill', label: 'An entry' }]} />
-      {top === 'tick' ? (
+      <ChoiceGrid cols={1} value={way} onPick={(k) => pickWay(k as Way)} options={WAYS} />
+      {way === 'tick' ? (
         <View>
-          {label('How many boxes')}
-          <ChoiceGrid cols={2} value={tickList ? 'list' : 'one'} onPick={(k) => pickTick(k === 'list')}
-            options={[{ key: 'list', label: 'A checklist' }, { key: 'one', label: a.name.trim() ? `Just ${a.name.trim()}` : 'Just this tracker' }]} />
-          {tickList ? term('item', 'Each box is called') : null}
+          {label('Things to tick off')}
+          {/* With nothing listed, the one box is the tracker itself, shown in grey until a thing is added. */}
+          {ticks.length === 0 ? row(a.name.trim() || 'This tracker', true) : ticks.map((x) => row(x.name, false, () => setTicks(ticks.filter((y) => y.id !== x.id)), x.id))}
+          <View style={[s.row, { marginTop: 8, gap: 8 }]}>
+            <TextInput
+              style={[s.input, { flex: 1 }]} value={tickDraft} maxLength={40} onChangeText={setTickDraft} onSubmitEditing={addTick}
+              placeholder="Add a thing" placeholderTextColor={colors.hint} returnKeyType="done" blurOnSubmit={false}
+            />
+            <SmallButton label="Add" onPress={addTick} />
+          </View>
+          {tickList ? term('item', 'Each one is called') : null}
         </View>
       ) : null}
-      {top === 'fill' ? (
+      {way === 'details' ? (
         <View>
           {label('How many entries')}
-          <ChoiceGrid cols={2} value={fillOften} onPick={(k) => setMode(k === 'daily' ? 'daily' : 'free')}
+          <ChoiceGrid cols={2} value={mode === 'daily' ? 'daily' : 'each'} onPick={(k) => setMode(k === 'daily' ? 'daily' : 'free')}
             options={[{ key: 'daily', label: 'One a day' }, { key: 'each', label: 'Any number' }]} />
-          {fillOften === 'each' ? (
-            <View>
-              {label('Each entry is')}
-              <ChoiceGrid cols={2} value={fillFrom} onPick={(k) => (k === 'list' ? (set({ planStyle: 'sets' }), setMode('plan')) : setMode('free'))}
-                options={[{ key: 'new', label: 'Named as you go' }, { key: 'list', label: 'Picked from a list' }]} />
-              {fillFrom === 'list' ? <View>{term('item', 'Each thing on the list is called')}{term('row', 'Each round of it is called')}</View> : null}
-            </View>
-          ) : null}
         </View>
       ) : null}
+      {way === 'plan' ? <View>{term('item', 'Each thing in the plan is called')}{term('row', 'Each round of it is called')}</View> : null}
       {a.record === 'count' ? (
         <View style={{ marginTop: 14 }}>
           {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}
@@ -334,12 +355,6 @@ export function RecordStep({
             />
           </View>
         </View>
-      ) : null}
-      {a.record === 'done' ? (
-        <Toggle
-          label="Track something I'm avoiding"
-          value={a.avoid} onChange={(v) => set(v ? { avoid: true, goals: [], finishPlan: false } : { avoid: false })}
-        />
       ) : null}
 
       {writing ? (

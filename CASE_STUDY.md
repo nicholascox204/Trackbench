@@ -2004,3 +2004,9 @@ Nick spotted the root problem: much of our vocabulary only makes sense after you
 
 ## 2026-11-27: The single box is named after the tracker
 "One box" didn't say what the box was: it is the tracker itself. The option now uses the tracker's name ("Just Floss"), or "Just this tracker" before the tracker has a name. A checklist moved first, because the most popular template, Daily habits, is a checklist and the single box mostly serves avoid trackers.
+
+## 2026-11-27: You log by — five things people do
+The checkbox/counter/entry version still nested a checklist inside "a checkbox", and gym split looked like a checklist. Labels named the tracker's shape, while people think in what they're doing. The answer was a radical flattening: **You log by** Ticking things off, Counting something, Writing down details, Following a plan, or Avoiding something.
+- **One box versus a checklist is no longer a choice.** You type the things to tick off. With nothing listed, the tracker itself is the box (shown in grey); anything listed makes a checklist. Items used to be added only after creation, so setup gained a small list editor.
+- **Avoiding** came out from behind a switch, because it's its own mindset.
+- **Plan versus details** keeps some overlap, which Nick flagged. We're trying it in hand before refining.
