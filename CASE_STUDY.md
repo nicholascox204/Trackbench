@@ -2074,3 +2074,6 @@ Also:
 
   This replaced unnamed "List 1/2/3" chips, a separate name box and a "+ List" / "Remove this list" pair that only appeared sometimes.
 - **The empty circles in dropdowns now use the border colour,** so they read as faint.
+
+## 2026-11-27: Lists get one edit card
+The list bar still mixed jobs: chips picked a list, a large name box sat under them, and New list and Remove were scattered around it. Now the chips only pick. A pencil beside them, the same pencil the items use, opens a single "Your lists" card. In it, each list's name is editable in place with a remove beside it, and a name box with Add makes a new list. Everything about the lists themselves lives in that one card. The items inside a list are still edited where they already were.

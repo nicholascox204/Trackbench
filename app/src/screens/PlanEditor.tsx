@@ -122,77 +122,76 @@ export function EditButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Lists to pick from: the lists as chips (the next one in turn marked) and a dashed New list chip; the picked list's name
-// below it, typed in place, with Remove. With no lists yet it is one card: Make your first list.
+// Lists to pick from. The chips only pick the day's list (the next in turn marked). The pencil beside them opens one card
+// for the lists themselves: each list's name typed in place with a remove, and New list at the end. With no lists yet it
+// is one card: Make your first list.
 export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
-  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [confirm, setConfirm] = useState(false);
+  const [removing, setRemoving] = useState<number | null>(null);
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
-  const editing = canEdit && day >= startOfDay(Date.now());
+  const may = canEdit && day >= startOfDay(Date.now());
   const next = nextList(t, day, entries);
   const create = () => {
     const n = name.trim();
     if (!n) return;
     const at = addList(t.id, n);
-    updateTracker(t.id, { rotationPick: { day, index: at } });
-    setName(''); setAdding(false); setConfirm(false);
+    if (v.days.length === 0) updateTracker(t.id, { rotationPick: { day, index: at } });
+    setName('');
   };
-  const nameBox = (first: boolean) => (
+  const nameBox = (label: string) => (
     <View style={[s.row, { gap: 8 }]}>
       <TextInput
-        style={[s.input, { flex: 1 }]} value={name} onChangeText={setName} onSubmitEditing={create} autoFocus={!first} maxLength={24}
+        style={[s.input, { flex: 1 }]} value={name} onChangeText={setName} onSubmitEditing={create} maxLength={24} blurOnSubmit={false}
         placeholder="Name it" placeholderTextColor={colors.hint} returnKeyType="done"
       />
-      <Button label="Create" onPress={create} disabled={!name.trim()} />
+      <Button label={label} onPress={create} disabled={!name.trim()} />
     </View>
   );
   if (v.days.length === 0) {
-    if (!editing) return null;
+    if (!may) return null;
     return (
       <Card keep style={{ marginBottom: 12 }}>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Make your first list</Text>
-        {nameBox(true)}
+        {nameBox('Create')}
       </Card>
     );
   }
-  const picked = v.days[current];
   return (
     <View style={{ marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {v.days.map((d, i) => (
-          <Chip
-            key={i} label={`${d.label.trim() || `List ${i + 1}`}${i === next && v.days.length > 1 ? ' · next' : ''}`} active={i === current}
-            onPress={() => { setConfirm(false); updateTracker(t.id, { rotationPick: { day, index: i } }); }}
-          />
-        ))}
-        {editing && v.days.length < MAX_LISTS && !adding ? (
-          <Tap onPress={() => setAdding(true)} accessibilityLabel="New list"
-            style={[s.chip, { flexDirection: 'row', alignItems: 'center', borderStyle: 'dashed', backgroundColor: 'transparent' }]}>
-            <Icon name="add" size={15} color={colors.text} />
-            <Text style={[s.chipText, { marginLeft: 4 }]}>New list</Text>
-          </Tap>
-        ) : null}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
+          {v.days.map((d, i) => (
+            <Chip
+              key={i} label={`${d.label.trim() || `List ${i + 1}`}${i === next && v.days.length > 1 ? ' · next' : ''}`} active={i === current}
+              onPress={() => updateTracker(t.id, { rotationPick: { day, index: i } })}
+            />
+          ))}
+        </View>
+        {may ? <EditButton onPress={() => { setEditing(!editing); setRemoving(null); setName(''); }} /> : null}
       </View>
-      {adding ? (
-        <View style={{ marginTop: 4, marginBottom: 8 }}>
-          {nameBox(false)}
-          <Button label="Cancel" variant="ghost" onPress={() => { setAdding(false); setName(''); }} style={{ marginTop: 6 }} />
-        </View>
+      {editing ? (
+        <Card keep style={{ marginTop: 4 }}>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Your lists</Text>
+          {v.days.map((d, i) => (
+            <View key={i} style={[s.row, { marginBottom: 8 }]}>
+              <TextInput
+                style={[s.input, { flex: 1 }]} value={d.label} maxLength={24} placeholder={`List ${i + 1}`} placeholderTextColor={colors.hint}
+                onChangeText={(val) => mutatePlanDay(t.id, i, (x) => { x.label = val; })}
+              />
+              <Tap
+                onPress={() => (removing === i ? (removeList(t.id, i), setRemoving(null)) : setRemoving(i))}
+                accessibilityLabel={`Remove ${d.label || `list ${i + 1}`}`} style={{ paddingHorizontal: 10, paddingVertical: 8 }}
+              >
+                {removing === i ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="close" size={20} color={colors.muted} />}
+              </Tap>
+            </View>
+          ))}
+          {v.days.length < MAX_LISTS ? <View style={{ marginTop: 6 }}>{nameBox('Add')}</View> : null}
+          <Button label="Done" variant="ghost" onPress={() => { setEditing(false); setRemoving(null); setName(''); }} style={{ marginTop: 8 }} />
+        </Card>
       ) : null}
-      {editing && picked ? (
-        <View style={[s.row, { marginTop: 4 }]}>
-          <TextInput
-            style={[s.input, { flex: 1, fontSize: 18, fontWeight: '700' }]} value={picked.label} maxLength={24}
-            onChangeText={(val) => mutatePlanDay(t.id, current, (d) => { d.label = val; })}
-            placeholder="List name" placeholderTextColor={colors.hint}
-          />
-          <Tap onPress={() => (confirm ? (removeList(t.id, current), setConfirm(false)) : setConfirm(true))} accessibilityLabel="Remove this list" style={{ paddingHorizontal: 10, paddingVertical: 8 }}>
-            <Text style={{ color: confirm ? colors.danger : colors.muted, fontSize: 14, fontWeight: '600' }}>{confirm ? 'Tap again' : 'Remove'}</Text>
-          </Tap>
-        </View>
-      ) : picked?.label ? <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>{picked.label}</Text> : null}
     </View>
   );
 }
