@@ -2132,3 +2132,14 @@ The pen on each list sat loose on the row. It now sits in a ring the same size a
 - **Attached dropdowns.** The open list hung under its box with a gap and its own rounded top. Now box and list are one shape: square where they meet, one accent outline, and a thin divider between.
 - **Trimming.** Phones add a space after a word. Text is now trimmed when it's saved, never while typing, since a space between words is needed mid-word.
 - **Last tracker.** Deleting the last tracker goes straight to making a new one instead of flashing an empty page with the bar.
+
+## 2026-11-27: A preview app that works away from the PC
+The dev build loads its code from the PC, so outside home Wi-Fi any reload or background kill dropped it, and showing the app at the gym was a gamble. We added a second install, **Trackbench Preview** (app.trackbench.preview). It's a release build with expo-updates that keeps the last published code on the phone. Code changes reach it with `eas update --channel preview`, in about a minute and with no rebuild. A rebuild is only needed when a native library is added.
+
+**Kept:** the dev build stays for live work.
+
+**Costs:**
+- The two apps have separate data until Google sign-in is registered for the preview ID.
+- The build lives in a short folder (C:\p), because release paths hit Windows' 260-character limit.
+
+**Limits:** the free plan allows unlimited updates and up to 1,000 monthly devices.

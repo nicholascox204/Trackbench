@@ -66,6 +66,12 @@
       "expo-splash-screen",
       "@react-native-google-signin/google-signin"
     ],
-    "scheme": "trackbench"
+    "scheme": "trackbench",
+    "extra": {
+      "eas": {
+        "projectId": "6e00e1ad-5e6d-4d04-87dd-c4c8937c233e"
+      }
+    },
+    "owner": "nicholas-cox"
   }
 }
