@@ -2106,3 +2106,11 @@ Nick found pills awkward everywhere. With names of different lengths they wrap u
   - the last row, "Add a list", works the same way for a new list.
 
   Dropdown gained optional rename, remove and add hooks, so any person-kept list can reuse this.
+
+## 2026-11-27: Dropdowns looked at properly
+Nick called the last version ugly and asked me to look at it myself rather than describe it. I built a throwaway list tracker in the preview and went through each state. Findings and changes:
+- **Label above the value in every dropdown.** A label on the left with the value after it left nothing lined up.
+- **Kept lists drop the circle column.** The chosen list is shown by its tint and weight, and the right column holds the pen, under the chevron. A circle and a pen side by side crowded the row.
+- **Editing a list uses real buttons:** a name box with Remove and Done. The confirm is a full button reading "Yes, remove". The first version, "Tap again to remove", wrapped onto two lines.
+- **"Add a list" is the app's dashed add button,** not a coloured text row.
+- **"Next" sat under the first list** because, with nothing logged, the first list is next in turn. It's now an inline tag ("next in turn"), shown only when it differs from the list already picked.

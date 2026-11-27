@@ -118,7 +118,7 @@ export function SlotEditor({
 export function EditButton({ onPress }: { onPress: () => void }) {
   return (
     <Tap onPress={onPress} style={{ padding: 6, marginLeft: 4 }}>
-      <Icon name="pencil" size={15} color={colors.hint} />
+      <Icon name="pencil-outline" size={16} color={colors.hint} />
     </Tap>
   );
 }
@@ -162,7 +162,7 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
     <View style={{ marginBottom: 12 }}>
       <Dropdown
         compact flush label="List" value={listName(current)} selected={String(current)}
-        options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && v.days.length > 1 ? { sub: 'Next' } : {}) }))}
+        options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && i !== current ? { tag: 'next in turn' } : {}) }))}
         onSelect={(k) => updateTracker(t.id, { rotationPick: { day, index: Number(k) } })}
         {...(may ? {
           onRename: (k: string, val: string) => mutatePlanDay(t.id, Number(k), (x) => { x.label = val; }),
