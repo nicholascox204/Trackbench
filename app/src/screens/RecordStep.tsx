@@ -1,8 +1,6 @@
-// "What do you enter?" Four headed sections, each doing one job:
-//   1. How you log it: tap once, tap to count, or enter details.
-//   2. How entries work (for details): add as you go, one value a day, or a list for each day.
-//   3. What you enter: one list of things, each a row you can open to edit, and one Add button.
-//   4. Totals: multiply any two of your numbers (neutral: no particular subject).
+// "You log". Three things you do: tick it off, count it, or fill it in. Ticking asks whether it is one thing or a list;
+// filling in asks how often, and for entries made each time, whether each one is new or picked from your list.
+// Then the things you fill in, one row each, and Calculations.
 // Every number can measure something that follows the person's units (weight, distance, height or length, liquid volume)
 // or carry a fixed label (minutes, calories, money, their own). That one "Measures" setting replaces the separate presets
 // and the separate Units step.
@@ -259,29 +257,63 @@ export function RecordStep({
   const shortcuts = planned && a.planStyle === 'sets' ? CHIPS.filter((c) => (c.id === 'weight' || c.id === 'reps') && !has(c.id)) : [];
 
   const numberFields = fields.filter((f) => f.type === 'number');
-  // How you log it, as one choice: each option is what you actually do when you log.
-  type Way = 'done' | 'count' | 'each' | 'daily' | 'list';
-  const way: Way = a.record === 'done' ? 'done' : a.record === 'count' ? 'count' : mode === 'plan' ? 'list' : mode === 'daily' ? 'daily' : 'each';
-  const pickWay = (w: Way) => {
-    if (w === 'done') return set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
-    if (w === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
-    set({ record: 'numbers', avoid: false });
-    setMode(w === 'list' ? 'plan' : w === 'daily' ? 'daily' : 'free');
+  // How you log it: three things you do, then the forks each one needs. The biggest fork is whether entries are
+  // made up on the spot or picked from a list you set ahead, so it is asked out loud, never tucked in a menu.
+  type Top = 'tick' | 'count' | 'fill';
+  const top: Top = a.record === 'count' ? 'count' : a.record === 'done' || (mode === 'plan' && a.planStyle === 'items') ? 'tick' : 'fill';
+  const pickTop = (t: Top) => {
+    if (t === top) return;
+    if (t === 'tick') return set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
+    if (t === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
+    set({ record: 'numbers', avoid: false, log: 'free', daily: true, finishPlan: false });
   };
-  const WAYS: { key: Way; label: string }[] = [
-    { key: 'done', label: 'Mark it done' },
-    { key: 'count', label: 'Count it' },
-    { key: 'each', label: 'Log it each time' },
-    { key: 'daily', label: 'Log it once a day' },
-    { key: 'list', label: 'Tick off a list' },
-  ];
+  const tickList = top === 'tick' && mode === 'plan';
+  const pickTick = (list: boolean) => (list ? (set({ record: 'numbers', avoid: false, planStyle: 'items' }), setMode('plan')) : set({ record: 'done', log: 'free', daily: false }));
+  const fillOften: 'daily' | 'each' = mode === 'daily' ? 'daily' : 'each';
+  const fillFrom: 'new' | 'list' = mode === 'plan' ? 'list' : 'new';
+  const label = (t: string) => <Text style={{ color: colors.muted, fontSize: 12, marginTop: 14, marginBottom: 6 }}>{t}</Text>;
+  const term = (k: 'item' | 'row', t: string) => (
+    <View>
+      {label(t)}
+      <TextInput
+        style={s.input} value={a.terms?.[k] ?? DEFAULT_TERMS[k]} maxLength={16} selectTextOnFocus
+        onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), [k]: v } })}
+      />
+    </View>
+  );
   // The heading over the fields says, as a sentence, when they are filled in.
-  const enterHeading = way === 'list' ? (a.planStyle === 'sets' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in` : `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`) : way === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
+  const enterHeading = tickList ? `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`
+    : mode === 'plan' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in`
+    : mode === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
   return (
     <View style={{ marginTop: 6 }}>
-      <Dropdown compact label="How" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
+      <ChoiceGrid cols={3} value={top} onPick={(k) => pickTop(k as Top)}
+        options={[{ key: 'tick', label: 'Tick it off' }, { key: 'count', label: 'Count it' }, { key: 'fill', label: 'Fill it in' }]} />
+      {top === 'tick' ? (
+        <View>
+          {label('What you tick off')}
+          <ChoiceGrid cols={2} value={tickList ? 'list' : 'one'} onPick={(k) => pickTick(k === 'list')}
+            options={[{ key: 'one', label: 'Just this' }, { key: 'list', label: 'A list of things' }]} />
+          {tickList ? term('item', 'Each thing is called') : null}
+        </View>
+      ) : null}
+      {top === 'fill' ? (
+        <View>
+          {label('How often')}
+          <ChoiceGrid cols={2} value={fillOften} onPick={(k) => setMode(k === 'daily' ? 'daily' : 'free')}
+            options={[{ key: 'daily', label: 'Once a day' }, { key: 'each', label: 'Each time it happens' }]} />
+          {fillOften === 'each' ? (
+            <View>
+              {label('Each entry is')}
+              <ChoiceGrid cols={2} value={fillFrom} onPick={(k) => (k === 'list' ? (set({ planStyle: 'sets' }), setMode('plan')) : setMode('free'))}
+                options={[{ key: 'new', label: 'New each time' }, { key: 'list', label: 'From your list' }]} />
+              {fillFrom === 'list' ? <View>{term('item', 'Each thing on the list is called')}{term('row', 'Each round of it is called')}</View> : null}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       {a.record === 'count' ? (
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: 14 }}>
           {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}
           <Dropdown
             label="Unit" value={counterUnitLabel(a, settings)} options={COUNT_UNITS} selected={counterUnitKey(a)}
@@ -311,35 +343,7 @@ export function RecordStep({
       ) : null}
 
       {writing ? (
-        <View style={{ marginTop: 8 }}>
-          <View style={{ marginBottom: 6 }}>
-            {mode === 'plan' ? (
-              <View>
-              <Dropdown
-                compact label="Items work as" value={a.planStyle === 'sets' ? 'Sets you log' : 'Items you tick'} selected={a.planStyle}
-                options={[
-                  { key: 'sets', label: 'Sets you log' },
-                  { key: 'items', label: 'Items you tick' },
-                ]}
-                onSelect={(k) => set({ planStyle: k as 'sets' | 'items' })}
-              />
-              <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Each item is called</Text>
-              <TextInput
-                style={[s.input, { marginBottom: 10 }]} value={a.terms?.item ?? DEFAULT_TERMS.item} maxLength={16} selectTextOnFocus
-                onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), item: v } })}
-              />
-              {a.planStyle === 'sets' ? (
-                <View>
-                  <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Each row is called</Text>
-                  <TextInput
-                    style={[s.input, { marginBottom: 10 }]} value={a.terms?.row ?? DEFAULT_TERMS.row} maxLength={16} selectTextOnFocus
-                    onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), row: v } })}
-                  />
-                </View>
-              ) : null}
-              </View>
-            ) : null}
-          </View>
+        <View style={{ marginTop: 18 }}>
           <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{enterHeading}</Text>
           {rows.length === 0 && nudge ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to enter, then continue.</Text> : null}
           {rows.map((f0) => {

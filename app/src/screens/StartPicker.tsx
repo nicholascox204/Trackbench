@@ -25,7 +25,7 @@ export function StartPicker({
   // Build your own is an ordinary row, same placements as the templates; it sits alone above Popular.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>
-      <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
+      <View style={[s.row, { paddingVertical: 10 }]}>
         <TrackerIcon name="construct-outline" size={40} />
         <View style={{ flex: 1, marginRight: 12 }}>
           <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
@@ -36,11 +36,12 @@ export function StartPicker({
     </Tap>
   );
   // Every template row is the same: icon, name, one line on what it is, and a plus (a check when you already have it).
-  const row = (t: Template) => {
+  const row = (t: Template, i = 0, list: Template[] = []) => {
+    const last = i === list.length - 1; // space, not a line, ends a section
     const added = have.has(t.id);
     return (
       <Tap key={t.id} onPress={() => onTemplate(t)} accessibilityLabel={added ? `${t.name}, added` : t.name}>
-        <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
+        <View style={[s.row, { paddingVertical: 10, borderBottomWidth: last ? 0 : px(1), borderBottomColor: `${colors.border}88` }]}>
           <TrackerIcon name={t.icon} size={40} />
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>

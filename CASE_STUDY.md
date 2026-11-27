@@ -1972,3 +1972,19 @@ I tried letting the card extend past the page margins so its icon would line up 
 - **Planned sessions** (gym): Log it each time, with the entry names written in advance.
 
 Both already live inside other ways. Merging into four with a hidden "Plan them ahead" switch was rejected because hidden actions get missed. The headings have to carry the meaning.
+
+## 2026-11-26: You log, three choices and the planned-or-new fork
+The five ways (Mark it done, Count it, each time, once a day, Tick off a list) mixed two separate questions. Mapping the templates showed that "Tick off a list" covered two unrelated things:
+- **Checklists**: habits, meds, chores.
+- **Planned sessions**: the gym.
+
+Nick named the real fork: entries made up on the spot versus entries picked from a list set ahead. You log now asks three visible questions in order. The headings carry the meaning, and nothing sits behind a switch or menu:
+1. **Tick it off, Count it, or Fill it in?**
+2. **Ticking:** just this, or a list of things?
+3. **Filling in:** once a day or each time; and for each time, new each time or from your list?
+
+I rejected a four-option version with a "Plan them ahead" switch, because the switch hid the fork. The data underneath is unchanged, so every template still maps exactly.
+
+Also:
+- Section-ending dividers on the start screen were removed, since space already separates the sections.
+- Web scrollbars use the highlight colour. Phones draw their own scrollbars, and they can't be tinted.
