@@ -17,10 +17,10 @@ const FLEXIBLE: Kind[] = ['times', 'whenever'];
 
 const OPTIONS: DropdownOption[] = [
   { key: 'daily', label: 'Every day' },
-  { key: 'weekdays', label: 'Certain days' },
-  { key: 'times', label: 'A few times a week' },
+  { key: 'weekdays', label: 'On certain weekdays' },
+  { key: 'times', label: 'A number of times' },
   { key: 'interval', label: 'Every few days' },
-  { key: 'monthly', label: 'Once a month' },
+  { key: 'monthly', label: 'On a date each month' },
   { key: 'whenever', label: 'Whenever' },
 ];
 
@@ -69,8 +69,8 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
     <Card style={{ padding: 12, marginBottom: 8 }}>
       <Dropdown compact label="How often" value={kindLabel} options={options} selected={sc.kind} onSelect={choose} />
 
-      {sc.kind === 'weekdays' ? <View style={{ marginTop: 6 }}><WeekToggles schedule={sc} onChange={(x) => set({ schedule: x })} /></View> : null}
-      {sc.kind === 'times' || sc.kind === 'interval' || sc.kind === 'monthly' || sc.kind === 'blocks' ? <View style={{ marginTop: 6 }}><KindControls schedule={sc} change={(x) => set({ schedule: x })} full={sc.kind === 'interval'} /></View> : null}
+      {sc.kind === 'weekdays' ? <View style={{ marginTop: 10 }}><WeekToggles schedule={sc} onChange={(x) => set({ schedule: x })} /></View> : null}
+      {sc.kind === 'times' || sc.kind === 'interval' || sc.kind === 'monthly' || sc.kind === 'blocks' ? <View style={{ marginTop: 10 }}><KindControls schedule={sc} change={(x) => set({ schedule: x })} /></View> : null}
       {sc.kind === 'weekdays' && sc.days.length === 0 ? <Text style={{ color: colors.warn, fontSize: 13, marginTop: 6 }}>Pick at least one day.</Text> : null}
 
       {planned ? (
@@ -92,7 +92,7 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
         </View>
       ) : null}
 
-      {a.window ? <ForAWhile a={a} set={set} today={Date.now()} /> : null}
+      <ForAWhile a={a} set={set} today={Date.now()} />
     </Card>
   );
 }

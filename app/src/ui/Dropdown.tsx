@@ -72,7 +72,6 @@ export function Dropdown({
                 </Tap>
               );
             })}
-            <View style={{ height: SEPARATION.endOfList / 2 }} />
           </ScrollView>
           {footer}
         </View>

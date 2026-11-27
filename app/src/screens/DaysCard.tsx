@@ -6,7 +6,7 @@ import { MAX_BLOCK, daysBetween, keyToDay, normalizeSchedule, scheduleText, week
 import { type Answers } from '../core/setup';
 import { addDays, startOfDay } from '../core/time';
 import type { Schedule } from '../core/types';
-import { Chip, Muted, Stepper, Tap, Toggle, colors, s } from '../ui/kit';
+import { ChoiceGrid, Muted, Stepper, Tap, colors } from '../ui/kit';
 import { EDGE } from '../ui/theme';
 
 const SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -35,102 +35,104 @@ export function WeekToggles({ schedule, onChange }: { schedule: Schedule; onChan
   );
 }
 
-// The controls for the kinds other than days of the week. On the summary only the one or two quick inputs show (how many
-// days, how many times, which day of the month); the Days screen adds the rest, like where counting starts.
-export function KindControls({ schedule, change, full }: { schedule: Schedule; change: (s: Schedule) => void; full?: boolean }) {
+// A small grey label over each group of controls, so every rhythm reads the same way.
+const Label = ({ children }: { children: string }) => <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>{children}</Text>;
+const Line = ({ before, after, children }: { before?: string; after?: string; children: React.ReactNode }) => (
+  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+    {before ? <Text style={{ color: colors.text, fontSize: 15, marginRight: 10 }}>{before}</Text> : null}
+    {children}
+    {after ? <Text style={{ color: colors.text, fontSize: 15, marginLeft: 10 }}>{after}</Text> : null}
+  </View>
+);
+
+// Today, tomorrow and the next Monday, as day keys: where counting or a set time starts.
+const startChoices = (today: number) => [
+  { key: dayKeyOf(today), label: 'Today' },
+  { key: dayKeyOf(addDays(today, 1)), label: 'Tomorrow' },
+  { key: dayKeyOf(addDays(today, ((8 - new Date(today).getDay()) % 7) || 7)), label: 'Monday' },
+];
+
+// The controls for the kinds other than days of the week: only the numbers; the headline above already says what it means.
+export function KindControls({ schedule, change }: { schedule: Schedule; change: (s: Schedule) => void }) {
   const today = startOfDay(Date.now());
-  return (
-    <View>
-      {schedule.kind === 'interval' ? (
-        <View style={{ marginTop: 0, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: colors.text, fontSize: 15, marginRight: 10 }}>Every</Text>
-            <Stepper value={schedule.n} min={2} max={30} onChange={(n) => change({ ...schedule, n })} />
-            <Text style={{ color: colors.text, fontSize: 15, marginLeft: 10 }}>days</Text>
-          </View>
-          {full ? <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Counting from</Text> : null}
-          {full ? <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {[
-              { label: 'Today', at: today },
-              { label: 'Tomorrow', at: addDays(today, 1) },
-              { label: 'Next Monday', at: addDays(today, ((8 - new Date(today).getDay()) % 7) || 7) },
-            ].map((o) => (
-              <Chip key={o.label} label={o.label} active={schedule.from === dayKeyOf(o.at)} onPress={() => change({ ...schedule, from: dayKeyOf(o.at) })} />
-            ))}
-          </View> : null}
-        </View>
-      ) : null}
-
-      {schedule.kind === 'times' ? (
-        <View style={{ marginTop: 0, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Stepper value={schedule.n} min={1} max={schedule.per === 'week' ? 7 : 31} onChange={(n) => change({ ...schedule, n })} />
-            <Text style={{ color: colors.text, fontSize: 15, marginLeft: 10 }}>{schedule.n === 1 ? 'time a' : 'times a'}</Text>
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            <Chip label="Week" active={schedule.per === 'week'} onPress={() => change({ ...schedule, per: 'week', n: Math.min(schedule.n, 7) })} />
-            <Chip label="Month" active={schedule.per === 'month'} onPress={() => change({ ...schedule, per: 'month' })} />
-          </View>
-        </View>
-      ) : null}
-
-      {schedule.kind === 'blocks' ? (
-        <View style={{ marginTop: 0, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: colors.text, fontSize: 15, marginRight: 10 }}>Blocks of</Text>
-            <Stepper value={schedule.n} min={2} max={MAX_BLOCK} onChange={(n) => change({ kind: 'blocks', n })} />
-            <Text style={{ color: colors.text, fontSize: 15, marginLeft: 10 }}>days</Text>
-          </View>
-          {full ? <Muted>Log a day to start a block. The days after it are expected, then nothing is until you start the next one. A skipped day counts as missed; the block keeps going.</Muted> : null}
-        </View>
-      ) : null}
-
-      {schedule.kind === 'monthly' ? (
-        <View style={{ marginTop: 0, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: colors.text, fontSize: 15, marginRight: 10 }}>On day</Text>
-            <Stepper value={schedule.day === 'last' ? 28 : schedule.day} min={1} max={31} onChange={(day) => change({ kind: 'monthly', day })} />
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            <Chip label="Last day of the month" active={schedule.day === 'last'} onPress={() => change({ kind: 'monthly', day: schedule.day === 'last' ? 28 : 'last' })} />
-          </View>
-        </View>
-      ) : null}
-
-    </View>
-  );
+  if (schedule.kind === 'times') {
+    return (
+      <View>
+        <Line after={schedule.n === 1 ? 'time' : 'times'}>
+          <Stepper value={schedule.n} min={1} max={schedule.per === 'week' ? 7 : 31} onChange={(n) => change({ ...schedule, n })} />
+        </Line>
+        <ChoiceGrid
+          cols={2} value={schedule.per}
+          onPick={(k) => change(k === 'week' ? { ...schedule, per: 'week', n: Math.min(schedule.n, 7) } : { ...schedule, per: 'month' })}
+          options={[{ key: 'week', label: 'A week' }, { key: 'month', label: 'A month' }]}
+        />
+      </View>
+    );
+  }
+  if (schedule.kind === 'interval') {
+    return (
+      <View>
+        <Line before="Every" after="days">
+          <Stepper value={schedule.n} min={2} max={30} onChange={(n) => change({ ...schedule, n })} />
+        </Line>
+        <Label>Counting from</Label>
+        <ChoiceGrid cols={3} value={schedule.from} onPick={(k) => change({ ...schedule, from: k })} options={startChoices(today)} />
+      </View>
+    );
+  }
+  if (schedule.kind === 'monthly') {
+    const last = schedule.day === 'last';
+    const day = last ? 1 : (schedule.day as number);
+    return (
+      <View>
+        <ChoiceGrid
+          cols={2} value={last ? 'last' : 'date'}
+          onPick={(k) => change({ kind: 'monthly', day: k === 'last' ? 'last' : day })}
+          options={[{ key: 'date', label: 'A date' }, { key: 'last', label: 'The last day' }]}
+        />
+        {!last ? (
+          <Line before="Day" after="of the month">
+            <Stepper value={day} min={1} max={31} onChange={(d) => change({ kind: 'monthly', day: d })} />
+          </Line>
+        ) : null}
+        {!last && day > 28 ? <Muted style={{ marginTop: -4, marginBottom: 8 }}>In shorter months it falls on the last day.</Muted> : null}
+      </View>
+    );
+  }
+  if (schedule.kind === 'blocks') {
+    return (
+      <Line before="Blocks of" after="days">
+        <Stepper value={schedule.n} min={2} max={MAX_BLOCK} onChange={(n) => change({ kind: 'blocks', n })} />
+      </Line>
+    );
+  }
+  return null;
 }
-// "Only for a while": a challenge or a set period. A start and a length; after the last day the tracker stops asking.
+
+// Whether it keeps repeating or runs for a set time (a challenge, a course). Always shown, so it is plain that a tracker
+// repeats until you stop it unless you give it an end.
 export function ForAWhile({ a, set, today }: { a: Answers; set: (p: Partial<Answers>) => void; today: number }) {
   const w = a.window;
   const length = w?.from && w?.until ? daysBetween(keyToDay(w.from), keyToDay(w.until)) + 1 : 30;
   const startKey = w?.from ?? dayKeyOf(today);
   const make = (fromKey: string, days: number) => ({ from: fromKey, until: dayKeyOf(addDays(keyToDay(fromKey), days - 1)) });
-  const starts = [
-    { label: 'Today', at: today },
-    { label: 'Tomorrow', at: addDays(today, 1) },
-    { label: 'Next Monday', at: addDays(today, ((8 - new Date(today).getDay()) % 7) || 7) },
-  ];
   return (
-    <View style={{ marginTop: 4 }}>
-      <Toggle
-        label="Only for a while"
-        value={!!w} onChange={(v) => set({ window: v ? make(dayKeyOf(today), 30) : undefined })}
+    <View style={{ marginTop: 10 }}>
+      <Label>Repeats</Label>
+      <ChoiceGrid
+        cols={2} value={w ? 'set' : 'on'}
+        onPick={(k) => set({ window: k === 'set' ? (w ?? make(dayKeyOf(today), 30)) : undefined })}
+        options={[{ key: 'on', label: 'Until I stop' }, { key: 'set', label: 'For a set time' }]}
       />
       {w ? (
-        <View style={{ marginBottom: 8 }}>
-          <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>How long</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {[7, 14, 30, 60, 90].map((n) => <Chip key={n} label={`${n} days`} active={length === n} onPress={() => set({ window: make(startKey, n) })} />)}
-          </View>
-          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4, marginBottom: 6 }}>Starts</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {starts.map((o) => <Chip key={o.label} label={o.label} active={startKey === dayKeyOf(o.at)} onPress={() => set({ window: make(dayKeyOf(o.at), length) })} />)}
-          </View>
-          <Muted>{scheduleText({ kind: 'daily' }, w).replace('Every day, ', '')}</Muted>
+        <View>
+          <Label>How many days</Label>
+          <ChoiceGrid cols={5} value={String(length)} onPick={(k) => set({ window: make(startKey, Number(k)) })} options={[7, 14, 30, 60, 90].map((n) => ({ key: String(n), label: String(n) }))} />
+          <Label>Starting</Label>
+          <ChoiceGrid cols={3} value={startKey} onPick={(k) => set({ window: make(k, length) })} options={startChoices(today)} />
+          <Muted>{scheduleText({ kind: 'daily' }, w).replace('Every day, ', '').replace(/^./, (c) => c.toUpperCase())}</Muted>
         </View>
       ) : null}
     </View>
   );
 }
-
