@@ -33,7 +33,7 @@ export function Dropdown({
   const [sure, setSure] = useState(false);
   const [adding, setAdding] = useState(false);
   const add = () => { const n = draft.trim(); if (!n || !onAdd) return; onAdd(n); setDraft(''); setAdding(false); };
-  const stopEdit = () => { setEditKey(null); setSure(false); setDraft(''); setAdding(false); };
+  const stopEdit = () => { if (editKey && draft !== draft.trim()) onRename?.(editKey, draft.trim()); setEditKey(null); setSure(false); setDraft(''); setAdding(false); };
   const shown = options.filter((o) => o.label.toLowerCase().includes(find.trim().toLowerCase()));
   return (
     <View ref={panel} style={{ marginBottom: flush ? 0 : compact ? SEPARATION.panelGap + 2 : SEPARATION.endOfList }}>
@@ -42,6 +42,8 @@ export function Dropdown({
         style={{
           flexDirection: 'row', alignItems: 'center', borderWidth: px(SEPARATION.controlBorder), borderRadius: 14, padding: compact ? 10 : 14,
           borderColor: open ? colors.accent : colors.border, backgroundColor: colors.raised,
+          // Open, the box and its list are one piece: square where they meet, one accent outline around both.
+          ...(open ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : {}),
         }}
       >
         {/* The label sits above the value, so the value and the list it opens both start at the left edge. */}
@@ -52,7 +54,8 @@ export function Dropdown({
         <Icon name={open ? 'chevron-up-circle-outline' : 'chevron-down-circle-outline'} size={compact ? 22 : 26} color={colors.accent} />
       </Tap>
       {open ? (
-        <View style={{ marginTop: SEPARATION.panelGap, borderWidth: px(SEPARATION.controlBorder), borderColor: colors.border, borderRadius: 14, backgroundColor: colors.card, overflow: 'hidden' }}>
+        <View style={{ borderWidth: px(SEPARATION.controlBorder), borderTopWidth: 0, borderColor: colors.accent, borderRadius: 14, borderTopLeftRadius: 0, borderTopRightRadius: 0, backgroundColor: colors.card, overflow: 'hidden' }}>
+          <View style={{ height: px(1), backgroundColor: colors.border }} />
           {searchable ? (
             <View style={{ padding: 10, borderBottomWidth: px(1), borderBottomColor: colors.border }}>
               <TextInput style={s.input} value={find} onChangeText={setFind} placeholder={searchLabel ?? 'Search'} placeholderTextColor={colors.hint} />
@@ -91,8 +94,8 @@ export function Dropdown({
                     {o.sub ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{o.sub}</Text> : null}
                   </View>
                   {onRename ? (
-                    <Tap onPress={() => { setEditKey(o.key); setDraft(o.label); setSure(false); setAdding(false); }} accessibilityLabel={`Edit ${o.label}`} style={{ width: mark, height: mark, borderRadius: mark / 2, borderWidth: 1.5, borderColor: colors.muted, alignItems: 'center', justifyContent: 'center' }}>
-                      {/* A pen in a ring the size of the chevron above it, so the two line up as one column. */}
+                    <Tap onPress={() => { setEditKey(o.key); setDraft(o.label); setSure(false); setAdding(false); }} accessibilityLabel={`Edit ${o.label}`} style={{ width: mark, height: mark, borderRadius: mark / 2, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                      {/* A pen on a quiet filled circle the size of the chevron above it, so the two line up as one column. */}
                       <Icon name="pencil" size={Math.round(mark * 0.5)} color={colors.muted} />
                     </Tap>
                   ) : (

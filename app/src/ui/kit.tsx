@@ -101,15 +101,15 @@ export function Scroll({ children, onScroll, onScrollBeginDrag, onScrollEndDrag,
   const regionApi = useMemo(() => ({ add: (r: Region) => { regions.current.add(r); }, remove: (r: Region) => { regions.current.delete(r); } }), []);
   const reveal = (node: RevealNode) => {
     if (!node) return;
-    setTimeout(() => { // after what opened has been laid out
-      node.measureInWindow((_x, top, _w, h) => {
+    setTimeout(() => { // after what opened has been laid out; it may be gone by then (a row removed or moved), so measuring is guarded
+      try { node.measureInWindow((_x, top, _w, h) => {
         ref.current?.measureInWindow((_sx, viewTop, _sw, viewH) => {
           const bottom = viewTop + viewH - kbNow.current - SCROLL.fieldMargin;
           const topEdge = viewTop + SCROLL.fieldMargin;
           if (h > bottom - topEdge) ref.current?.scrollTo({ y: Math.max(0, y.current + (top - topEdge)), animated: true });
           else if (top + h > bottom) ref.current?.scrollTo({ y: y.current + (top + h - bottom), animated: true });
         });
-      });
+      }); } catch { /* the view left before it could be measured */ }
     }, 60);
   };
   const settle = () => {
@@ -142,7 +142,7 @@ export function Scroll({ children, onScroll, onScrollBeginDrag, onScrollEndDrag,
       if (areas.length === 0) return justField();
       let best: { t: number; h: number } | null = null;
       let waiting = areas.length;
-      areas.forEach((a) => a.measureInWindow((_ax, at, _aw, ah) => {
+      areas.forEach((a) => { try { a.measureInWindow((_ax, at, _aw, ah) => {
         if (at <= top + 1 && at + ah >= top + h - 1 && (!best || ah < best.h)) best = { t: at, h: ah };
         if (--waiting > 0) return;
         ref.current?.measureInWindow((_sx, viewTop) => {
@@ -158,7 +158,7 @@ export function Scroll({ children, onScroll, onScrollBeginDrag, onScrollEndDrag,
           }
           if (pick.t + pick.h > visibleBottom) ref.current?.scrollTo({ y: y.current + (pick.t + pick.h - visibleBottom), animated: true });
         });
-      }));
+      }); } catch { /* a region that just left */ } });
     });
   };
   const bringLater = (ms: number) => { if (kbNow.current > 0 && !scrolling.current) setTimeout(bring, ms); };

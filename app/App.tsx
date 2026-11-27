@@ -204,7 +204,9 @@ function AppInner() {
       <SetupFlow
         key={editId ?? 'new'}
         trackerId={editId}
-        cancel={() => (editId && state.trackers.some((t) => t.id === editId) ? setNav({ name: 'tracker', id: editId }) : backToTracker())}
+        // Leaving setup: back to the tracker being edited; if it was just deleted and was the last one, straight to making a new
+        // one (never an empty page with only the bar).
+        cancel={() => { const now = getState().trackers; if (editId && now.some((t) => t.id === editId)) setNav({ name: 'tracker', id: editId }); else if (now.length === 0) setNav({ name: 'setup' }); else backToTracker(); }}
         done={(id) => setNav({ name: 'tracker', id })}
         toWelcome={() => setNav({ name: 'welcome', revisit: true })}
       />

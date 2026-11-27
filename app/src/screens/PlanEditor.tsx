@@ -46,7 +46,12 @@ export function SlotEditor({
     [d.slots[i], d.slots[j]] = [d.slots[j], d.slots[i]];
   });
   const remove = () => { mutatePlanDay(t.id, weekday, (d) => { d.slots = d.slots.filter((y) => y.id !== slot.id); }); onClose(); };
-  const done = () => (slot.name.trim() ? onClose() : remove());
+  // Closing saves the name without stray spaces; an empty name removes the item.
+  const done = () => {
+    if (!slot.name.trim()) return remove();
+    if (slot.name !== slot.name.trim()) mutatePlanDay(t.id, weekday, (d) => { d.slots = d.slots.map((y) => (y.id === slot.id ? { ...y, name: y.name.trim() } : y)); });
+    onClose();
+  };
   const numFields = t.fields.filter((f) => f.type === 'number');
 
   return (
@@ -114,11 +119,12 @@ export function SlotEditor({
   );
 }
 
-// The small pencil that opens a row's editor: a plain pen in the faint hint colour, so it is findable without shouting.
+// The pen that opens a row's editor: a small pen on a quiet filled circle (just enough to show the button) the size of a
+// dropdown chevron, sitting in the same column.
 export function EditButton({ onPress }: { onPress: () => void }) {
   return (
-    <Tap onPress={onPress} style={{ padding: 6, marginLeft: 4 }}>
-      <Icon name="pencil-outline" size={16} color={colors.hint} />
+    <Tap onPress={onPress} accessibilityLabel="Edit" hitSlop={8} style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center', marginLeft: 8 }}>
+      <Icon name="pencil" size={11} color={colors.muted} />
     </Tap>
   );
 }
@@ -185,6 +191,7 @@ export function DayHeader({ t, weekday, editable }: { t: Tracker; weekday: numbe
     <TextInput
       style={[s.input, { marginBottom: 12, fontSize: 18, fontWeight: '700' }]} value={pd.label}
       onChangeText={(v) => mutatePlanDay(t.id, weekday, (d) => { d.label = v; })}
+      onBlur={() => { if (pd.label !== pd.label.trim()) mutatePlanDay(t.id, weekday, (d) => { d.label = d.label.trim(); }); }}
       placeholder={planOf(t).rotation ? 'List name' : 'Day title'} placeholderTextColor={colors.hint}
     />
   );

@@ -489,7 +489,13 @@ export function addFieldOptions(trackerId: string, fieldId: string, options: str
   setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, fields: t.fields.map((f) => (f.id === fieldId ? { ...f, options } : f)) } : t)) });
 }
 
-export function saveSetup(draft: TrackerDraft, inSystem: boolean, existingId?: string): string {
+export function saveSetup(raw: TrackerDraft, inSystem: boolean, existingId?: string): string {
+  // Names, options and wording are saved without stray spaces.
+  const draft: TrackerDraft = {
+    ...raw, name: raw.name.trim(),
+    fields: raw.fields.map((f) => ({ ...tidyName(f), ...(f.options ? { options: f.options.map((o) => o.trim()).filter(Boolean) } : {}), ...(f.unit ? { unit: f.unit.trim() } : {}) })),
+    ...(raw.terms ? { terms: Object.fromEntries(Object.entries(raw.terms).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])) } : {}),
+  };
   const sysId = state.systems[0]?.id ?? null;
   if (existingId) {
     const before = state.trackers.find((x) => x.id === existingId);
@@ -521,7 +527,12 @@ function atFor(day: number): number {
 }
 
 // One reading a day: save over today's entry if there is one, otherwise add it.
-export function saveDaily(trackerId: string, values: Entry['values'], day: number = startOfDay(Date.now())): void {
+// Typed text is saved without the spaces around it (phones add one after a word); it is only trimmed when saved, never while typing.
+const tidy = (v: Entry['values']): Entry['values'] => Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typeof x === 'string' ? x.trim() : x]));
+const tidyName = <T extends { name: string }>(x: T): T => ({ ...x, name: x.name.trim() });
+
+export function saveDaily(trackerId: string, raw: Entry['values'], day: number = startOfDay(Date.now())): void {
+  const values = tidy(raw);
   const existing = state.entries.find((e) => e.trackerId === trackerId && e.done && startOfDay(e.at) === day);
   if (!existing) return logFree(trackerId, values, day);
   setState({ ...state, entries: state.entries.map((e) => (e.id === existing.id ? { ...e, values: { ...e.values, ...values } } : e)) });
@@ -535,7 +546,8 @@ export function addEntries(entries: Entry[]): void {
 
 export function newEntryId(): string { return makeId(); }
 
-export function logFree(trackerId: string, values: Entry['values'] = {}, day: number = startOfDay(Date.now())): void {
+export function logFree(trackerId: string, raw: Entry['values'] = {}, day: number = startOfDay(Date.now())): void {
+  const values = tidy(raw);
   const entry: Entry = { id: makeId(), trackerId, at: atFor(day), done: true, values };
   setState({ ...state, entries: [...state.entries, entry] });
   emit({ type: 'entry.logged', entry });

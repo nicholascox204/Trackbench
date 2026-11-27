@@ -2125,3 +2125,10 @@ When the keyboard opened, the page scrolled until a field sat 40 points above it
 
 ## 2026-11-27: The list pen gets a ring
 The pen on each list sat loose on the row. It now sits in a ring the same size as the dropdown's chevron, directly under it. The right edge of the control reads as one column: chevron, then a ringed pen on each list.
+
+## 2026-11-27: Item pens, attached dropdowns, trimming, and a real bug
+- **The bug behind the error.** Removing or moving an item on a pick-from-lists tracker flashed an error. Item rows sent their edits to the list for the day's weekday (Friday is 5), but there those lists aren't weekdays. With two lists, "list 5" doesn't exist. Rows now edit the list actually on screen. The web preview never showed it, because the failing write happened on the phone's path, so it was found by reading the code, not by reproducing it.
+- **Pen inside the item.** The item's grey box now holds both the tick area and the pen. The pen sits in the same column as the dropdown chevron, on a quiet filled circle that shows the button's edge without the ring Nick found too strong.
+- **Attached dropdowns.** The open list hung under its box with a gap and its own rounded top. Now box and list are one shape: square where they meet, one accent outline, and a thin divider between.
+- **Trimming.** Phones add a space after a word. Text is now trimmed when it's saved, never while typing, since a space between words is needed mid-word.
+- **Last tracker.** Deleting the last tracker goes straight to making a new one instead of flashing an empty page with the bar.

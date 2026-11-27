@@ -112,17 +112,16 @@ function WeekStrip({
 const tidy = (n: number): number => Math.round(n * 10) / 10;
 
 function RowSlot({
-  t, slot, day, entries, editable, settings, canEdit, open, onToggle, index, count,
+  t, slot, day, entries, editable, settings, canEdit, open, onToggle, index, count, list,
 }: {
   t: Tracker; slot: Slot; day: number; entries: Entry[]; editable: boolean; settings: Settings;
-  canEdit: boolean; open: boolean; onToggle: () => void; index: number; count: number;
+  canEdit: boolean; open: boolean; onToggle: () => void; index: number; count: number; list: number; // list: where this day's list sits in the plan (a weekday, a block day or one of the lists to pick from)
 }) {
   const terms = termsOf(t);
   const mine = entries.filter((e) => e.slotId === slot.id && startOfDay(e.at) === day);
   const sets = slot.sets as number;
   const doneCount = mine.filter((e) => e.done && (e.row ?? 0) < sets).length;
   const nf = t.fields.filter((f) => f.type === 'number');
-  const weekday = new Date(day).getDay();
   const [plates, setPlates] = useState(false);
   const lift = liftFields(t);
   const bests = bestsBefore(t, entries, slot.id, day);
@@ -131,10 +130,10 @@ function RowSlot({
   const todayTop = Math.max(0, ...mine.map((e) => (lift.weight ? Number(e.values[lift.weight.id]) || 0 : 0)));
   const plateBase = todayTop || bests.weight;
   const plateUnit = (wUnit === 'lb' ? 'lb' : wUnit === 'kg' ? 'kg' : undefined) && usesBar(slot.name) ? (wUnit as 'kg' | 'lb') : undefined; // only barbell lifts load plates
-  if (open) return <SlotEditor t={t} slot={slot} weekday={weekday} settings={settings} index={index} count={count} onClose={onToggle} />;
+  if (open) return <SlotEditor t={t} slot={slot} weekday={list} settings={settings} index={index} count={count} onClose={onToggle} />;
   return (
     <Card keep style={{ padding: 14, marginBottom: 10 }}>
-      <View style={[s.row, { justifyContent: 'space-between', marginBottom: 10 }]}>
+      <View style={[s.row, { justifyContent: 'space-between', marginBottom: 10, marginRight: -4 }]}>
         <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', flex: 1 }}>{slot.name}</Text>
         {canEdit ? <EditButton onPress={onToggle} /> : null}
       </View>
@@ -217,26 +216,24 @@ function itemNumbers(t: Tracker, values: Record<string, number> | undefined, set
 }
 
 function ItemRow({
-  t, slot, day, entries, editable, settings, canEdit, open, onToggle, index, count,
+  t, slot, day, entries, editable, settings, canEdit, open, onToggle, index, count, list,
 }: {
   t: Tracker; slot: Slot; day: number; entries: Entry[]; editable: boolean; settings: Settings;
-  canEdit: boolean; open: boolean; onToggle: () => void; index: number; count: number;
+  canEdit: boolean; open: boolean; onToggle: () => void; index: number; count: number; list: number; // list: where this day's list sits in the plan (a weekday, a block day or one of the lists to pick from)
 }) {
   const e = entries.find((x) => x.slotId === slot.id && x.row === undefined && startOfDay(x.at) === day && x.done);
   const variant = e?.variant;
   const values = variant !== undefined && slot.variants?.[variant] ? slot.variants[variant].values : slot.values;
   const left = t.tools.stock ? stockText(stockLeft(slot, entries)) : undefined;
-  if (open) return <SlotEditor t={t} slot={slot} weekday={new Date(day).getDay()} settings={settings} index={index} count={count} onClose={onToggle} />;
+  if (open) return <SlotEditor t={t} slot={slot} weekday={list} settings={settings} index={index} count={count} onClose={onToggle} />;
   return (
     <View style={{ marginBottom: 6 }}>
-      <View style={s.row}>
+      {/* One box holds the tick area and the pen, so the pen sits inside it, in the same column as the dropdown chevron above. */}
+      <View style={[s.row, { borderRadius: 8, borderWidth: px(1), paddingRight: canEdit ? 10 : 0, backgroundColor: e ? colors.doneBg : colors.card, borderColor: e ? colors.done : colors.border }]}>
       <Tap
         disabled={!editable}
         onPress={() => toggleItem(t.id, day, slot.id)}
-        style={[s.row, {
-          flex: 1, padding: 12, borderRadius: 8, borderWidth: px(1), gap: 10,
-          backgroundColor: e ? colors.doneBg : colors.card, borderColor: e ? colors.done : colors.border, opacity: editable ? 1 : 0.6,
-        }]}
+        style={[s.row, { flex: 1, padding: 12, gap: 10, opacity: editable ? 1 : 0.6 }]}
       >
         <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: EDGE, borderColor: e ? colors.done : colors.muted, backgroundColor: e ? colors.done : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           {e ? <Text style={{ color: colors.onAccent, fontSize: 12, fontWeight: '800' }}>✓</Text> : null}
@@ -636,7 +633,7 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
                 {planDay.slots.map((sl, at) => {
                   const common = {
                     t, slot: sl, day, entries, editable, settings, canEdit, open: openId === sl.id,
-                    onToggle: () => setOpenId(openId === sl.id ? null : sl.id), index: at, count: planDay.slots.length,
+                    onToggle: () => setOpenId(openId === sl.id ? null : sl.id), index: at, count: planDay.slots.length, list: weekdayOfDay,
                   };
                   return isRowSlot(sl) ? <RowSlot key={sl.id} {...common} /> : <ItemRow key={sl.id} {...common} />;
                 })}
