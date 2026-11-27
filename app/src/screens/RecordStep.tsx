@@ -293,7 +293,7 @@ export function RecordStep({
         <View>
           {label('How many boxes')}
           <ChoiceGrid cols={2} value={tickList ? 'list' : 'one'} onPick={(k) => pickTick(k === 'list')}
-            options={[{ key: 'one', label: 'One box' }, { key: 'list', label: 'A checklist' }]} />
+            options={[{ key: 'list', label: 'A checklist' }, { key: 'one', label: a.name.trim() ? `Just ${a.name.trim()}` : 'Just this tracker' }]} />
           {tickList ? term('item', 'Each box is called') : null}
         </View>
       ) : null}

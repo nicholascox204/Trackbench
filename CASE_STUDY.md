@@ -2001,3 +2001,6 @@ Nick spotted the root problem: much of our vocabulary only makes sense after you
 - **For an entry:** One a day or Any number; then Named as you go or Picked from a list.
 
 "Form" was rejected as technical. "Entry" won because the rest of the app already uses the word, so setup teaches it. The headings carry the noun, which keeps each option to two or three words.
+
+## 2026-11-27: The single box is named after the tracker
+"One box" didn't say what the box was: it is the tracker itself. The option now uses the tracker's name ("Just Floss"), or "Just this tracker" before the tracker has a name. A checklist moved first, because the most popular template, Daily habits, is a checklist and the single box mostly serves avoid trackers.
