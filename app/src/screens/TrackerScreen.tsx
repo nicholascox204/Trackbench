@@ -622,7 +622,6 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
                 <AddSlot key={`add${day}`} t={t} weekday={weekdayOfDay} first settings={settings} />
               ) : (
                 <View>
-                  <Muted style={{ marginBottom: 8, textAlign: 'center' }}>Nothing on {listName(t, weekdayOfDay)}{fromToday ? '. What you add here applies from today on.' : ''}</Muted>
                   {canEdit ? <AddSlot key={`add${day}`} t={t} weekday={weekdayOfDay} first={false} settings={settings} /> : null}
                 </View>
               )}
