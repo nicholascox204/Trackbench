@@ -88,17 +88,19 @@ async function takePage(db: Db, table: Table, page: CloudRow[]): Promise<number>
   return take.length;
 }
 
-async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: number; changedLocal: boolean }> {
+async function pull(db: Db, cloud: CloudApi, table: Table, mark: (step: string) => void = () => {}): Promise<{ received: number; changedLocal: boolean }> {
   const key = `cloud-cursor-${table}`;
   let cursor = await metaGet<Cursor>(db, key);
   let received = 0;
   let changedLocal = false;
   for (;;) {
     const page = await cloud.changedSince(table, cursor, PAGE);
+    mark(`fetch ${page.length} ${table}`);
     if (page.length === 0) break;
     await db.transaction(async () => {
       if (await takePage(db, table, page)) changedLocal = true;
     });
+    mark(`write ${page.length} ${table}`);
     received += page.length;
     const last = page[page.length - 1];
     cursor = { at: asZ(String(last.updated_at)), id: String(last.id) };
@@ -108,7 +110,8 @@ async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: 
   return { received, changedLocal };
 }
 
-export async function sync(db: Db, cloud: CloudApi, userId: string, opts: { pull?: boolean } = {}): Promise<SyncResult> {
+export async function sync(db: Db, cloud: CloudApi, userId: string, opts: { pull?: boolean; mark?: (step: string) => void } = {}): Promise<SyncResult> {
+  const mark = opts.mark ?? (() => {});
   let sent = 0;
   sent += await pushRows<TrackerRow>(db, cloud, 'trackers', userId, trackerOut); // trackers first: entries point at them
   sent += await pushRows<EntryRow>(db, cloud, 'entries', userId, entryOut);
@@ -132,8 +135,9 @@ export async function sync(db: Db, cloud: CloudApi, userId: string, opts: { pull
     changedLocal = true;
   }
 
-  const t = await pull(db, cloud, 'trackers');
-  const e = await pull(db, cloud, 'entries');
+  mark('send');
+  const t = await pull(db, cloud, 'trackers', mark);
+  const e = await pull(db, cloud, 'entries', mark);
 
   // rows deleted everywhere are no longer needed here
   await db.run('delete from entries where deleted_at is not null and dirty = 0');

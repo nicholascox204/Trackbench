@@ -90,7 +90,8 @@ async function runSync(pull: boolean): Promise<void> {
     scheduleSave();
     await saving; // what is waiting to be written goes first
     const userId = await cloud.signedInUserId();
-    const res = await sync(db, cloud.supabaseApi(cloud.cloudClient()), userId, { pull });
+    mark('session');
+    const res = await sync(db, cloud.supabaseApi(cloud.cloudClient()), userId, { pull, mark });
     if (res.changedLocal) {
       // another device changed something: bring it into what is on screen (anything changed meanwhile is saved first, and the load is repeated if the app changed again)
       for (let tries = 0; tries < 3; tries++) {
@@ -99,9 +100,11 @@ async function runSync(pull: boolean): Promise<void> {
         const seen = version;
         const r = await load(db);
         if (seen !== version) continue;
+        mark('read back');
         state = fromStored(r.state);
         snap = r.snapshot;
         listeners.forEach((l) => l());
+        mark('show');
         break;
       }
     }
@@ -149,6 +152,16 @@ function setPending(on: boolean): void {
 export const getRestorePhase = (): RestorePhase => (pending ? (restorePhase === 'off' ? 'busy' : restorePhase) : 'off');
 export const isRestoring = (): boolean => pending;
 const RESTORE_LIMIT = 30000;
+// How long the last restore took, step by step, shown in Settings so a slow one can be pinned down on the phone itself.
+let restoreTiming = '';
+export const getRestoreTiming = (): string => restoreTiming;
+let timer: { start: number; last: number; steps: string[] } | null = null;
+function mark(step: string): void {
+  if (!timer) return;
+  const now = Date.now();
+  timer.steps.push(`${step} ${((now - timer.last) / 1000).toFixed(1)}s`);
+  timer.last = now;
+}
 
 // About to sign in: hold from here, so nothing flashes once the account is in.
 export function beginSignIn(): void { restorePhase = 'busy'; setPending(true); }
@@ -162,17 +175,26 @@ export async function restoreAccount(): Promise<void> {
   restorePhase = 'busy';
   setPending(true);
   restoreRun = (async () => {
+    const t0 = Date.now();
+    timer = { start: t0, last: t0, steps: [] };
     const cloud = await import('./cloud');
     try {
       if (current) await Promise.race([current, wait(RESTORE_LIMIT)]); // a sync from before signing in finishes first
       syncing = false; current = null;
+      mark('wait');
       setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });
       if (db) { await saving; await db.run("update kv set dirty = 0, updated_at = 0 where key = 'settings'"); }
+      mark('prepare');
       const done = await Promise.race([syncNow().then(() => true), wait(RESTORE_LIMIT).then(() => false)]);
       if (!done || cloud.getCloudStatus().phase === 'error') throw new Error('restore');
       restorePhase = 'off';
+      if (timer) restoreTiming = `${((Date.now() - timer.start) / 1000).toFixed(1)}s in all: ${timer.steps.join(', ')}`;
+      console.log('[restore]', restoreTiming);
+      timer = null;
       setPending(false);
     } catch {
+      if (timer) restoreTiming = `failed after ${((Date.now() - timer.start) / 1000).toFixed(1)}s: ${timer.steps.join(', ')}`;
+      timer = null;
       restorePhase = 'failed';
       listeners.forEach((l) => l());
     } finally {
