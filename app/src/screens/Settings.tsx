@@ -9,7 +9,10 @@ import { minuteText, usualMinute } from '../core/startPick';
 import { resetAllPermissions } from '../core/devReset';
 import { cloudConfigured, useCloudStatus } from '../core/cloud';
 import { useSession } from '../core/auth';
-import * as Updates from 'expo-updates';
+// When this published version was made. The dev build on the phone predates the update system, so it is looked up only
+// where it exists; there the line says the app is running from the PC.
+let publishedAt: Date | null = null;
+try { publishedAt = (require('expo-updates') as { createdAt: Date | null }).createdAt; } catch { /* dev build: no update system */ }
 import { getRestoreTiming } from '../core/store';
 import { PERSONAS } from '../core/personas';
 import { DeletedList } from './DeletedList';
@@ -77,7 +80,7 @@ export function Settings() {
               {accountMsg ? <Text style={{ color: colors.danger, fontSize: 13, marginTop: 8 }}>{accountMsg}</Text> : null}
             </Card>
             {/* Testing aid: which published version this is, and how long bringing the trackers in last took. */}
-            <Muted style={{ marginTop: 8, fontSize: 12 }}>{Updates.createdAt ? `Version from ${Updates.createdAt.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : 'Running from the PC'}</Muted>
+            <Muted style={{ marginTop: 8, fontSize: 12 }}>{publishedAt ? `Version from ${publishedAt.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : 'Running from the PC'}</Muted>
             {getRestoreTiming() ? <Muted style={{ marginTop: 4, fontSize: 12 }}>{`Last sign-in: ${getRestoreTiming()}`}</Muted> : null}
           </View>
         ) : cloudConfigured ? (
