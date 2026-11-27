@@ -69,10 +69,10 @@ export function StartPicker({
           {card('Build your own', () => onScratch())}
           {heading('Popular')}
           {popular.map(row)}
-          {CATEGORIES.map((c) => {
-            // ones already shown under Popular come last, so each category opens on something new
+          {CATEGORIES.map((c, ci) => {
+            // The first category peeks under Popular, so it opens on something not already shown there (Reading, not Daily habits).
             const inCat = TEMPLATES.filter((t) => t.category === c);
-            const list = [...inCat.filter((t) => !popular.includes(t)), ...inCat.filter((t) => popular.includes(t))];
+            const list = ci > 0 ? inCat : [...inCat.filter((t) => !popular.includes(t)), ...inCat.filter((t) => popular.includes(t))];
             return list.length ? <View key={c}>{heading(c)}{list.map(row)}</View> : null;
           })}
         </View>
