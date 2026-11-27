@@ -1921,3 +1921,5 @@ Days is the part of setup most likely to differ between people, so each headline
 ## 2026-11-26: How often drawn like every other summary row
 
 How often was a bordered dropdown inside a card, a box in a box, with a bottom margin that made it sit high when there were no controls under it (Every day). It was the one row that looked different. The dropdown now has a row style that matches the summary rows exactly: small grey label over the value, a plain chevron (down rather than right, since it opens in place), no inner box and no extra margin. The options open inside the same card. Lists on planned trackers uses the same style.
+
+Follow-up the same day: matching the rows went too far. How often is the only menu that opens in place on the summary, so a box of its own is a fair signal that it behaves differently. Middle ground: the inner box and its accent chevron are back, and only the bottom margin that pushed it off-centre is gone (a `flush` option on Dropdown).
