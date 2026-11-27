@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState as RNAppState, BackHandler, Platform, View, useColorScheme } from 'react-native';
+import { AppState as RNAppState, BackHandler, View, useColorScheme } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
@@ -164,8 +164,6 @@ function AppInner() {
   const bar = (
     <>
       <StatusBar style={theme.colors.isDark ? 'light' : 'dark'} />
-      {/* On the web, scrollbars use the highlight colour. Phones draw their own and cannot be tinted. */}
-      {Platform.OS === 'web' ? <style>{`* { scrollbar-color: ${theme.colors.accent} transparent; }`}</style> : null}
       {insets.top > 0 ? <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: theme.colors.bg, zIndex: 100, elevation: 100 }} /> : null}
     </>
   );

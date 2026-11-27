@@ -1988,3 +1988,8 @@ I rejected a four-option version with a "Plan them ahead" switch, because the sw
 Also:
 - Section-ending dividers on the start screen were removed, since space already separates the sections.
 - Web scrollbars use the highlight colour. Phones draw their own scrollbars, and they can't be tinted.
+
+## 2026-11-26: Lines back, plain scrollbar, ghost names
+- **Row lines:** dividers are back under every row on the start screen, including the last in each section. The list reads as one continuous index, and stopping the lines early made the last rows look unfinished.
+- **Scrollbar:** the accent colour was reverted. It only worked on the web, and phones are where the app lives.
+- **Item names:** the "called" boxes for list things and rounds now start empty, with the default word as grey hint text, so people write their own word rather than editing "Item".

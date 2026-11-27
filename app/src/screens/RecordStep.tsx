@@ -276,8 +276,8 @@ export function RecordStep({
     <View>
       {label(t)}
       <TextInput
-        style={s.input} value={a.terms?.[k] ?? DEFAULT_TERMS[k]} maxLength={16} selectTextOnFocus
-        onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), [k]: v } })}
+        style={s.input} value={a.terms?.[k] ?? ''} maxLength={16} placeholder={DEFAULT_TERMS[k]} placeholderTextColor={colors.hint}
+        onChangeText={(v) => { const { [k]: _old, ...rest } = a.terms ?? {}; set({ terms: v.trim() ? { ...rest, [k]: v } : rest }); }}
       />
     </View>
   );
