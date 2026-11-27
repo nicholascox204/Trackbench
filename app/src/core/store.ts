@@ -9,6 +9,7 @@ import { Derived, dayResult, derive, entriesOnDay } from './derive';
 import { applyIntensity, defaultConfig, hash01 } from './engine';
 import { iconFromEmoji } from './icons';
 import { emit } from './events';
+import { withHistory } from './history';
 import { dayKeyOf, emptyPlanDays, planFor, previousRow, stripRest, syncSame, versionFor } from './plan';
 import { normalizeSchedule, scheduleOf, weekdaysOf } from './schedule';
 import { getPreset } from './presets';
@@ -467,10 +468,16 @@ export function savePlanDays(trackerId: string, days: PlanDay[], same?: boolean)
 }
 
 // Create a tracker from the setup flow, or update one when editing.
+// Add options to a choice field as it is now (a past day may show an older setup, which is never written back).
+export function addFieldOptions(trackerId: string, fieldId: string, options: string[]): void {
+  setState({ ...state, trackers: state.trackers.map((t) => (t.id === trackerId ? { ...t, fields: t.fields.map((f) => (f.id === fieldId ? { ...f, options } : f)) } : t)) });
+}
+
 export function saveSetup(draft: TrackerDraft, inSystem: boolean, existingId?: string): string {
   const sysId = state.systems[0]?.id ?? null;
   if (existingId) {
-    updateTracker(existingId, { ...draft, systemId: inSystem ? sysId : null });
+    const before = state.trackers.find((x) => x.id === existingId);
+    if (before) setState({ ...state, trackers: state.trackers.map((x) => (x.id === existingId ? withHistory(before, { ...x, ...draft, systemId: inSystem ? sysId : null }) : x)) });
     return existingId;
   }
   const t = build(draft, inSystem ? sysId : null);

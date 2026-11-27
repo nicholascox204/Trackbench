@@ -2038,3 +2038,13 @@ Checklist items could be added in setup, but gym plans are deliberately written 
 ## 2026-11-27: More room at the top, first-item card returns
 - **Top space:** titles sat too close to the top edge. Every screen's top space was raised by the same 16 points, in one shared value, so it stays consistent.
 - **First-item card:** clearing a checklist or plan now brings back the "Add your first …" card. Before, it only appeared on a brand-new tracker.
+
+## 2026-11-27: Past days stay as they were
+Edits used to reach into the past. A removed field's values were hidden on old days. A changed schedule or target re-judged old days, so a streak could change after the fact. Only plans were dated.
+
+Nick's rule: people looking back should see each day as it was. A tracker's setup is now dated the same way plans are. Saving an edit keeps the old setup for every earlier day. Each day shows its own fields and is judged by its own rules.
+
+On the edge case Nick raised (editing while looking at a day two days ago), edits always apply from today, whichever day is on screen. Yesterday and two days ago keep what they had. "From the day you were viewing" was rejected, because it would silently rewrite the days in between.
+
+Also:
+- **The Added check is gone from template rows.** You can add a template twice, and after heavy edits the check said little.

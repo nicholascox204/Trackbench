@@ -237,7 +237,12 @@ export interface Tracker {
   cleanFrom?: number;
   /** The day that count was typed. Slips from before it are replaced by it; slips from then on count. */
   cleanSetOn?: number;
+  /** Earlier setups, oldest first: each applies to days before its `until`. See history.ts. */
+  past?: SetupVersion[];
 }
+
+// How a tracker was set up before an edit; it applies to every day before `until` (YYYY-MM-DD) not covered by an older one.
+export type SetupVersion = { until: string } & Partial<Pick<Tracker, 'input' | 'fields' | 'measures' | 'primaryMeasure' | 'targets' | 'derived' | 'success' | 'schedule' | 'window' | 'planStyle' | 'daily' | 'avoid' | 'terms'>>;
 
 export type TrackerDraft = Omit<Tracker, 'id' | 'systemId' | 'createdAt'>;
 

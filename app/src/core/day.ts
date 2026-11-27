@@ -3,11 +3,13 @@
 
 import type { DayTrackerResult } from './engine';
 import { computeDay, expectedOn, trackerSuccess } from './measures';
+import { trackerOn } from './history';
 import { planFor } from './plan';
 import { startOfDay } from './time';
 import type { Entry, Tracker } from './types';
 
-export function dayResult(t: Tracker, dayEntries: Entry[], day: number, all?: Entry[]): DayTrackerResult {
+export function dayResult(live: Tracker, dayEntries: Entry[], day: number, all?: Entry[]): DayTrackerResult {
+  const t = trackerOn(live, day); // judged by the setup it had that day
   const measures = computeDay(t, dayEntries, planFor(t, day, all));
   const expected = expectedOn(t, day, all);
   const ok = trackerSuccess(t, measures);

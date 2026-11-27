@@ -1,6 +1,6 @@
 // The first screen of adding a tracker: search, Build your own, then every template under a heading. Popular first (the top
 // few by popularity, repeated in their categories so each category is complete), then every category, so scrolling shows what kinds exist without tapping a filter. Searching
-// flattens it into one list. Templates you already have end in a check instead of a chevron. A search that finds nothing offers to build it yourself,
+// flattens it into one list. A search that finds nothing offers to build it yourself,
 // with the name already typed.
 
 import { useState } from 'react';
@@ -10,13 +10,13 @@ import { Go, Icon, Muted, Tap, TrackerIcon, colors, s } from '../ui/kit';
 import { px } from '../ui/theme';
 
 export function StartPicker({
-  onTemplate, onScratch, have,
-}: { onTemplate: (t: Template) => void; onScratch: (name?: string) => void; have: Set<string> }) {
+  onTemplate, onScratch,
+}: { onTemplate: (t: Template) => void; onScratch: (name?: string) => void; have?: Set<string> }) {
   const [query, setQuery] = useState('');
   const q = query.trim();
   const results = searchTemplates(query);
 
-  const badge = (added = false) => <Go done={added} />;
+  const badge = () => <Go />;
   // Build your own is an ordinary row, same placements as the templates; it sits alone above Popular.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>
@@ -30,18 +30,17 @@ export function StartPicker({
       </View>
     </Tap>
   );
-  // Every template row is the same: icon, name, one line on what it is, and a plus (a check when you already have it).
+  // Every template row is the same: icon, name, one line on what it is, and a chevron.
   const row = (t: Template) => {
-    const added = have.has(t.id);
     return (
-      <Tap key={t.id} onPress={() => onTemplate(t)} accessibilityLabel={added ? `${t.name}, added` : t.name}>
+      <Tap key={t.id} onPress={() => onTemplate(t)} accessibilityLabel={t.name}>
         <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
           <TrackerIcon name={t.icon} size={40} />
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>
             <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>{t.blurb}</Text>
           </View>
-          {badge(added)}
+          {badge()}
         </View>
       </Tap>
     );

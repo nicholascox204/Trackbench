@@ -9,7 +9,8 @@ import { computeDay, isCalculated } from '../core/measures';
 import { pickedDayFor, rememberPickedDay } from '../core/pickedDay';
 import { WEEKDAYS, isRowSlot, planFor, planIndexFor, previousRow, viewVersion } from '../core/plan';
 import { takeTimerFill, useTimerFill } from '../core/timers';
-import { deleteEntry, logFree, mutatePlanDay, saveDaily, setRow, setTapTotal, toggleItem, undoLast, updateEntry, updateTracker, useAppState } from '../core/store';
+import { addFieldOptions, deleteEntry, logFree, mutatePlanDay, saveDaily, setRow, setTapTotal, toggleItem, undoLast, updateEntry, updateTracker, useAppState } from '../core/store';
+import { trackerOn } from '../core/history';
 import { isDueOn, listDays, scheduleOf, windowNote } from '../core/schedule';
 import { addDays, formatDay, startOfDay } from '../core/time';
 import type { Entry, Field, Settings, Slot, Tracker } from '../core/types';
@@ -330,7 +331,7 @@ function FreeForm({
             // Typing or nudging a number that the phone fills means you want it your way: automatic goes off.
             if (f.id === autoId) updateTracker(t.id, { sources: { ...(t.sources ?? {}), [f.id]: 'manual' } });
           }}
-            onOptions={f.type === 'choice' ? (o) => updateTracker(t.id, { fields: t.fields.map((x) => (x.id === f.id ? { ...x, options: o } : x)) }) : undefined} />
+            onOptions={f.type === 'choice' ? (o) => addFieldOptions(t.id, f.id, o) : undefined} />
           {averages?.[f.id] ? <Text style={{ color: colors.accent, fontSize: 13, marginTop: 6 }}>{averages[f.id]}</Text> : null}
         </View>
   ));
@@ -415,7 +416,7 @@ function EntryRow({ t, e, settings, editable, first }: { t: Tracker; e: Entry; s
     <View key={f.id} style={{ marginBottom: i === list.length - 1 ? 0 : 8, marginRight: reserve && i === 0 ? 44 : 0 }}>
       <FieldInput
         f={f} value={e.values[f.id]} settings={settings} bare after onChange={(v) => set(f.id, v)}
-        onOptions={f.type === 'choice' ? (o) => updateTracker(t.id, { fields: t.fields.map((x) => (x.id === f.id ? { ...x, options: o } : x)) }) : undefined}
+        onOptions={f.type === 'choice' ? (o) => addFieldOptions(t.id, f.id, o) : undefined}
       />
     </View>
   ));
@@ -462,7 +463,7 @@ function EntryRow({ t, e, settings, editable, first }: { t: Tracker; e: Entry; s
 export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) {
   const top = useTopPad();
   const { state } = useAppState();
-  const t = state.trackers.find((x) => x.id === id);
+  const live = state.trackers.find((x) => x.id === id);
   // A tracker opens on today, even a brand-new one with nothing planned: that is where you add the first thing.
   const firstDay = (): number => startOfDay(Date.now());
   const startDay = (): number => pickedDayFor(id) ?? firstDay(); // a day you switched to stays until a new day begins
@@ -473,13 +474,15 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
   const [totalKey, setTotalKey] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const today = startOfDay(Date.now());
-  if (!t) {
+  if (!live) {
     return (
       <View style={s.screen}>
         <ScreenHeader label="Tracker" />
       </View>
     );
   }
+  // The day on screen shows the setup it had: a past day keeps its old fields and rules after an edit.
+  const t = trackerOn(live, day);
   const settings = state.settings;
   const entries = state.entries.filter((e) => e.trackerId === id);
   const editable = day <= today && !(t.tools.lockPast && day < today);
