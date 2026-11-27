@@ -61,6 +61,7 @@ function scheduleSave(): void {
   });
 }
 
+let sentAt = 0; // the change count at the last sync that finished
 let version = 0; // counts every change made through setState, so a sync can tell whether the app changed while it worked
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let syncing = false;
@@ -109,6 +110,7 @@ async function runSync(pull: boolean): Promise<void> {
       }
     }
     cloud.setCloudStatus({ phase: 'idle', at: Date.now(), sent: res.sent, received: res.received });
+    sentAt = startedAt;
   } catch (e) {
     cloud.setCloudStatus({ phase: 'error', message: cloud.friendlyError(e) });
   } finally {
@@ -118,10 +120,13 @@ async function runSync(pull: boolean): Promise<void> {
 }
 
 // The app is being left: send what is waiting now, without the usual pause (the app may not get another chance to run).
+// Only sending (nothing is fetched, which the next open does), and only when something is waiting, so leaving costs no
+// requests at all when nothing changed. A change made just before leaving goes now rather than in four seconds.
 export function flushOnLeave(): void {
+  const waiting = !!syncTimer || version !== sentAt;
   if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
   scheduleSave();
-  void syncNow();
+  if (waiting) void syncNow({ pull: false });
 }
 
 // ---------- the account ----------

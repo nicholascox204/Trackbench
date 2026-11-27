@@ -2195,3 +2195,7 @@ Sign-out refused with "the latest changes could not be backed up", even though t
 ## 2026-11-27 — Signed in means backed up; the backup switch is gone
 
 Sign-out kept refusing because backing up had quietly switched itself off. Whether the app backed up was a setting (cloudSync); sign-out set it off on the phone, that "off" could travel up with the settings, and the next sign-in brought it back down, so nothing was sent again and new entries piled up unsent. Nick asked for syncing to be simpler: Trackbench is phone-first, and the account exists for safety and, later, social features, not for juggling devices. Decided: there is no backup setting. Signed in means backed up, decided by the session alone, so no stored value can get out of step. The old switch is removed from Settings.
+
+## 2026-11-27 — When backing up happens
+
+Nick asked for backups as often as is sensible without loading the service, including when the app closes, on sign-out and on uninstall. Settled: a change is sent about four seconds after it is made (a burst of taps is one send); opening the app fetches anything new; leaving the app sends at once, but only when something is waiting, and only sends (no fetch), so leaving costs no requests when nothing changed. Sign-out makes a last send. Uninstalling cannot run anything (Android gives an app no warning), so the four-second send is what keeps data safe there: at most the last few seconds before uninstalling could be lost.
