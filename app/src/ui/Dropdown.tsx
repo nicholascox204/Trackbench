@@ -22,6 +22,11 @@ export function Dropdown({
   const [open, setOpen] = useState(false);
   const [find, setFind] = useState('');
   const panel = useReveal(open);
+  // The list lines up with the box that opens it: the same side padding, the text on the same side as the value, and the
+  // check mark the same size and place as the chevron.
+  const pad = compact ? 10 : 14;
+  const mark = compact ? 22 : 26;
+  const right = compact && !!label;
   const shown = options.filter((o) => o.label.toLowerCase().includes(find.trim().toLowerCase()));
   return (
     <View ref={panel} style={{ marginBottom: flush ? 0 : compact ? SEPARATION.panelGap + 2 : SEPARATION.endOfList }}>
@@ -62,15 +67,15 @@ export function Dropdown({
                 <Tap
                   key={o.key} onPress={() => { onSelect(o.key); setOpen(false); setFind(''); }}
                   style={{
-                    flexDirection: 'row', alignItems: 'center', paddingVertical: SEPARATION.rowPad, paddingHorizontal: 14,
+                    flexDirection: 'row', alignItems: 'center', paddingVertical: SEPARATION.rowPad, paddingHorizontal: pad,
                     backgroundColor: on ? colors.accentBg : 'transparent', borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border,
                   }}
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: on ? '700' : '500' }}>{o.label}</Text>
-                    {o.sub ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{o.sub}</Text> : null}
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: on ? '700' : '500', textAlign: right ? 'right' : 'left' }}>{o.label}</Text>
+                    {o.sub ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2, textAlign: right ? 'right' : 'left' }}>{o.sub}</Text> : null}
                   </View>
-                  {on ? <Icon name="checkmark-circle" size={20} color={colors.accent} /> : null}
+                  <View style={{ width: mark, alignItems: 'center' }}>{on ? <Icon name="checkmark-circle" size={mark} color={colors.accent} /> : null}</View>
                 </Tap>
               );
             })}

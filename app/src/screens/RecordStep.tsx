@@ -11,7 +11,8 @@ import { CHIPS, chipField, type Answers, type ComboFn } from '../core/setup';
 import type { Field, Settings } from '../core/types';
 import { DEFAULT_TERMS } from '../core/terms';
 import { systemDefaultUnit, defaultStep } from '../core/units';
-import { dayKeyOf } from '../core/plan';
+import { MAX_LISTS, dayKeyOf } from '../core/plan';
+import { WEEKLY } from './ScheduleSection';
 import { Button, Card, ChoiceGrid, Icon, Muted, Option, Reveal, SmallButton, Stepper, Tap, Toggle, colors, s } from '../ui/kit';
 import { cleanOption } from '../core/choices';
 import { Dropdown, type DropdownOption } from '../ui/Dropdown';
@@ -278,6 +279,27 @@ export function RecordStep({
     { key: 'plan', label: 'Following a plan' },
     { key: 'avoid', label: 'Avoiding something' },
   ];
+  // How a list works: one list, a list per weekday (only where the rhythm is weekdays), or pick a list each time.
+  const turns = a.rotation.length >= 2;
+  const lists = turns ? 'turns' : a.samePlan ? 'same' : 'each';
+  const weekly = WEEKLY.includes(a.schedule.kind);
+  const LISTS: DropdownOption[] = [
+    { key: 'same', label: 'One list' },
+    ...(weekly ? [{ key: 'each', label: 'A list per weekday' }] : []),
+    { key: 'turns', label: 'Pick a list each time' },
+  ];
+  const chooseLists = (k: string) => set(k === 'same' ? { samePlan: true, rotation: [] } : k === 'each' ? { samePlan: false, rotation: [] } : { samePlan: false, rotation: turns ? a.rotation : ['', '', ''] });
+  const listsControl = (
+    <View style={{ marginTop: 14 }}>
+      <Dropdown compact flush label="Lists" value={LISTS.find((o) => o.key === lists)?.label ?? 'One list'} options={LISTS} selected={lists} onSelect={chooseLists} />
+      {turns ? (
+        <View style={[s.row, { justifyContent: 'space-between', marginTop: 10 }]}>
+          <Text style={{ color: colors.text, fontSize: 15 }}>How many lists</Text>
+          <Stepper value={a.rotation.length} min={2} max={MAX_LISTS} onChange={(n) => set({ rotation: Array.from({ length: n }, (_, i) => a.rotation[i] ?? '') })} />
+        </View>
+      ) : null}
+    </View>
+  );
   const label = (t: string) => <Text style={{ color: colors.muted, fontSize: 12, marginTop: 14, marginBottom: 6 }}>{t}</Text>;
   const term = (k: 'item' | 'row', t: string) => (
     <View>
@@ -296,7 +318,7 @@ export function RecordStep({
   return (
     <View style={{ marginTop: 6 }}>
       <Dropdown compact label="" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
-      {way === 'tick' ? <View style={{ marginTop: 6 }}>{term('item', 'Each one is called')}</View> : null}
+      {way === 'tick' ? <View style={{ marginTop: 6 }}>{term('item', 'Each one is called')}{listsControl}</View> : null}
       {way === 'details' ? (
         <View>
           {label('How many entries')}
@@ -304,7 +326,7 @@ export function RecordStep({
             options={[{ key: 'daily', label: 'One a day' }, { key: 'each', label: 'Any number' }]} />
         </View>
       ) : null}
-      {way === 'plan' ? <View>{term('item', 'Each thing in the plan is called')}{term('row', 'Each round of it is called')}</View> : null}
+      {way === 'plan' ? <View>{term('item', 'Each thing in the plan is called')}{term('row', 'Each round of it is called')}{listsControl}</View> : null}
       {a.record === 'count' ? (
         <View style={{ marginTop: 14 }}>
           {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}

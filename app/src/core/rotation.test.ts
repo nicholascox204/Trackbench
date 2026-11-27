@@ -71,5 +71,5 @@ test('editing a rotation brings its lists back, and keeps what was built in them
 test('the summary says the lists are chosen each time', () => {
   const t = rotation();
   const line = planWords(answersFromTracker(t, SETTINGS, false));
-  assert.ok(line.startsWith('Choose each time (Push, Pull, Legs)'), line);
+  assert.ok(line.startsWith('Pick a list each time (Push, Pull, Legs)'), line);
 });

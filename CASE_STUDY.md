@@ -2048,3 +2048,12 @@ On the edge case Nick raised (editing while looking at a day two days ago), edit
 
 Also:
 - **The Added check is gone from template rows.** You can add a template twice, and after heavy edits the check said little.
+
+## 2026-11-27: Lists move to You log by, and stop rewriting the days
+**What was wrong.** The Lists setting sat in the Days card. It only appeared for checklists and plans, so it popped in between How often and the rest of the screen. It was also wired to rewrite How often: "Choose each time" forced 3 days a week, and "A list per weekday" forced certain weekdays. The days changed behind your back, from a different screen.
+
+**What changed.**
+- **Lists now lives in You log by,** next to what each item is called, because it describes how the list works.
+- **The forced changes are gone.** One list and "Pick a list each time" work with any rhythm. A list per weekday is only offered when the rhythm is weekly. If you later change How often to something that isn't weekly, a per-weekday list falls back to one list. That is the single remaining link, and it's the only case where per-weekday has no meaning.
+
+**Dropdowns** now line up their open list with the box that opened it. The padding is the same, the text sits on the same side as the value, and the check mark sits where the chevron is.

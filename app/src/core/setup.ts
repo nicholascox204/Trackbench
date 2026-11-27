@@ -504,8 +504,8 @@ export function nameProblem(name: string, others: string[]): '' | 'empty' | 'tak
 
 // How a plan's lists are described: one list shared by every day, or a list for each day (with the days' names if they have them).
 export function planWords(a: Answers): string {
-  if (a.rotation.length >= 2) return `Choose each time (${a.rotation.map((n) => n.trim()).filter(Boolean).join(', ') || `${a.rotation.length} lists`})`;
-  if (a.samePlan) return 'The same list';
+  if (a.rotation.length >= 2) return `Pick a list each time (${a.rotation.map((n) => n.trim()).filter(Boolean).join(', ') || `${a.rotation.length} lists`})`;
+  if (a.samePlan) return 'One list';
   const order = a.schedule.kind === 'blocks' ? weekdaysOf(a.schedule) : [1, 2, 3, 4, 5, 6, 0].filter((d) => weekdaysOf(a.schedule).includes(d));
   const named = order.map((d) => (a.dayNames[d] ?? '').trim()).filter(Boolean).join(', ');
   return `A list per weekday${named ? ` (${named})` : ''}`;
