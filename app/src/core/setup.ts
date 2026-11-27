@@ -132,6 +132,9 @@ export function answersFromPreset(presetId: string): Answers {
       return { ...a, record: 'count' };
     case 'check-in':
       return { ...a, record: 'done' };
+    // Build your own starts as a checklist with nothing on it yet.
+    case 'blank':
+      return { ...a, record: 'numbers', log: 'plan', planStyle: 'items', samePlan: true, ticks: [] };
     case 'set-plan':
       return { ...a, record: 'numbers', chips: ['weight', 'reps'], log: 'plan', schedule: { kind: 'weekdays', days: [1, 3, 5] }, planMode: 'asigo', terms: SETS_TERMS };
     case 'measurement':
@@ -535,7 +538,7 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const logging =
     a.record === 'done' ? (a.avoid ? 'Avoiding something' : 'Ticking things off')
     : a.record === 'count' ? `Counting something, ${counterWords(a, settings)}`
-    : a.log === 'plan' && a.planStyle === 'items' ? `Ticking things off${tickNames ? `: ${tickNames}` : ''}`
+    : a.log === 'plan' && a.planStyle === 'items' ? `Ticking things off${tickNames ? `: ${tickNames}` : a.ticks ? ', nothing yet' : ''}`
     : a.log === 'plan' ? `Following a plan${names ? `: ${names}` : ''}`
     : `Writing down details, ${a.daily ? 'one a day' : 'any number'}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;

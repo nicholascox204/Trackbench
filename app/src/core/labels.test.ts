@@ -38,7 +38,7 @@ test('setup has one You log line that says how it is logged and what is written 
   const line = (a: typeof base) => summaryLines(a, settings).find((l) => l.label === 'You log by')?.value;
   assert.equal(line({ ...base, log: 'free', daily: false }), 'Writing down details, any number: Exercise, Weight, Reps');
   assert.equal(line({ ...base, custom: [weight], log: 'free', daily: true }), 'Writing down details, one a day: Weight');
-  assert.equal(line({ ...base, custom: [weight, reps], log: 'plan' }), 'Following a plan: Weight, Reps');
+  assert.equal(line({ ...base, custom: [weight, reps], log: 'plan', planStyle: 'sets' }), 'Following a plan: Weight, Reps');
   assert.equal(line({ ...answersFromPreset('check-in') } as typeof base), 'Ticking things off');
   assert.equal(line({ ...answersFromPreset('check-in'), avoid: true } as typeof base), 'Avoiding something');
   assert.equal(line({ ...answersFromPreset('counter') } as typeof base), 'Counting something, 1 a tap');

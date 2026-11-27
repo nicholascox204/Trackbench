@@ -29,7 +29,7 @@ test('a gym plan from scratch matches the gym template', () => {
 
 test('a meal plan from scratch matches the meals template', () => {
   same('meals', {
-    record: 'numbers', chips: ['protein', 'kcal'], log: 'plan', planStyle: 'items', samePlan: true,
+    record: 'numbers', chips: [], log: 'plan', planStyle: 'items', samePlan: true, terms: { item: 'Meal', row: 'Round', target: 'Target' },
     extras: { previous: false, lockPast: false, average: false },
   });
 });

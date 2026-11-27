@@ -124,7 +124,10 @@ const ALL: Template[] = [
   T('pain', 'Pain level', 'bandage-outline', 'Health', 'Rate it from 1 to 10 each day.', 'pain injury rehab recovery back knee chronic', 'measurement', () => ({
     chips: [], custom: [rating('pain', 'Pain', 10)], daily: true,
   })),
-  T('meals', 'Meal plan', 'restaurant-outline', 'Body', 'Your usual meals, ticked off.', 'meal plan meals prep food eat diet protein calories macros nutrition', 'checklist-totals'),
+  T('meals', 'Meal plan', 'restaurant-outline', 'Body', 'Your usual meals, ticked off.', 'meal plan meals prep food eat diet protein calories macros nutrition', 'checklist-totals', () => ({
+    chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
+    samePlan: true, planMode: 'asigo', terms: { item: 'Meal', row: 'Round', target: 'Target' },
+  })),
 
   // ---- Habits ----
   T('meditate', 'Meditate', 'flower-outline', 'Mind', 'Minutes sat, with a timer.', 'meditate meditation mindfulness calm breathe', 'measurement', () => ({
@@ -171,7 +174,11 @@ const ALL: Template[] = [
     chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
     samePlan: true, planMode: 'asigo',
   })),
-  T('plants', 'Plants', 'leaf-outline', 'Life', 'Tick off each watering.', 'plants garden water houseplants', 'check-in', { schedule: { kind: 'weekdays', days: [0, 3] } }),
+  T('plants', 'Plants', 'leaf-outline', 'Life', 'Tick off each plant.', 'plants garden water houseplants', 'checklist-totals', () => ({
+    chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
+    samePlan: true, planMode: 'asigo', terms: { item: 'Plant', row: 'Round', target: 'Target' },
+    schedule: { kind: 'weekdays', days: [0, 3] },
+  })),
 
   // ---- Added to cover what people ask for ----
   T('food-log', 'Food log', 'fast-food-outline', 'Body', 'What you eat, calories, protein.', 'food eating diet calories protein macros log meals snack', 'time-blocks', () => ({
@@ -198,7 +205,11 @@ const ALL: Template[] = [
     combos: [{ id: 'fast', name: 'Hours fasted', a: 'last', b: 'first', fn: 'span' }], daily: true, extras: { previous: true, lockPast: false, average: false },
     goal: 'none', goals: [],
   })),
-  T('bills', 'Bills', 'receipt-outline', 'Money', 'Tick off when paid, monthly.', 'bills rent pay payment monthly subscription utilities due', 'check-in', { schedule: { kind: 'monthly', day: 1 } }),
+  T('bills', 'Bills', 'receipt-outline', 'Money', 'Tick off each bill, monthly.', 'bills rent pay payment monthly subscription utilities due', 'checklist-totals', () => ({
+    chips: [], planStyle: 'items' as const, goal: 'none', goals: [], extraTargets: [], extras: { previous: false, lockPast: false, average: false },
+    samePlan: true, planMode: 'asigo', terms: { item: 'Bill', row: 'Round', target: 'Target' },
+    schedule: { kind: 'monthly', day: 1 },
+  })),
   T('balance', 'Balance', 'wallet-outline', 'Money', 'A balance, checked weekly.', 'balance net worth debt savings account bank loan', 'measurement', () => ({
     chips: [], custom: [{ ...num('balance', 'Balance', { unit: '$', step: 100, default: 0 }), reading: true }], daily: true, extras: { previous: true, lockPast: false, average: false },
     goal: 'none', goals: [], schedule: { kind: 'weekdays', days: [0] },
@@ -232,7 +243,7 @@ export function searchTemplates(query: string, category: Category | 'All' = 'All
 // The few neutral ways a tracker can work, for "Build your own".
 export interface Shape { id: string; name: string; icon: string; blurb: string; make: () => Answers }
 export const SHAPES: Shape[] = [
-  { id: 'check', name: 'Check-in', icon: 'checkmark-circle-outline', blurb: 'Done or not, once a day.', make: () => ({ ...answersFromPreset('check-in'), name: '' }) },
+  { id: 'check', name: 'Checklist', icon: 'checkmark-circle-outline', blurb: 'Things to tick off each day.', make: () => ({ ...answersFromPreset('blank'), name: '' }) },
   { id: 'avoid', name: 'Avoid something', icon: 'ban-outline', blurb: 'Log slips. Count clean days.', make: () => ({ ...answersFromPreset('check-in'), name: '', avoid: true }) },
   { id: 'counter', name: 'Counter', icon: 'add-circle-outline', blurb: 'Tap +1 toward a daily target.', make: () => ({ ...answersFromPreset('counter'), name: '' }) },
   { id: 'daily', name: 'Daily value', icon: 'today-outline', blurb: 'One reading a day: a weight, a mood, a time.', make: () => ({ ...answersFromPreset('measurement'), name: '', chips: [], custom: [num('value', 'Value')], daily: true, extras: { previous: true, lockPast: false, average: false } }) },

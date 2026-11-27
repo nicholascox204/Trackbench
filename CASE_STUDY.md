@@ -2023,3 +2023,10 @@ Five full-width cells looked awkward, with short labels in long cells. The five 
 Under a checklist, "For each item, you can also fill in" with "+ Add something" read as a second form leaking in from Following a plan. In truth these are numbers fixed per item that add up when ticked: Meals carries calories and protein per meal. The heading is now **Each thing adds up** and the button **+ Add a number**, offering numbers only.
 - **Dropping Ticking things off was considered and rejected.** It's the most popular case and the simplest idea.
 - **The two list ways now differ plainly:** ticking adds fixed numbers, while a plan has you type details each round.
+
+## 2026-11-27: Ticking things off is just a checklist
+Two cuts to make ticking behave like an ordinary checklist:
+- **No single box.** Ticking "the tracker itself" read oddly in the tracker and used a different UI from every other setup. Plants and Bills became checklists (each plant, each bill), which suits them better anyway.
+- **No per-item numbers in setup.** "Each thing adds up" was list-editing UI inside setup. To keep templates within what Build your own can reach, Meal plan became a plain checklist of meals and lost its calorie and protein totals. If those come back, they belong where the list itself is edited.
+
+Also: the screen title reads "You log by", and the dropdown above the choices lost its "By" label. Build your own starts as an empty checklist that needs at least one thing before it can be saved.

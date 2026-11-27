@@ -44,7 +44,7 @@ import { spanPair } from '../core/spanClock';
 
 const QUESTIONS: Record<StepKey, string> = {
   start: 'What do you want to track?',
-  record: 'You log',
+  record: 'You log by',
   target: 'Target',
   shows: 'What it shows',
   tools: 'Tools',
@@ -195,10 +195,12 @@ export function SetupFlow({
   const nameIssue = nameProblem(a.name, otherNames);
   const nameMsg = nameIssue === 'taken' ? 'You already have a tracker with this name.' : nameIssue === 'empty' && nameNudge ? 'Give it a name to continue.' : '';
   const hasThings = draft.fields.length > 0;
+  // Details need something to fill in; a checklist written here needs something on it.
+  const needsThings = (a.record === 'numbers' && a.log !== 'plan' && !hasThings) || (a.record === 'numbers' && a.log === 'plan' && a.planStyle === 'items' && !!a.ticks && !a.ticks.some((x) => x.name.trim()));
   // What stops you going on from here, if anything. The button then looks unavailable but still answers.
   const blocked =
-    step === 'summary' ? nameIssue !== '' || (a.record === 'numbers' && a.log !== 'plan' && !hasThings) :
-    step === 'record' ? (a.record === 'numbers' && a.log !== 'plan' && !hasThings) : false;
+    step === 'summary' ? nameIssue !== '' || needsThings :
+    step === 'record' ? needsThings : false;
   const isStart = step === 'start';
   const isSummary = step === 'summary';
   const planned = a.record === 'numbers' && a.log === 'plan';
@@ -214,7 +216,7 @@ export function SetupFlow({
   // Saving from the leave sheet: go ahead if it is complete, otherwise show what is missing.
   function saveFromSheet() {
     setConfirmLeave(false);
-    const complete = nameIssue === '' && !(a.record === 'numbers' && a.log !== 'plan' && !hasThings);
+    const complete = nameIssue === '' && !needsThings;
     if (complete) return finish();
     if (detour) setDetour(null);
     if (nameIssue !== '') { setNameNudge(true); setTimeout(() => nameRef.current?.focus(), 150); }

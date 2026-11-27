@@ -264,7 +264,6 @@ export function RecordStep({
   const ticks = a.ticks ?? [];
   // The list decides the shape: nothing listed ticks the tracker itself, anything listed makes a checklist.
   const setTicks = (next: { id: string; name: string }[]) => {
-    if (next.length === 0) return set({ ticks: [], record: 'done', avoid: false, log: 'free', daily: false });
     set({ ticks: next, record: 'numbers', avoid: false, planStyle: 'items', samePlan: true, finishPlan: false });
     if (mode !== 'plan') setMode('plan');
   };
@@ -273,7 +272,7 @@ export function RecordStep({
   const addTick = () => { const id = newId(); setTicks([...ticks, { id, name: '' }]); setJustAdded(id); };
   const pickWay = (w: Way) => {
     if (w === way) return;
-    if (w === 'tick') return ticks.length ? setTicks(ticks) : set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
+    if (w === 'tick') return setTicks(ticks);
     if (w === 'avoid') return set({ record: 'done', avoid: true, goals: [], goal: 'none', log: 'free', daily: false, finishPlan: false });
     if (w === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
     if (w === 'plan') { set({ record: 'numbers', avoid: false, planStyle: 'sets' }); return setMode('plan'); }
@@ -321,13 +320,13 @@ export function RecordStep({
   );
   return (
     <View style={{ marginTop: 6 }}>
-      <Dropdown compact label="By" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
+      <Dropdown compact label="" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
       {way === 'tick' ? (
         <View style={{ marginTop: 6 }}>
-          {tickList ? <View style={{ marginBottom: 12 }}>{term('item', 'Each one is called')}</View> : null}
+          <View style={{ marginBottom: 12 }}>{term('item', 'Each one is called')}</View>
           <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Things to tick off</Text>
-          {/* With nothing listed, the one box is the tracker itself, shown in grey until a thing is added. */}
-          {ticks.length === 0 ? tickRow(null) : ticks.map((x) => tickRow(x))}
+          {ticks.map((x) => tickRow(x))}
+          {nudge && !ticks.some((x) => x.name.trim()) ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to tick off, then continue.</Text> : null}
           <Button label="+ Add a thing" variant="ghost" onPress={addTick} />
         </View>
       ) : null}
@@ -363,7 +362,7 @@ export function RecordStep({
         </View>
       ) : null}
 
-      {writing ? (
+      {writing && !tickList ? (
         <View style={{ marginTop: 18 }}>
           <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{enterHeading}</Text>
           {rows.length === 0 && nudge ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to enter, then continue.</Text> : null}
