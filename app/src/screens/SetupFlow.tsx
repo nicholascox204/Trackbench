@@ -44,7 +44,7 @@ import { spanPair } from '../core/spanClock';
 
 const QUESTIONS: Record<StepKey, string> = {
   start: 'What do you want to track?',
-  record: 'What do you enter?',
+  record: 'You log',
   target: 'Target',
   shows: 'What it shows',
   tools: 'Tools',
