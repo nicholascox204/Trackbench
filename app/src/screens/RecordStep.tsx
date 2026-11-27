@@ -18,6 +18,7 @@ import { dayKeyOf } from '../core/plan';
 import { Button, Card, ChoiceGrid, Icon, Muted, Option, Reveal, SmallButton, Stepper, Tap, Toggle, colors, s } from '../ui/kit';
 import { cleanOption } from '../core/choices';
 import { Dropdown, type DropdownOption } from '../ui/Dropdown';
+import { LogPreview } from './LogPreview';
 import { EDGE, px } from '../ui/theme';
 
 const TYPE_ICON: Record<Field['type'], string> = {
@@ -259,32 +260,40 @@ export function RecordStep({
   const shortcuts = planned && a.planStyle === 'sets' ? CHIPS.filter((c) => (c.id === 'weight' || c.id === 'reps') && !has(c.id)) : [];
 
   const numberFields = fields.filter((f) => f.type === 'number');
-  const ways: { key: Answers['record']; label: string; caption: string; pick: () => void }[] = [
-    { key: 'done', label: 'Tap once', caption: 'Mark it done. Good for habits.', pick: () => set({ record: 'done', avoid: false, goal: 'none', log: 'free' }) },
-    { key: 'count', label: 'Tap to count', caption: 'Each tap adds one, or a set amount.', pick: () => set({ record: 'count', avoid: false, log: 'free', finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') }) },
-    { key: 'numbers', label: 'Fill in', caption: 'Numbers, ratings, times, notes. Any mix.', pick: () => set({ record: 'numbers', avoid: false }) },
+  // How you log it, as one choice: each option is what you actually do when you log.
+  type Way = 'done' | 'count' | 'each' | 'daily' | 'list';
+  const way: Way = a.record === 'done' ? 'done' : a.record === 'count' ? 'count' : mode === 'plan' ? 'list' : mode === 'daily' ? 'daily' : 'each';
+  const pickWay = (w: Way) => {
+    if (w === 'done') return set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
+    if (w === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
+    set({ record: 'numbers', avoid: false });
+    setMode(w === 'list' ? 'plan' : w === 'daily' ? 'daily' : 'free');
+  };
+  const WAYS: { key: Way; label: string }[] = [
+    { key: 'done', label: 'Mark it done' },
+    { key: 'count', label: 'Count it' },
+    { key: 'each', label: 'Log it each time' },
+    { key: 'daily', label: 'Log it once a day' },
+    { key: 'list', label: 'Tick off a list' },
   ];
-  const modes: (DropdownOption & { key: 'free' | 'daily' | 'plan' })[] = [
-    { key: 'free', label: 'Each time it happens' },
-    { key: 'daily', label: 'Once a day' },
-    { key: 'plan', label: 'From a list' },
-  ];
+  // The heading over the fields says, as a sentence, when they are filled in.
+  const enterHeading = way === 'list' ? (a.planStyle === 'sets' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in` : `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`) : way === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
   return (
     <View style={{ marginTop: 6 }}>
       <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>How do you log it?</Text>
-      <View style={{ flexDirection: 'row', gap: 6 }}>
-        {ways.map((w) => {
-          const on = a.record === w.key;
+      <Card style={{ padding: 0, marginBottom: 8 }}>
+        {WAYS.map((w, i) => {
+          const on = way === w.key;
           return (
-            <Tap
-              key={w.key} onPress={w.pick}
-              style={{ flex: 1, minHeight: 48, borderRadius: 12, borderWidth: EDGE, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.accent : 'transparent' }}
-            >
-              <Text style={{ color: on ? colors.onAccent : colors.text, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>{w.label}</Text>
+            <Tap key={w.key} onPress={() => pickWay(w.key)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: i === 0 ? 0 : px(1), borderTopColor: colors.border, backgroundColor: on ? colors.accentBg : 'transparent' }}>
+                <Text style={{ flex: 1, color: colors.text, fontSize: 15, fontWeight: on ? '700' : '500' }}>{w.label}</Text>
+                {on ? <Icon name="checkmark-circle" size={20} color={colors.accent} /> : null}
+              </View>
             </Tap>
           );
         })}
-      </View>
+      </Card>
       {a.record === 'count' ? (
         <View style={{ marginTop: 6 }}>
           {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}
@@ -316,9 +325,8 @@ export function RecordStep({
       ) : null}
 
       {writing ? (
-        <View style={{ marginTop: 16 }}>
+        <View style={{ marginTop: 8 }}>
           <View style={{ marginBottom: 6 }}>
-            <Dropdown compact label="Entries" value={modes.find((m) => m.key === mode)?.label ?? ''} options={modes} selected={mode} onSelect={(k) => setMode(k as 'free' | 'daily' | 'plan')} />
             {mode === 'plan' ? (
               <View>
               <Dropdown
@@ -346,7 +354,7 @@ export function RecordStep({
               </View>
             ) : null}
           </View>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>What you enter</Text>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{enterHeading}</Text>
           {rows.length === 0 && nudge ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to enter, then continue.</Text> : null}
           {rows.map((f0) => {
             const f = rawName(f0);
@@ -409,6 +417,7 @@ export function RecordStep({
 
         </View>
       ) : null}
+      <LogPreview a={a} fields={fields} settings={settings} countUnit={a.countKind ? systemDefaultUnit(a.countKind, settings) : a.countUnit.trim()} />
     </View>
   );
 }

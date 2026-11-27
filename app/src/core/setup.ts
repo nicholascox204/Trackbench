@@ -520,12 +520,12 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const cap = (s: string): string => s.replace(/^./, (c) => c.toUpperCase());
 
   // What you log: how it is logged and what is written down.
-  const names = draft.fields.filter((f) => !f.label).map((f) => f.name).join(', ');
-  const named = draft.fields.some((f) => f.label) ? ', each named' : '';
+  const names = draft.fields.map((f) => f.name).join(', ');
+
   const logging =
     a.record === 'done' ? (a.avoid ? 'Tap once to log a slip' : 'Tap once when done')
     : a.record === 'count' ? counterWords(a, settings)
-    : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
+    : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'Once a day' : 'Each time'}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;
   lines.push({ label: 'You log', value: empty ? 'Nothing yet' : logging, step: 'record' });
   // No Target row: goals and progress are worked out after the fact, apart from setup (decided 2026-11-26). A preset's own

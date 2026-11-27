@@ -36,8 +36,8 @@ test('a named-entry tracker keeps the name first and out of the numbers', () => 
 test('setup has one You log line that says how it is logged and what is written down', () => {
   const base = { ...answersFromPreset('blank'), record: 'numbers' as const, custom: [what, weight, reps] };
   const line = (a: typeof base) => summaryLines(a, settings).find((l) => l.label === 'You log')?.value;
-  assert.equal(line({ ...base, log: 'free', daily: false }), 'Add entries as you go, each named: Weight, Reps');
-  assert.equal(line({ ...base, custom: [weight], log: 'free', daily: true }), 'One value a day: Weight');
+  assert.equal(line({ ...base, log: 'free', daily: false }), 'Each time: Exercise, Weight, Reps');
+  assert.equal(line({ ...base, custom: [weight], log: 'free', daily: true }), 'Once a day: Weight');
   assert.equal(line({ ...base, custom: [weight, reps], log: 'plan' }), 'A list per weekday: Weight, Reps');
   assert.equal(line({ ...answersFromPreset('check-in') } as typeof base), 'Tap once when done');
   assert.equal(line({ ...answersFromPreset('check-in'), avoid: true } as typeof base), 'Tap once to log a slip');
