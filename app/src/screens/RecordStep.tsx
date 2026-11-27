@@ -303,9 +303,9 @@ export function RecordStep({
           <View style={[s.row, { justifyContent: 'space-between', marginBottom: 10 }]}>
             <Text style={{ color: colors.text, fontSize: 15 }}>Each tap adds</Text>
             <Stepper
-              value={a.countStep} min={0.1} max={5000}
-              step={a.countStep < 1 || (a.countStep === 1 && a.countStep % 1 !== 0) ? 0.1 : a.countStep >= 100 ? 50 : a.countStep >= 10 ? 5 : 1}
-              onChange={(v) => set({ countStep: Math.max(0.1, Math.round(v * 100) / 100) })}
+              value={a.countStep} min={0.01} max={5000}
+              step={a.countStep < 0.1 ? 0.01 : a.countStep < 1 ? 0.1 : a.countStep >= 100 ? 50 : a.countStep >= 10 ? 5 : 1}
+              onChange={(v) => set({ countStep: Math.max(0.01, Math.round(v * 100) / 100) })}
             />
           </View>
         </View>
