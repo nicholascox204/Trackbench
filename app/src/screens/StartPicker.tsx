@@ -1,6 +1,6 @@
 // The first screen of adding a tracker: search, Build your own, then every template under a heading. Popular first (the top
 // few by popularity, repeated in their categories so each category is complete), then every category, so scrolling shows what kinds exist without tapping a filter. Searching
-// flattens it into one list. Templates you already have end in a check instead of a plus. A search that finds nothing offers to build it yourself,
+// flattens it into one list. Templates you already have end in a check instead of a chevron. A search that finds nothing offers to build it yourself,
 // with the name already typed.
 
 import { useState } from 'react';
@@ -16,13 +16,23 @@ export function StartPicker({
   const q = query.trim();
   const results = searchTemplates(query);
 
+  // The end of every row: a chevron in a tinted circle, a check once you have it.
+  const badge = (added = false) => (
+    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name={added ? 'checkmark' : 'chevron-forward'} size={16} color={colors.accent} />
+    </View>
+  );
+  // Build your own sits in a card but keeps the template row placements: icon, name, one line, badge.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>
-      <View style={{ borderWidth: px(1), borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, padding: 14 }}>
+      <View style={{ borderWidth: px(1), borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}>
         <View style={s.row}>
-          <View style={{ marginRight: 12 }}><Icon name="construct-outline" size={26} color={colors.muted} /></View>
-          <Text style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
-          <Icon name="chevron-forward" size={18} color={colors.muted} />
+          <TrackerIcon name="construct-outline" size={40} />
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
+            <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>Set up every part yourself</Text>
+          </View>
+          {badge()}
         </View>
       </View>
     </Tap>
@@ -38,7 +48,7 @@ export function StartPicker({
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>
             <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>{t.blurb}</Text>
           </View>
-          <Icon name={added ? 'checkmark' : 'chevron-forward'} size={18} color={colors.muted} />
+          {badge(added)}
         </View>
       </Tap>
     );
