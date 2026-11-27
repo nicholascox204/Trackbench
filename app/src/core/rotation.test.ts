@@ -35,12 +35,13 @@ test('the next list is the one after the last you trained, and skipped days do n
   assert.equal(nextList(t, day(9), [...done, log(1, day(3)), log(2, day(4))]), 0, 'wraps round after Legs');
 });
 
-test('which list a day shows: the one chosen, else the one logged on it, else the next in turn', () => {
+test('which list a day shows: the one chosen, else the one logged on it, else the one used last', () => {
   const t = rotation();
   const before = [log(0, day(0))];
-  assert.equal(planIndexFor(t, day(1), before), 1, 'next in turn');
+  assert.equal(planIndexFor(t, day(1), before), 0, 'no automatic next: the list used last');
+  assert.equal(planIndexFor({ ...t, rotationPick: { day: day(0), index: 2 } }, day(1), []), 2, 'nothing logged yet: the list last picked');
   assert.equal(planIndexFor({ ...t, rotationPick: { day: day(1), index: 2 } }, day(1), before), 2, 'chosen for the day');
-  assert.equal(planIndexFor({ ...t, rotationPick: { day: day(0), index: 2 } }, day(1), before), 1, 'a choice made for another day does not carry over');
+  assert.equal(planIndexFor({ ...t, rotationPick: { day: day(0), index: 2 } }, day(1), before), 0, 'what was logged last wins over a pick that was never used');
   assert.equal(planIndexFor(t, day(1), [...before, log(2, day(1))]), 2, 'after logging, the day shows the list you logged');
 });
 

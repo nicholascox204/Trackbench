@@ -2114,3 +2114,8 @@ Nick called the last version ugly and asked me to look at it myself rather than 
 - **Editing a list uses real buttons:** a name box with Remove and Done. The confirm is a full button reading "Yes, remove". The first version, "Tap again to remove", wrapped onto two lines.
 - **"Add a list" is the app's dashed add button,** not a coloured text row.
 - **"Next" sat under the first list** because, with nothing logged, the first list is next in turn. It's now an inline tag ("next in turn"), shown only when it differs from the list already picked.
+
+## 2026-11-27: No automatic next list
+"Pick from a set of lists" used to open on the next list in turn, after the one last trained. Nick's reference user is a paramedic whose gym days follow shifts, not a fixed order, so guessing the next list is wrong as often as right. The day now opens on the list used last, or, before anything is logged, the one last picked by hand, and the person changes it. No automation. This should carry over to Following a plan when we reach it.
+
+The rename and add boxes in dropdowns are now kept in view as a whole, name box plus buttons, when the keyboard opens. Before, only the field was kept in view, which overshot.

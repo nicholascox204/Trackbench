@@ -123,14 +123,13 @@ export function EditButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Lists to pick from: one List dropdown picks the day's list (the next in turn marked Next); in it each list has a pen to
+// Lists to pick from: one List dropdown picks the day's list, opening on the one used last; in it each list has a pen to
 // rename or remove it, and the last row adds a list. With no lists yet: Make your first list.
 export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
   const [name, setName] = useState('');
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
   const may = canEdit && day >= startOfDay(Date.now());
-  const next = nextList(t, day, entries);
   const create = () => {
     const n = name.trim();
     if (!n) return;
@@ -162,7 +161,7 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
     <View style={{ marginBottom: 12 }}>
       <Dropdown
         compact flush label="List" value={listName(current)} selected={String(current)}
-        options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && i !== current ? { tag: 'next in turn' } : {}) }))}
+        options={v.days.map((_, i) => ({ key: String(i), label: listName(i) }))}
         onSelect={(k) => updateTracker(t.id, { rotationPick: { day, index: Number(k) } })}
         {...(may ? {
           onRename: (k: string, val: string) => mutatePlanDay(t.id, Number(k), (x) => { x.label = val; }),

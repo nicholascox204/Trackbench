@@ -5,7 +5,7 @@
 import { useState, type ReactNode } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SEPARATION } from '../constants/layout';
-import { Button, Icon, Tap, colors, s, useReveal } from './kit';
+import { Button, Icon, KeepInView, Tap, colors, s, useReveal } from './kit';
 import { EDGE, px } from '../ui/theme';
 
 export interface DropdownOption { key: string; label: string; sub?: string; tag?: string } // tag: a short muted word on the same line
@@ -67,7 +67,7 @@ export function Dropdown({
               // A row being changed: its name in a box, then Remove and Done as real buttons.
               if (editKey === o.key) {
                 return (
-                  <View key={o.key} style={{ padding: pad, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border, backgroundColor: colors.raised }}>
+                  <KeepInView key={o.key} style={{ padding: pad, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border, backgroundColor: colors.raised }}>
                     <TextInput
                       style={s.input} value={draft} autoFocus maxLength={24} placeholder="Name it" placeholderTextColor={colors.hint}
                       onChangeText={(v) => { setDraft(v); onRename?.(o.key, v); }} onSubmitEditing={stopEdit} returnKeyType="done"
@@ -76,7 +76,7 @@ export function Dropdown({
                       {onRemove ? <Button label={sure ? 'Yes, remove' : 'Remove'} variant={sure ? 'danger' : 'ghost'} onPress={() => (sure ? (onRemove(o.key), stopEdit()) : setSure(true))} style={{ flex: 1 }} /> : null}
                       <Button label="Done" onPress={stopEdit} style={{ flex: 1 }} />
                     </View>
-                  </View>
+                  </KeepInView>
                 );
               }
               // A list the person keeps marks the chosen row by its tint and weight, and keeps the right column for the pen,
@@ -103,7 +103,8 @@ export function Dropdown({
             {onAdd ? (
               <View style={{ padding: pad, borderTopWidth: shown.length ? 1 : 0, borderTopColor: colors.border }}>
                 {adding ? (
-                  <View>
+                  // With the keyboard up, the name box and its buttons are kept in view together.
+                  <KeepInView>
                     <TextInput
                       style={s.input} value={draft} autoFocus maxLength={24} onChangeText={setDraft} onSubmitEditing={add}
                       placeholder="Name it" placeholderTextColor={colors.hint} returnKeyType="done"
@@ -112,7 +113,7 @@ export function Dropdown({
                       <Button label="Cancel" variant="ghost" onPress={stopEdit} style={{ flex: 1 }} />
                       <Button label="Add" onPress={add} disabled={!draft.trim()} style={{ flex: 1 }} />
                     </View>
-                  </View>
+                  </KeepInView>
                 ) : (
                   // The same dashed add button as the rest of the app.
                   <Tap

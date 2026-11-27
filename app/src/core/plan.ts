@@ -66,7 +66,8 @@ export function nextList(t: Tracker, dayStart: number, all: Entry[]): number {
   return last < 0 ? 0 : (last + 1) % n;
 }
 
-// Which list a rotation day uses: the one chosen for the day, else the latest one logged on it, else the next in turn.
+// Which list a day uses when picking from a set of lists: the one chosen for the day, else the latest one logged on it, else
+// the one used last.
 function rotationIndex(t: Tracker, dayStart: number, all: Entry[]): number {
   const v = versionFor(t.plan, dayStart);
   const n = v?.days.length ?? 0;
@@ -78,8 +79,11 @@ function rotationIndex(t: Tracker, dayStart: number, all: Entry[]): number {
     if (!latest || e.at > latest.at) latest = e;
   }
   if (latest) return listOfSlot(v, latest.slotId);
+  // Nothing chosen or logged today: the list used last, never an automatic next one (shifts and odd days make a fixed order
+  // wrong); before anything is logged, the list last picked by hand, else the first.
   const last = lastTrainedBefore(v, t, all, dayStart);
-  return last < 0 ? 0 : (last + 1) % n;
+  if (last >= 0) return last;
+  return t.rotationPick && t.rotationPick.index < n ? t.rotationPick.index : 0;
 }
 
 export function planIndexFor(t: Tracker, dayStart: number, all?: Entry[]): number {
