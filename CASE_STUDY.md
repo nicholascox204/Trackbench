@@ -2170,3 +2170,12 @@ On the Preview app, signing in could sit on "Bringing in your trackers…" indef
 Signing in on a phone took far longer than the small amount of data suggested. The account held about 4,100 entries (mostly the imported lifting history), and each was written to the phone with its own look-up and its own insert: over 8,000 trips across to the database. Each page of 500 now takes one look-up and multi-row inserts of 80, about 55 trips in all. The rule that a newer change waiting on the phone is not overwritten is kept.
 
 A countdown started and then turned off in setup (or on a tracker that was deleted) still rang when its time ran out, because its alert was already scheduled with the phone. Now turning off the countdown or timer tool, or deleting the tracker, cancels the alert and clears it from the notification shade.
+
+## 2026-11-27 — Sign-in, sign-out and restore, put right
+
+Testing on the Preview app turned up three faults behind "slow, and it opens on Add a tracker":
+- **Opening on setup.** While signed out the app has no trackers, so a background rule moved it to setup; after signing in it stayed there even once the trackers arrived. Now, while signed out or while trackers come in, the app stays at its starting point, and routes as usual (to the last tracker) once they are in.
+- **Blank settings could overwrite the account's.** After a sign-out the phone holds fresh blank settings, which looked newer than the account's and were sent up on the next sign-in, replacing the name and look. On signing in, the account's settings now always win.
+- **The "still restoring" mark lived in settings**, which travel to the account. It now stays on the phone only.
+
+Sign-out was slow because it ran a full sync (send and fetch) and waited on two network sign-outs. Now it sends only what has not reached the account (usually nothing, so it is immediate), signs out on the phone without waiting for the network, and clears. Restores fetch 1,000 rows per request instead of 500.

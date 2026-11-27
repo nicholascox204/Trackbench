@@ -64,6 +64,12 @@ export async function emailAccount(mode: 'create' | 'signin', email: string, pas
   if (!data.session) throw new Error('confirm');
 }
 
+// Signing out on this phone only: the session is dropped here at once, with no wait on the network.
+export async function signOutLocal(): Promise<void> {
+  void GoogleSignin.signOut().catch(() => {});
+  try { await cloudClient().auth.signOut({ scope: 'local' }); } catch { /* the stored session is cleared either way */ }
+}
+
 export async function signOutNow(): Promise<void> {
   try { await GoogleSignin.signOut(); } catch { /* not signed in with Google */ }
   await cloudClient().auth.signOut();

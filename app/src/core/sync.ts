@@ -17,7 +17,7 @@ export interface CloudApi {
 
 export interface SyncResult { sent: number; received: number; changedLocal: boolean }
 
-const PAGE = 500;
+const PAGE = 1000; // the most the service returns at once
 const iso = (ms: number): string => new Date(ms).toISOString();
 // the server sends microseconds (…12:00:00.123456+00:00); only milliseconds are kept
 export const ms = (s: unknown): number => new Date(String(s).replace(/(\.\d{3})\d+/, '$1')).getTime();
@@ -108,10 +108,16 @@ async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: 
   return { received, changedLocal };
 }
 
-export async function sync(db: Db, cloud: CloudApi, userId: string): Promise<SyncResult> {
+export async function sync(db: Db, cloud: CloudApi, userId: string, opts: { pull?: boolean } = {}): Promise<SyncResult> {
   let sent = 0;
   sent += await pushRows<TrackerRow>(db, cloud, 'trackers', userId, trackerOut); // trackers first: entries point at them
   sent += await pushRows<EntryRow>(db, cloud, 'entries', userId, entryOut);
+
+  if (opts.pull === false) { // only sending (signing out): settings go up if changed here, nothing comes down
+    const m = await db.all<{ value: string; updated_at: number }>("select value, updated_at from kv where key = 'settings' and dirty = 1");
+    if (m.length) { await cloud.upsert('settings', [{ user_id: userId, data: JSON.parse(m[0].value) as unknown }]); await db.run("update kv set dirty = 0 where key = 'settings' and updated_at = ?", [m[0].updated_at]); sent++; }
+    return { sent, received: 0, changedLocal: false };
+  }
 
   // settings are one row each way
   const mine = await db.all<{ value: string; updated_at: number; dirty: number }>("select value, updated_at, dirty from kv where key = 'settings'");

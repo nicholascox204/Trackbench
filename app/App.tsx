@@ -68,7 +68,7 @@ function AppInner() {
   const needsAccount = !(cloudConfigured && session.loading) && !session.userId && !browserSkip;
   // Signed in, trackers still coming down: hold on the restore screen. Picks up again if the app was closed midway.
   const holding = !!session.userId && isRestoring();
-  useEffect(() => { if (loaded && session.userId && restoreNeedsStart()) void restoreAccount(); }, [loaded, session.userId, state.settings.restorePending]);
+  useEffect(() => { if (loaded && session.userId && restoreNeedsStart()) void restoreAccount(); }, [loaded, session.userId, isRestoring()]);
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });
   const [timersReady, setTimersReady] = useState(false);
@@ -130,10 +130,14 @@ function AppInner() {
     if (nav.name === 'tracker') { setLastId(nav.id); if (loaded) noteTrackerOpened(nav.id); }
   }, [nav, loaded]);
 
+  // Signed out, or the account's trackers still coming down: back to the start, so once they are in the app opens where it
+  // normally would (the last tracker), not on a screen it drifted to while there was nothing here.
+  useEffect(() => { if ((needsAccount || holding) && nav.name !== 'launch') setNav({ name: 'launch' }); }, [needsAccount, holding, nav.name]);
+
   // With no trackers at all (a fresh install, a full reset, or the last one deleted) the only place to be is making one.
   useEffect(() => {
-    if (loaded && !isRestoring() && state.onboarded && state.trackers.length === 0 && nav.name !== 'setup' && nav.name !== 'launch' && nav.name !== 'welcome') setNav({ name: 'setup' });
-  }, [loaded, state.onboarded, state.trackers.length, nav.name]);
+    if (loaded && !isRestoring() && !needsAccount && state.onboarded && state.trackers.length === 0 && nav.name !== 'setup' && nav.name !== 'launch' && nav.name !== 'welcome') setNav({ name: 'setup' });
+  }, [loaded, needsAccount, state.onboarded, state.trackers.length, nav.name]);
 
   // Finishing the opening screen moves on to the first tracker (or the one you were on).
   useEffect(() => {
