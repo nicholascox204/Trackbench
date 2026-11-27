@@ -4,7 +4,8 @@ import { AppState as RNAppState, BackHandler, Platform, Text, View, useColorSche
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
-import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isRestoring, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
+import { RestoreScreen } from './src/screens/RestoreScreen';
+import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isRestoring, loadState, restoreAccount, restoreNeedsStart, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
 import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { syncHealth } from './src/core/healthRead';
@@ -65,6 +66,9 @@ function AppInner() {
   // phone never skips, and a phone build that cannot reach the cloud still stops here and says so.
   const browserSkip = Platform.OS === 'web' && __DEV__ && !!state.settings.skippedSignIn;
   const needsAccount = !(cloudConfigured && session.loading) && !session.userId && !browserSkip;
+  // Signed in, trackers still coming down: hold on the restore screen. Picks up again if the app was closed midway.
+  const holding = !!session.userId && isRestoring();
+  useEffect(() => { if (loaded && session.userId && restoreNeedsStart()) void restoreAccount(); }, [loaded, session.userId, state.settings.restorePending]);
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });
   const [timersReady, setTimersReady] = useState(false);
@@ -98,8 +102,8 @@ function AppInner() {
   }, [loaded, state.onboarded]);
 
   useEffect(() => {
-    if (loaded && timersReady && tapChecked && !session.loading && !needsAccount && nav.name === 'launch') setNav(!state.settings.welcomed ? { name: 'welcome' } : state.onboarded ? startNav(state, takeTapTarget()) : { name: 'setup' });
-  }, [loaded, timersReady, tapChecked, session.loading, needsAccount, nav.name, state]);
+    if (loaded && timersReady && tapChecked && !session.loading && !needsAccount && !holding && nav.name === 'launch') setNav(!state.settings.welcomed ? { name: 'welcome' } : state.onboarded ? startNav(state, takeTapTarget()) : { name: 'setup' });
+  }, [loaded, timersReady, tapChecked, session.loading, needsAccount, holding, nav.name, state]);
 
   // A notification tapped while the app is already open or in the background.
   useEffect(() => {
@@ -173,7 +177,7 @@ function AppInner() {
 
   if (!loaded || (cloudConfigured && session.loading)) return <View style={s.screen} />;
   // Signing in: hold still until the account's trackers are in, so nothing flashes on the way.
-  if (isRestoring()) return <View style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: colors.muted, fontSize: 14 }}>Bringing in your trackers…</Text></View>;
+  if (holding) return <View style={s.screen}>{bar}<RestoreScreen /></View>;
   if (needsAccount) return <View style={s.screen}>{bar}<AuthScreen /></View>;
 
   // Where "back" goes from Progress, Settings and flows: the tracker you were on, else the first one.

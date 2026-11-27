@@ -2160,3 +2160,7 @@ Publishing now checks that the cloud settings are inside each update before it c
 **Signing out.**
 - It went through the look-and-name welcome before reaching sign-in, because it cleared the phone first and signed out second. Now it signs out first, so the screen goes straight to sign-in.
 - It keeps what belongs to the phone rather than the account (the look, the units, having seen the welcome), so signing back in doesn't ask for them again.
+
+## 2026-11-27 — Bringing trackers in after sign-in never just waits
+
+On the Preview app, signing in could sit on "Bringing in your trackers…" indefinitely, and reloading dropped the person into tracker setup as if the account were empty. Two causes: the hold waited on the sync with no time limit, and the hold lived only in memory, so a restart forgot a restore was half done. Decided: the pending restore is saved, so reopening the app resumes it instead of starting setup; each attempt has a 30-second limit; and the screen always says what is happening, with a spinner, a "taking longer than usual" line after 8 seconds, and on failure a plain explanation with Try again and Sign out. Considered letting people continue into the app while trackers load in the background, but that reopens the empty-setup flash the hold exists to prevent.

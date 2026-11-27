@@ -38,6 +38,7 @@ export interface Settings {
   welcomed?: boolean; // the opening screen (name and look) has been done
   alerts?: AlertSettings; // what the app may nudge you about (set up; delivery comes later)
   skippedSignIn?: boolean; // testing only: use the app without an account
+  restorePending?: boolean; // signed in, but the account's trackers have not all come down yet; the app holds until they do, even across a restart
   cloudSync?: boolean; // back up to the cloud and keep other devices in step (off until chosen)
   devSync?: boolean; // testing: trackers made from a template are rebuilt from it each time the app opens
   openOn?: { mode: 'smart' } | { mode: 'last' } | { mode: 'pinned'; id: string }; // which tracker the app opens on; unset means smart

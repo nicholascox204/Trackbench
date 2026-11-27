@@ -64,6 +64,7 @@ function scheduleSave(): void {
 let version = 0; // counts every change made through setState, so a sync can tell whether the app changed while it worked
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let syncing = false;
+let current: Promise<void> | null = null; // the sync running now, so a caller can wait for it
 
 // Send and fetch changes a few seconds after the last one, so a burst of taps is one sync.
 function queueSync(): void {
@@ -72,7 +73,13 @@ function queueSync(): void {
 }
 
 // Back up to the cloud and take in changes from other devices. Nothing here blocks logging.
-export async function syncNow(): Promise<void> {
+export function syncNow(): Promise<void> {
+  if (syncing && current) return current;
+  current = runSync();
+  return current;
+}
+
+async function runSync(): Promise<void> {
   if (!db || syncing || !state.settings.cloudSync) return;
   const cloud = await import('./cloud');
   if (!cloud.cloudConfigured) return;
@@ -126,17 +133,54 @@ export function askToSignIn(): void {
   setState({ ...state, settings: { ...state.settings, skippedSignIn: false } });
 }
 
-// Signing in and bringing an account's trackers down: while this is on, the app holds still, so an account that has
-// trackers never flashes the empty "make a tracker" screen before they arrive.
-let restoring = false;
-export const isRestoring = (): boolean => restoring;
-export function setRestoring(on: boolean): void { restoring = on; listeners.forEach((l) => l()); }
+// Signing in and bringing an account's trackers down. While pending, the app holds still on the restore screen, so an
+// account with trackers never lands on the empty "make a tracker" screen. It is saved, so closing the app midway picks
+// up where it left off instead of starting setup. A restore that cannot finish says so, rather than waiting forever.
+export type RestorePhase = 'off' | 'busy' | 'failed';
+let restorePhase: RestorePhase = 'off';
+export const getRestorePhase = (): RestorePhase => (state.settings.restorePending ? (restorePhase === 'off' ? 'busy' : restorePhase) : 'off');
+export const isRestoring = (): boolean => !!state.settings.restorePending;
+const RESTORE_LIMIT = 30000;
 
-// Just signed in: backing up switches on, what is on this phone goes up, and what the account already holds (a new phone) comes down.
-export async function afterSignIn(): Promise<void> {
-  setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });
-  await syncNow();
+// About to sign in: hold from here, so nothing flashes once the account is in.
+export function beginSignIn(): void {
+  restorePhase = 'busy';
+  setState({ ...state, settings: { ...state.settings, restorePending: true } });
 }
+// Sign-in did not happen (cancelled, wrong password): let go of the hold.
+export function cancelSignIn(): void {
+  restorePhase = 'off';
+  setState({ ...state, settings: { ...state.settings, restorePending: false } });
+}
+
+// Signed in: backing up switches on, what is on this phone goes up, and what the account already holds comes down.
+export async function restoreAccount(): Promise<void> {
+  if (restorePhase === 'busy' && restoreRun) return restoreRun;
+  restorePhase = 'busy';
+  listeners.forEach((l) => l());
+  restoreRun = (async () => {
+    setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false, restorePending: true } });
+    const cloud = await import('./cloud');
+    try {
+      if (current) await Promise.race([current, wait(RESTORE_LIMIT)]); // a sync from before signing in finishes first
+      syncing = false; current = null; // that one is not waited on again
+      const done = await Promise.race([syncNow().then(() => true), wait(RESTORE_LIMIT).then(() => false)]);
+      if (!done || cloud.getCloudStatus().phase === 'error') throw new Error('restore');
+      restorePhase = 'off';
+      setState({ ...state, settings: { ...state.settings, restorePending: false } });
+    } catch {
+      restorePhase = 'failed';
+      listeners.forEach((l) => l());
+    } finally {
+      restoreRun = null;
+    }
+  })();
+  return restoreRun;
+}
+let restoreRun: Promise<void> | null = null;
+// The app opened signed in with a restore left unfinished (closed midway): start it again. Not after it failed; that waits for Try again.
+export const restoreNeedsStart = (): boolean => !!state.settings.restorePending && !restoreRun && restorePhase !== 'failed';
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // Sign out. What is on the phone is sent first, then removed (the next person to sign in must not receive it); it all comes back on signing in again.
 // Returns a sentence when it could not be done safely.
@@ -152,6 +196,16 @@ export async function signOutSafely(): Promise<string | null> {
   await resetAll();
   setState({ ...state, settings: { ...state.settings, ...keep } });
   return null;
+}
+
+// Give up on a restore that will not finish: signed out, the phone cleared (the look stays), back to sign-in.
+export async function abandonRestore(): Promise<void> {
+  const auth = await import('./auth');
+  const keep = { appearance: state.settings.appearance, units: state.settings.units, welcomed: state.settings.welcomed };
+  restorePhase = 'off';
+  try { await auth.signOutNow(); } catch { /* offline: the session is dropped below anyway */ }
+  await resetAll();
+  setState({ ...state, settings: { ...state.settings, ...keep, restorePending: false } });
 }
 
 // Delete the account and everything under it, in the cloud and on this phone.

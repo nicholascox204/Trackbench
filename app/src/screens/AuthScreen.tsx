@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { authProblem, cloudConfigured, emailAccount, googleConfigured, signInWithGoogle } from '../core/auth';
-import { afterSignIn, setRestoring, skipSignIn } from '../core/store';
+import { beginSignIn, cancelSignIn, restoreAccount, skipSignIn } from '../core/store';
 import { Button, Scroll, Tap, colors, s, useTopPad } from '../ui/kit';
 import { EDGE } from '../ui/theme';
 
@@ -30,16 +30,17 @@ export function AuthScreen() {
   async function run(way: 'google' | 'email', go: () => Promise<void>): Promise<void> {
     setBusy(way);
     setProblem('');
-    setRestoring(true); // hold the app still until the account's trackers are in
+    beginSignIn(); // hold the app still until the account's trackers are in
     try {
       await go();
-      await afterSignIn();
     } catch (e) {
+      cancelSignIn();
       setProblem(authProblem(e));
-    } finally {
-      setRestoring(false);
       setBusy(null);
+      return;
     }
+    setBusy(null);
+    void restoreAccount(); // the restore screen takes over from here
   }
 
   const ready = email.includes('@') && password.length >= 6;
