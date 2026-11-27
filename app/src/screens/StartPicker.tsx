@@ -39,7 +39,7 @@ export function StartPicker({
             <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>{t.blurb}</Text>
           </View>
           <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: added ? `${colors.done}22` : colors.accentBg }}>
-            <Icon name={added ? 'checkmark' : 'add'} size={17} color={added ? colors.done : colors.accent} />
+            <Icon name={added ? 'checkmark' : 'arrow-forward'} size={16} color={added ? colors.done : colors.accent} />
           </View>
         </View>
       </Tap>
