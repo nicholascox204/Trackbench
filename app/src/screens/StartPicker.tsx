@@ -22,18 +22,16 @@ export function StartPicker({
       <Icon name={added ? 'checkmark' : 'chevron-forward'} size={16} color={colors.accent} />
     </View>
   );
-  // Build your own sits in a card but keeps the template row placements; the card bleeds out by its padding so the icon and badge line up with the rows below.
+  // Build your own is an ordinary row, same placements as the templates; it sits alone above Popular.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>
-      <View style={{ borderWidth: px(1), borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, marginHorizontal: -12 }}>
-        <View style={s.row}>
-          <TrackerIcon name="construct-outline" size={40} />
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
-            <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>Set up every part yourself</Text>
-          </View>
-          {badge()}
+      <View style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: `${colors.border}88` }]}>
+        <TrackerIcon name="construct-outline" size={40} />
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
+          <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>Set up every part yourself</Text>
         </View>
+        {badge()}
       </View>
     </Tap>
   );
