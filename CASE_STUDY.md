@@ -2119,3 +2119,6 @@ Nick called the last version ugly and asked me to look at it myself rather than 
 "Pick from a set of lists" used to open on the next list in turn, after the one last trained. Nick's reference user is a paramedic whose gym days follow shifts, not a fixed order, so guessing the next list is wrong as often as right. The day now opens on the list used last, or, before anything is logged, the one last picked by hand, and the person changes it. No automation. This should carry over to Following a plan when we reach it.
 
 The rename and add boxes in dropdowns are now kept in view as a whole, name box plus buttons, when the keyboard opens. Before, only the field was kept in view, which overshot.
+
+## 2026-11-27: Smart scroll stops just above the keyboard
+When the keyboard opened, the page scrolled until a field sat 40 points above it, and kept-together blocks (a name box with its buttons) added their own padding on top. Together that showed part of the next item, which looked like an overshoot. The gap is now 12 points everywhere, set in one shared value, so a field or its buttons sit just above the keyboard.

@@ -16,9 +16,10 @@ export const SCROLL = {
   // Keeps focused inputs visible above the keyboard (iOS adjusts insets; Android resizes the window).
   keyboardPersistTaps: 'handled' as const,
   dismissKeyboardOn: 'on-drag' as const,
-  // Space kept between a focused field and the top of the keyboard. One value for every screen: a field sitting right on the
-  // keyboard's edge looks cramped and hides what is under your thumb, so there is a little room. Change it here, everywhere follows.
-  fieldMargin: 40,
+  // Space kept between a focused field (or the bottom of its kept-together area, like a name box and its buttons) and the top
+  // of the keyboard. Small on purpose: the field or its buttons sit just above the keyboard, without showing the next thing.
+  // One value for every screen; change it here, everywhere follows.
+  fieldMargin: 12,
   // For screens that show results under a search field: where the field sits from the top.
   fieldTopMargin: 6, // plus the phone's top safe area (notch, camera, status bar), so the field never sits behind it
   // Wait for the keyboard animation to settle before scrolling the field into view.
