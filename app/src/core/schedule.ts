@@ -168,7 +168,7 @@ export function scheduleText(s: Schedule, w?: ScheduleWindow): string {
     case 'daily': text = 'Every day'; break;
     case 'weekdays': text = daysText(s.days); break;
     case 'interval': text = s.n <= 1 ? 'Every day' : s.n === 2 ? 'Every other day' : `Every ${s.n} days`; break;
-    case 'times': text = s.n === 1 ? `Once a ${s.per}` : `${s.n} times a ${s.per}`; break;
+    case 'times': text = s.n === 1 ? `1 day a ${s.per}` : `${s.n} days a ${s.per}`; break; // days, not entries: three on one day count once
     case 'monthly': text = s.day === 'last' ? 'Last day of each month' : `On the ${ordinal(s.day)} of each month`; break;
     case 'blocks': text = `Blocks of ${s.n} days, whenever you start`; break;
     default: text = 'Whenever it happens';

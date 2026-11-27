@@ -15,12 +15,13 @@ import { ForAWhile, KindControls, WeekToggles } from './DaysCard';
 type Kind = Schedule['kind'];
 const FLEXIBLE: Kind[] = ['times', 'whenever'];
 
+// Fixed rhythms first (the calendar says which day), then flexible ones (you choose), each half from most to least often.
 const OPTIONS: DropdownOption[] = [
   { key: 'daily', label: 'Every day' },
   { key: 'weekdays', label: 'On certain weekdays' },
-  { key: 'times', label: 'A number of times' },
   { key: 'interval', label: 'Every few days' },
   { key: 'monthly', label: 'On a date each month' },
+  { key: 'times', label: 'A number of days' },
   { key: 'whenever', label: 'Whenever' },
 ];
 
@@ -92,7 +93,8 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
         </View>
       ) : null}
 
-      <ForAWhile a={a} set={set} today={Date.now()} />
+      {/* An end date only shows where a template set one (a 30-day challenge); ending belongs with goals, reworked later. */}
+      {a.window ? <ForAWhile a={a} set={set} today={Date.now()} /> : null}
     </Card>
   );
 }

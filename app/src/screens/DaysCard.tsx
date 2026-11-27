@@ -58,7 +58,7 @@ export function KindControls({ schedule, change }: { schedule: Schedule; change:
   if (schedule.kind === 'times') {
     return (
       <View>
-        <Line after={schedule.n === 1 ? 'time' : 'times'}>
+        <Line after={schedule.n === 1 ? 'day' : 'days'}>
           <Stepper value={schedule.n} min={1} max={schedule.per === 'week' ? 7 : 31} onChange={(n) => change({ ...schedule, n })} />
         </Line>
         <ChoiceGrid

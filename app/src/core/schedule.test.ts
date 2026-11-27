@@ -57,8 +57,8 @@ test('schedules read as plain sentences', () => {
   assert.equal(t({ kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }), 'Every day');
   assert.equal(t({ kind: 'interval', n: 2, from: '2026-11-10' }), 'Every other day');
   assert.equal(t({ kind: 'interval', n: 3, from: '2026-11-10' }), 'Every 3 days');
-  assert.equal(t({ kind: 'times', n: 3, per: 'week' }), '3 times a week');
-  assert.equal(t({ kind: 'times', n: 1, per: 'month' }), 'Once a month');
+  assert.equal(t({ kind: 'times', n: 3, per: 'week' }), '3 days a week');
+  assert.equal(t({ kind: 'times', n: 1, per: 'month' }), '1 day a month');
   assert.equal(t({ kind: 'monthly', day: 'last' }), 'Last day of each month');
   assert.equal(t({ kind: 'monthly', day: 22 }), 'On the 22nd of each month');
   assert.equal(t({ kind: 'monthly', day: 11 }), 'On the 11th of each month');
