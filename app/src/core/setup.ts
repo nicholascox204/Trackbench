@@ -505,10 +505,15 @@ export function nameProblem(name: string, others: string[]): '' | 'empty' | 'tak
 // How a plan's lists are described: one list shared by every day, or a list for each day (with the days' names if they have them).
 export function planWords(a: Answers): string {
   if (a.rotation.length >= 2) return `Pick a list each time (${a.rotation.map((n) => n.trim()).filter(Boolean).join(', ') || `${a.rotation.length} lists`})`;
-  if (a.samePlan) return 'One list';
+  if (a.samePlan) return 'The same list each time';
   const order = a.schedule.kind === 'blocks' ? weekdaysOf(a.schedule) : [1, 2, 3, 4, 5, 6, 0].filter((d) => weekdaysOf(a.schedule).includes(d));
   const named = order.map((d) => (a.dayNames[d] ?? '').trim()).filter(Boolean).join(', ');
   return `A list per weekday${named ? ` (${named})` : ''}`;
+}
+
+// How a list works, in a few words for the summary.
+function listsWord(a: Answers): string {
+  return a.rotation.length >= 2 ? 'pick a list each time' : a.samePlan ? 'the same list each time' : 'a list per weekday';
 }
 
 // The rows on the summary: what you log, what it shows, its tools and its options, each with its current contents. Rows that do not
@@ -528,8 +533,8 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const logging =
     a.record === 'done' ? (a.avoid ? 'Avoiding something' : 'Ticking things off')
     : a.record === 'count' ? `Counting something, ${counterWords(a, settings)}`
-    : a.log === 'plan' && a.planStyle === 'items' ? 'Ticking things off'
-    : a.log === 'plan' ? `Following a plan${names ? `: ${names}` : ''}`
+    : a.log === 'plan' && a.planStyle === 'items' ? `Ticking things off, ${listsWord(a)}`
+    : a.log === 'plan' ? `Following a plan, ${listsWord(a)}${names ? `: ${names}` : ''}`
     : `Writing down details, ${a.daily ? 'one a day' : 'any number'}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;
   lines.push({ label: 'You log by', value: empty ? 'Writing down details, nothing yet' : logging, step: 'record' });

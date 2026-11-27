@@ -9,9 +9,10 @@ import { liftFields } from '../core/records';
 import { importSlotId } from '../core/liftImport';
 import { stockLeft } from '../core/stock';
 import { Text, TextInput, View } from 'react-native';
-import { WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
+import { MAX_LISTS, WEEKDAYS, isRowSlot, nextList, versionFor } from '../core/plan';
+import { startOfDay } from '../core/time';
 import { scheduleOf } from '../core/schedule';
-import { getState, mutatePlanDay, updateTracker } from '../core/store';
+import { getState, mutatePlanDay, savePlanDays, updateTracker } from '../core/store';
 import { DEFAULT_TERMS, plural, termsOf } from '../core/terms';
 import type { Entry, PlanDay, Settings, Slot, Tracker } from '../core/types';
 import { defaultStep, fieldUnit, formatNumber, fromDisplay, round2, toDisplay } from '../core/units';
@@ -127,6 +128,8 @@ export function RotationPicker({ t, day, entries, current }: { t: Tracker; day: 
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
   const next = nextList(t, day, entries);
+  const today = day >= startOfDay(Date.now());
+  const cur = versionFor(t.plan, Date.now()) ?? v;
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
       {v.days.map((d, i) => (
@@ -135,6 +138,11 @@ export function RotationPicker({ t, day, entries, current }: { t: Tracker; day: 
           onPress={() => updateTracker(t.id, { rotationPick: { day, index: i } })}
         />
       ))}
+      {/* How many lists is set here, not in setup: add one, or drop the one picked while it is still empty. Changes apply from today. */}
+      {today && v.days.length < MAX_LISTS ? <Chip label="+ List" onPress={() => savePlanDays(t.id, [...cur.days, { label: '', slots: [] }])} /> : null}
+      {today && cur.days.length > 2 && (cur.days[current]?.slots.length ?? 1) === 0 ? (
+        <Chip label="Remove this list" onPress={() => { savePlanDays(t.id, cur.days.filter((_, i) => i !== current)); updateTracker(t.id, { rotationPick: { day, index: 0 } }); }} />
+      ) : null}
     </View>
   );
 }

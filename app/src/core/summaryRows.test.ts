@@ -35,8 +35,8 @@ test('the past-days row is named for what is in it', () => {
 
 test('a list that is the same every day says what is ticked, not that it is the same list', () => {
   const rows = (id: string) => summaryLines(TEMPLATES.find((t) => t.id === id)!.make(), SETTINGS).find((r) => r.label === 'You log by')?.value;
-  assert.equal(rows('habit'), 'Ticking things off');
-  assert.equal(rows('vitamins'), 'Ticking things off');
+  assert.equal(rows('habit'), 'Ticking things off, the same list each time');
+  assert.equal(rows('vitamins'), 'Ticking things off, the same list each time');
 });
 
 test('Steps from my phone is under Bring in: on for the Steps preset, saved as the source, and named in that row', () => {

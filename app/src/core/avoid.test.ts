@@ -26,7 +26,7 @@ test('a streak that is still going can be the best', () => {
 
 test('the summary says whether the lists are the same every day or one for each day', () => {
   const lines = (patch: object) => planWords({ ...answersFromPreset('set-plan'), ...patch } as never);
-  assert.ok(lines({ samePlan: true }).startsWith('One list'));
+  assert.ok(lines({ samePlan: true }).startsWith('The same list each time'));
   const each = lines({ samePlan: false, schedule: { kind: 'weekdays', days: [1, 3, 5] }, dayNames: { 1: 'Push', 3: 'Pull', 5: 'Legs' } });
   assert.ok(each.startsWith('A list per weekday (Push, Pull, Legs)'), each);
 });

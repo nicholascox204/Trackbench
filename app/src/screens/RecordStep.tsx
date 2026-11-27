@@ -279,25 +279,20 @@ export function RecordStep({
     { key: 'plan', label: 'Following a plan' },
     { key: 'avoid', label: 'Avoiding something' },
   ];
-  // How a list works: one list, a list per weekday (only where the rhythm is weekdays), or pick a list each time.
+  // How a list works: the same list each time, a list per weekday (only where the rhythm is weekly), or pick a list each
+  // time. How many lists to pick from is set on the tracker, where they are named and filled.
   const turns = a.rotation.length >= 2;
   const lists = turns ? 'turns' : a.samePlan ? 'same' : 'each';
   const weekly = WEEKLY.includes(a.schedule.kind);
   const LISTS: DropdownOption[] = [
-    { key: 'same', label: 'One list' },
+    { key: 'same', label: 'The same list each time' },
     ...(weekly ? [{ key: 'each', label: 'A list per weekday' }] : []),
     { key: 'turns', label: 'Pick a list each time' },
   ];
   const chooseLists = (k: string) => set(k === 'same' ? { samePlan: true, rotation: [] } : k === 'each' ? { samePlan: false, rotation: [] } : { samePlan: false, rotation: turns ? a.rotation : ['', '', ''] });
   const listsControl = (
     <View style={{ marginTop: 14 }}>
-      <Dropdown compact flush label="Lists" value={LISTS.find((o) => o.key === lists)?.label ?? 'One list'} options={LISTS} selected={lists} onSelect={chooseLists} />
-      {turns ? (
-        <View style={[s.row, { justifyContent: 'space-between', marginTop: 10 }]}>
-          <Text style={{ color: colors.text, fontSize: 15 }}>How many lists</Text>
-          <Stepper value={a.rotation.length} min={2} max={MAX_LISTS} onChange={(n) => set({ rotation: Array.from({ length: n }, (_, i) => a.rotation[i] ?? '') })} />
-        </View>
-      ) : null}
+      <Dropdown compact flush label="Lists" value={LISTS.find((o) => o.key === lists)?.label ?? LISTS[0].label} options={LISTS} selected={lists} onSelect={chooseLists} />
     </View>
   );
   const label = (t: string) => <Text style={{ color: colors.muted, fontSize: 12, marginTop: 14, marginBottom: 6 }}>{t}</Text>;

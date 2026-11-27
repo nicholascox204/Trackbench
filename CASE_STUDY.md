@@ -2057,3 +2057,10 @@ Also:
 - **The forced changes are gone.** One list and "Pick a list each time" work with any rhythm. A list per weekday is only offered when the rhythm is weekly. If you later change How often to something that isn't weekly, a per-weekday list falls back to one list. That is the single remaining link, and it's the only case where per-weekday has no meaning.
 
 **Dropdowns** now line up their open list with the box that opened it. The padding is the same, the text sits on the same side as the value, and the check mark sits where the chevron is.
+
+## 2026-11-27: Lists wording, count on the tracker, circles in dropdowns
+- **"The same list each time"** replaces "One list". Nick suggested "Daily list", but that reads wrong for a tracker you log three days a week. "Each time" works for any rhythm and pairs with "Pick a list each time".
+- **How many lists** left setup. The tracker's list chips now have "+ List", and "Remove this list" on an empty one. That's where lists are named and filled, so their number lives there too.
+- **The summary row says how the list works** (Following a plan, pick a list each time: Weight, Reps).
+- **Unselected dropdown options show an empty circle,** so every row ends in a mark and the list reads as a set of choices.
+- **Kept on purpose: the word "list"** for a checklist of one. "Each time" and the tracker's "Add your first habit" carry a list of one well enough, and a different word for one item would split one idea in two.
