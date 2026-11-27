@@ -2077,3 +2077,9 @@ Also:
 
 ## 2026-11-27: Lists get one edit card
 The list bar still mixed jobs: chips picked a list, a large name box sat under them, and New list and Remove were scattered around it. Now the chips only pick. A pencil beside them, the same pencil the items use, opens a single "Your lists" card. In it, each list's name is editable in place with a remove beside it, and a name box with Add makes a new list. Everything about the lists themselves lives in that one card. The items inside a list are still edited where they already were.
+
+## 2026-11-27: A quieter edit pen; list editing inside the chips
+**The edit icon.** The edit icon was a box with a pen. It took up space and read as loud. It's now a small plain pen in the faint hint colour, used everywhere rows open an editor.
+- Common practice: a pencil means edit. A gear means settings, so it would be wrong here. Three dots means a menu of actions, which we don't need.
+
+**List editing.** The edit card showed every list again as its own row under the chips, so the same lists appeared twice. Now the pen turns the chips themselves into the editor. You tap a list to rename or remove it, or tap the dashed New list chip to add one. One set of chips, and only the list you're changing is open.

@@ -113,22 +113,23 @@ export function SlotEditor({
   );
 }
 
-// The small pencil that opens a row's editor.
+// The small pencil that opens a row's editor: a plain pen in the faint hint colour, so it is findable without shouting.
 export function EditButton({ onPress }: { onPress: () => void }) {
   return (
     <Tap onPress={onPress} style={{ padding: 6, marginLeft: 4 }}>
-      <Icon name="create-outline" size={18} color={colors.muted} />
+      <Icon name="pencil" size={15} color={colors.hint} />
     </Tap>
   );
 }
 
-// Lists to pick from. The chips only pick the day's list (the next in turn marked). The pencil beside them opens one card
-// for the lists themselves: each list's name typed in place with a remove, and New list at the end. With no lists yet it
-// is one card: Make your first list.
+// Lists to pick from. The chips pick the day's list (the next in turn marked). The pencil turns the same chips into an edit
+// card: tap a list to rename or remove it, or New list to add one. With no lists yet it is one card: Make your first list.
 export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [removing, setRemoving] = useState<number | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [target, setTarget] = useState(0); // the list being changed while editing
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
   const may = canEdit && day >= startOfDay(Date.now());
@@ -138,7 +139,7 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
     if (!n) return;
     const at = addList(t.id, n);
     if (v.days.length === 0) updateTracker(t.id, { rotationPick: { day, index: at } });
-    setName('');
+    setName(''); setAdding(false); setTarget(at);
   };
   const nameBox = (label: string) => (
     <View style={[s.row, { gap: 8 }]}>
@@ -158,41 +159,57 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
       </Card>
     );
   }
-  return (
-    <View style={{ marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-          {v.days.map((d, i) => (
-            <Chip
-              key={i} label={`${d.label.trim() || `List ${i + 1}`}${i === next && v.days.length > 1 ? ' · next' : ''}`} active={i === current}
-              onPress={() => updateTracker(t.id, { rotationPick: { day, index: i } })}
-            />
-          ))}
-        </View>
-        {may ? <EditButton onPress={() => { setEditing(!editing); setRemoving(null); setName(''); }} /> : null}
-      </View>
-      {editing ? (
-        <Card keep style={{ marginTop: 4 }}>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Your lists</Text>
-          {v.days.map((d, i) => (
-            <View key={i} style={[s.row, { marginBottom: 8 }]}>
-              <TextInput
-                style={[s.input, { flex: 1 }]} value={d.label} maxLength={24} placeholder={`List ${i + 1}`} placeholderTextColor={colors.hint}
-                onChangeText={(val) => mutatePlanDay(t.id, i, (x) => { x.label = val; })}
-              />
-              <Tap
-                onPress={() => (removing === i ? (removeList(t.id, i), setRemoving(null)) : setRemoving(i))}
-                accessibilityLabel={`Remove ${d.label || `list ${i + 1}`}`} style={{ paddingHorizontal: 10, paddingVertical: 8 }}
-              >
-                {removing === i ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="close" size={20} color={colors.muted} />}
-              </Tap>
-            </View>
-          ))}
-          {v.days.length < MAX_LISTS ? <View style={{ marginTop: 6 }}>{nameBox('Add')}</View> : null}
-          <Button label="Done" variant="ghost" onPress={() => { setEditing(false); setRemoving(null); setName(''); }} style={{ marginTop: 8 }} />
-        </Card>
+  const chips = (edit: boolean) => (
+    <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
+      {v.days.map((d, i) => (
+        <Chip
+          key={i} label={`${d.label.trim() || `List ${i + 1}`}${!edit && i === next && v.days.length > 1 ? ' · next' : ''}`}
+          active={edit ? i === target && !adding : i === current}
+          onPress={() => (edit ? (setTarget(i), setAdding(false), setRemoving(false)) : updateTracker(t.id, { rotationPick: { day, index: i } }))}
+        />
+      ))}
+      {edit && v.days.length < MAX_LISTS ? (
+        <Tap onPress={() => { setAdding(true); setRemoving(false); }} accessibilityLabel="New list"
+          style={[s.chip, { flexDirection: 'row', alignItems: 'center', borderStyle: 'dashed', backgroundColor: adding ? colors.accentBg : 'transparent' }]}>
+          <Icon name="add" size={15} color={colors.text} />
+          <Text style={[s.chipText, { marginLeft: 4 }]}>New list</Text>
+        </Tap>
       ) : null}
     </View>
+  );
+  const close = () => { setEditing(false); setAdding(false); setRemoving(false); setName(''); };
+  const picked = v.days[target];
+  // Not editing: the chips pick the day's list. Editing: the same chips sit in a card, and the one tapped is the one changed.
+  if (!editing) {
+    return (
+      <View style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start' }}>
+        {chips(false)}
+        {may ? <EditButton onPress={() => { setTarget(current); setEditing(true); }} /> : null}
+      </View>
+    );
+  }
+  return (
+    <Card keep style={{ marginBottom: 12 }}>
+      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Your lists</Text>
+      {chips(true)}
+      <View style={{ marginTop: 6 }}>
+        {adding ? nameBox('Add') : picked ? (
+          <View style={s.row}>
+            <TextInput
+              style={[s.input, { flex: 1 }]} value={picked.label} maxLength={24} placeholder={`List ${target + 1}`} placeholderTextColor={colors.hint}
+              onChangeText={(val) => mutatePlanDay(t.id, target, (x) => { x.label = val; })}
+            />
+            <Tap
+              onPress={() => (removing ? (removeList(t.id, target), setRemoving(false), setTarget(0)) : setRemoving(true))}
+              accessibilityLabel="Remove this list" style={{ paddingHorizontal: 10, paddingVertical: 8 }}
+            >
+              {removing ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="trash-outline" size={19} color={colors.muted} />}
+            </Tap>
+          </View>
+        ) : null}
+      </View>
+      <Button label="Done" variant="ghost" onPress={close} style={{ marginTop: 8 }} />
+    </Card>
   );
 }
 
