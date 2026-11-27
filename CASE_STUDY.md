@@ -2034,3 +2034,7 @@ Also: the screen title reads "You log by", and the dropdown above the choices lo
 ## 2026-11-27: Setup decides how, the tracker holds what
 Checklist items could be added in setup, but gym plans are deliberately written on the tracker after setup, so it doesn't feel long or daunting. Nick flagged the inconsistency. Checklist items now also live only on the tracker. Setup asks just what each one is called, and the new tracker opens on "Add your first habit".
 - **Considered: templates bringing a starter item** as a built-in tutorial. Rejected, because it is sample content: an item you have to delete, which would count in your history if ticked. The tracker's empty state already teaches the step.
+
+## 2026-11-27: More room at the top, first-item card returns
+- **Top space:** titles sat too close to the top edge. Every screen's top space was raised by the same 16 points, in one shared value, so it stays consistent.
+- **First-item card:** clearing a checklist or plan now brings back the "Add your first …" card. Before, it only appeared on a brand-new tracker.

@@ -8,9 +8,10 @@ import { colors, EDGE, getTheme, px, s } from './theme';
 import { cleanDecimal, decimalRoom, firstKey } from '../core/limits';
 
 export { colors, s };
-export const topPad = Platform.OS === 'web' ? 20 : Platform.OS === 'ios' ? 60 : 44;
+// Space above the first thing on every screen: kept generous so titles never crowd the top edge.
+export const topPad = Platform.OS === 'web' ? 36 : Platform.OS === 'ios' ? 76 : 60;
 // Room above the first thing on a screen: never less than the notch or status bar the phone reports, whatever the fixed guess says.
-export function useTopPad(): number { return Math.max(topPad, useSafeAreaInsets().top + 12); }
+export function useTopPad(): number { return Math.max(topPad, useSafeAreaInsets().top + 28); }
 
 // One icon library (Ionicons). Unknown names fall back so imports never break the screen.
 export function Icon({ name, size = 22, color }: { name: string; size?: number; color?: string }) {

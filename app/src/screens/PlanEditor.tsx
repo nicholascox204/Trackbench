@@ -3,7 +3,7 @@
 // What a row, a repeat and a target are called is the tracker's own wording, so a plan works for lifting,
 // language practice, rehab or anything else.
 
-import { useRef, useState, type ComponentRef } from 'react';
+import { useRef, useState, type ComponentRef, useEffect } from 'react';
 import { suggestExercises } from '../core/exercises';
 import { liftFields } from '../core/records';
 import { importSlotId } from '../core/liftImport';
@@ -169,6 +169,8 @@ export function AddSlot({
   const [values, setValues] = useState<Record<string, number>>({}); // the numbers an item carries (calories, protein), set as it is added
   const numFields = t.fields.filter((f) => f.type === 'number');
   const [open, setOpen] = useState(first); // an empty day opens the card; otherwise it is a slim button until you need it
+  // Clearing the list brings the first-item card back, the same as a new tracker.
+  useEffect(() => { if (first) setOpen(true); }, [first]);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const rowKind = t.planStyle ? t.planStyle === 'sets' : t.measures.some((m) => m.id === 'sets') || day.slots.some(isRowSlot);
   const lifting = rowKind && !!liftFields(t).weight; // suggestions from the exercise library while typing a name
