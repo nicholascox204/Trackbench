@@ -70,7 +70,9 @@ export function StartPicker({
           {heading('Popular')}
           {popular.map(row)}
           {CATEGORIES.map((c) => {
-            const list = TEMPLATES.filter((t) => t.category === c);
+            // ones already shown under Popular come last, so each category opens on something new
+            const inCat = TEMPLATES.filter((t) => t.category === c);
+            const list = [...inCat.filter((t) => !popular.includes(t)), ...inCat.filter((t) => popular.includes(t))];
             return list.length ? <View key={c}>{heading(c)}{list.map(row)}</View> : null;
           })}
         </View>

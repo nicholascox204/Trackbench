@@ -10,6 +10,8 @@ import { px } from '../ui/theme';
 
 export interface DropdownOption { key: string; label: string; sub?: string }
 
+const LONG_LIST = 7; // more options than this scroll inside the list
+
 export function Dropdown({
   label, value, options, selected, onSelect, searchable, searchLabel, footer, compact,
 }: {
@@ -49,7 +51,8 @@ export function Dropdown({
               <TextInput style={s.input} value={find} onChangeText={setFind} placeholder={searchLabel ?? 'Search'} placeholderTextColor={colors.muted} />
             </View>
           ) : null}
-          <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: SEPARATION.listMaxHeight }}>
+          {/* a short list opens in full; only a long or searchable one scrolls inside itself */}
+          <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" scrollEnabled={searchable || options.length > LONG_LIST} style={searchable || options.length > LONG_LIST ? { maxHeight: SEPARATION.listMaxHeight } : undefined}>
             {shown.length === 0 ? <Text style={{ color: colors.muted, padding: 14 }}>Nothing matches.</Text> : null}
             {shown.map((o, i) => {
               const on = o.key === selected;
