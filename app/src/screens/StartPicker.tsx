@@ -22,10 +22,10 @@ export function StartPicker({
       <Icon name={added ? 'checkmark' : 'chevron-forward'} size={16} color={colors.accent} />
     </View>
   );
-  // Build your own sits in a card but keeps the template row placements: icon, name, one line, badge.
+  // Build your own sits in a card but keeps the template row placements; the card bleeds out by its padding so the icon and badge line up with the rows below.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>
-      <View style={{ borderWidth: px(1), borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}>
+      <View style={{ borderWidth: px(1), borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, marginHorizontal: -12 }}>
         <View style={s.row}>
           <TrackerIcon name="construct-outline" size={40} />
           <View style={{ flex: 1, marginRight: 12 }}>
