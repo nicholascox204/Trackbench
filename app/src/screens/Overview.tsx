@@ -16,7 +16,7 @@ import { useAppState } from '../core/store';
 import { addDays, startOfDay } from '../core/time';
 import { formatFieldValue, formatMeasure } from '../core/units';
 import type { Tracker } from '../core/types';
-import { Icon, Scroll, Tap, colors, useTopPad } from '../ui/kit';
+import { Card, ChoiceGrid, Icon, Scroll, Tap, colors, useTopPad } from '../ui/kit';
 import { EDGE, px } from '../ui/theme';
 
 const GAP = 3;
@@ -37,13 +37,6 @@ function Cell({ v, h, radius = 3, outlined, edge }: { v: number | undefined; h: 
   return <View style={{ height: h, borderRadius: radius, backgroundColor: stepColour(v), borderWidth: v === undefined || edge ? px(1) : 0, borderColor: colors.border, ...(outlined ? { borderWidth: EDGE, borderColor: colors.text } : null) }} />;
 }
 
-function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  return (
-    <Tap onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: EDGE, borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.accentBg : 'transparent', marginRight: 6, marginBottom: 6 }}>
-      <Text style={{ color: on ? colors.text : colors.muted, fontSize: 13, fontWeight: on ? '700' : '600' }}>{label}</Text>
-    </Tap>
-  );
-}
 
 const Caption = ({ children }: { children: string }) => <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6, marginTop: 14 }}>{children}</Text>;
 
@@ -255,10 +248,7 @@ export function Overview() {
       <Text style={{ color: colors.muted, fontSize: 14, marginTop: 4 }}>{`Streak ${streak.current} ${streak.current === 1 ? 'day' : 'days'} · best ${streak.best}`}</Text>
 
       <View style={{ marginTop: 16, padding: 15, borderRadius: 14, borderWidth: EDGE, borderColor: colors.border }}>
-        <View style={{ flexDirection: 'row' }}>
-          <Chip label="Ladder" on={system === 'ladder'} onPress={() => setSystem('ladder')} />
-          <Chip label="Year" on={system === 'year'} onPress={() => setSystem('year')} />
-        </View>
+        <ChoiceGrid cols={2} value={system} onPick={(k) => setSystem(k as 'ladder' | 'year')} options={[{ key: 'ladder', label: 'Ladder' }, { key: 'year', label: 'Year' }]} />
         {system === 'ladder' ? ladder() : year()}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14 }}>
           <Text style={{ color: colors.muted, fontSize: 11, marginRight: 6 }}>Less</Text>
@@ -272,7 +262,14 @@ export function Overview() {
       {edit && tucked.length > 0 ? (
         <View style={{ marginTop: 16 }}>
           <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Put away</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{tucked.map((p) => <Chip key={p.id} label={`Show ${p.tracker.name}`} on={false} onPress={() => setHide(hide.filter((h) => h !== p.id))} />)}</View>
+          <Card style={{ padding: 0 }}>{tucked.map((p, i) => (
+            <Tap key={p.id} onPress={() => setHide(hide.filter((h) => h !== p.id))}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
+                <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 15 }}>{p.tracker.name}</Text>
+                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>Show</Text>
+              </View>
+            </Tap>
+          ))}</Card>
         </View>
       ) : null}
       <Tap onPress={() => setEdit(!edit)} style={{ alignSelf: 'center', paddingVertical: 14, marginTop: 8 }}>

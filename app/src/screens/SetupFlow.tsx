@@ -30,7 +30,7 @@ import { Dropdown } from '../ui/Dropdown';
 import { NameCard } from './NameCard';
 import { StartPicker } from './StartPicker';
 import type { Template } from '../core/templates';
-import { Button, Card, Chip, Icon, Muted, Option, Stepper, Toggle, colors, s, topPad, Tap, Scroll, useTopPad } from '../ui/kit';
+import { Button, Card, ChoiceGrid, Icon, Muted, Option, Stepper, Toggle, colors, s, topPad, Tap, Scroll, useTopPad } from '../ui/kit';
 import { SmallButton } from '../ui/kit';
 import { px } from '../ui/theme';
 import { canRecordRun } from '../core/runImport';
@@ -303,11 +303,8 @@ export function SetupFlow({
             {draft.fields.some((f) => f.unitKind) ? (
               <Card style={{ padding: 12, marginTop: 8 }}>
                 <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 8 }}>Units</Text>
-                <View style={s.wrap}>
-                  {(['default', 'imperial', 'metric'] as const).map((u) => (
-                    <Chip key={u} label={u === 'default' ? 'My default' : u === 'imperial' ? 'Imperial' : 'Metric'} active={a.units === u} onPress={() => setA(changeUnits(a, u, settings))} />
-                  ))}
-                </View>
+                <ChoiceGrid cols={3} value={a.units} onPick={(u) => setA(changeUnits(a, u as Answers['units'], settings))}
+                  options={[{ key: 'default', label: 'My default' }, { key: 'imperial', label: 'Imperial' }, { key: 'metric', label: 'Metric' }]} />
               </Card>
             ) : null}
           </View>

@@ -16,8 +16,9 @@ import { addList, getState, mutatePlanDay, removeList, updateTracker } from '../
 import { DEFAULT_TERMS, plural, termsOf } from '../core/terms';
 import type { Entry, PlanDay, Settings, Slot, Tracker } from '../core/types';
 import { defaultStep, fieldUnit, formatNumber, fromDisplay, round2, toDisplay } from '../core/units';
-import { Button, Card, Chip, Icon, Muted, Reveal, StepGroup, Stepper, Tap, colors, s } from '../ui/kit';
+import { Button, Card, Icon, Muted, Reveal, StepGroup, Stepper, Tap, colors, s } from '../ui/kit';
 import { FieldInput } from '../ui/FieldInput';
+import { Dropdown } from '../ui/Dropdown';
 import { EDGE } from '../ui/theme';
 
 export { DEFAULT_TERMS, plural, termsOf };
@@ -122,14 +123,12 @@ export function EditButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Lists to pick from. The chips pick the day's list (the next in turn marked). The pencil turns the same chips into an edit
-// card: tap a list to rename or remove it, or New list to add one. With no lists yet it is one card: Make your first list.
+// Lists to pick from: one List dropdown picks the day's list (the next in turn marked Next); Edit lists in its footer opens
+// a card with each list as a row (name typed in place, bin) and a box to add one. With no lists yet: Make your first list.
 export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [removing, setRemoving] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [target, setTarget] = useState(0); // the list being changed while editing
+  const [removing, setRemoving] = useState<number | null>(null);
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
   const may = canEdit && day >= startOfDay(Date.now());
@@ -139,7 +138,7 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
     if (!n) return;
     const at = addList(t.id, n);
     if (v.days.length === 0) updateTracker(t.id, { rotationPick: { day, index: at } });
-    setName(''); setAdding(false); setTarget(at);
+    setName('');
   };
   const nameBox = (label: string) => (
     <View style={[s.row, { gap: 8 }]}>
@@ -159,55 +158,45 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
       </Card>
     );
   }
-  const chips = (edit: boolean) => (
-    <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-      {v.days.map((d, i) => (
-        <Chip
-          key={i} label={`${d.label.trim() || `List ${i + 1}`}${!edit && i === next && v.days.length > 1 ? ' · next' : ''}`}
-          active={edit ? i === target && !adding : i === current}
-          onPress={() => (edit ? (setTarget(i), setAdding(false), setRemoving(false)) : updateTracker(t.id, { rotationPick: { day, index: i } }))}
-        />
-      ))}
-      {edit && v.days.length < MAX_LISTS ? (
-        <Tap onPress={() => { setAdding(true); setRemoving(false); }} accessibilityLabel="New list"
-          style={[s.chip, { flexDirection: 'row', alignItems: 'center', borderStyle: 'dashed', backgroundColor: adding ? colors.accentBg : 'transparent' }]}>
-          <Icon name="add" size={15} color={colors.text} />
-          <Text style={[s.chipText, { marginLeft: 4 }]}>New list</Text>
-        </Tap>
-      ) : null}
-    </View>
-  );
-  const close = () => { setEditing(false); setAdding(false); setRemoving(false); setName(''); };
-  const picked = v.days[target];
-  // Not editing: the chips pick the day's list. Editing: the same chips sit in a card, and the one tapped is the one changed.
+  const listName = (i: number) => v.days[i]?.label.trim() || `List ${i + 1}`;
+  const close = () => { setEditing(false); setRemoving(null); setName(''); };
+  // Picking: one dropdown, so names of any length sit on one line. Editing the lists themselves is in its footer.
   if (!editing) {
     return (
-      <View style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start' }}>
-        {chips(false)}
-        {may ? <EditButton onPress={() => { setTarget(current); setEditing(true); }} /> : null}
+      <View style={{ marginBottom: 12 }}>
+        <Dropdown
+          compact flush label="List" value={listName(current)} selected={String(current)}
+          options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && v.days.length > 1 ? { sub: 'Next' } : {}) }))}
+          onSelect={(k) => updateTracker(t.id, { rotationPick: { day, index: Number(k) } })}
+          footer={may ? (
+            <Tap onPress={() => setEditing(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+              <Icon name="pencil" size={15} color={colors.muted} />
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }}>Edit lists</Text>
+            </Tap>
+          ) : undefined}
+        />
       </View>
     );
   }
+  // Editing: every list as a full-width row, its name typed in place with a bin, then a box to add one.
   return (
     <Card keep style={{ marginBottom: 12 }}>
       <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Your lists</Text>
-      {chips(true)}
-      <View style={{ marginTop: 6 }}>
-        {adding ? nameBox('Add') : picked ? (
-          <View style={s.row}>
-            <TextInput
-              style={[s.input, { flex: 1 }]} value={picked.label} maxLength={24} placeholder={`List ${target + 1}`} placeholderTextColor={colors.hint}
-              onChangeText={(val) => mutatePlanDay(t.id, target, (x) => { x.label = val; })}
-            />
-            <Tap
-              onPress={() => (removing ? (removeList(t.id, target), setRemoving(false), setTarget(0)) : setRemoving(true))}
-              accessibilityLabel="Remove this list" style={{ paddingHorizontal: 10, paddingVertical: 8 }}
-            >
-              {removing ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="trash-outline" size={19} color={colors.muted} />}
-            </Tap>
-          </View>
-        ) : null}
-      </View>
+      {v.days.map((d, i) => (
+        <View key={i} style={[s.row, { marginBottom: 8 }]}>
+          <TextInput
+            style={[s.input, { flex: 1 }]} value={d.label} maxLength={24} placeholder={`List ${i + 1}`} placeholderTextColor={colors.hint}
+            onChangeText={(val) => mutatePlanDay(t.id, i, (x) => { x.label = val; })}
+          />
+          <Tap
+            onPress={() => (removing === i ? (removeList(t.id, i), setRemoving(null)) : setRemoving(i))}
+            accessibilityLabel={`Remove ${listName(i)}`} style={{ paddingHorizontal: 10, paddingVertical: 8 }}
+          >
+            {removing === i ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="trash-outline" size={19} color={colors.muted} />}
+          </Tap>
+        </View>
+      ))}
+      {v.days.length < MAX_LISTS ? <View style={{ marginTop: 4 }}>{nameBox('Add')}</View> : null}
       <Button label="Done" variant="ghost" onPress={close} style={{ marginTop: 8 }} />
     </Card>
   );
@@ -295,9 +284,17 @@ export function AddSlot({
         returnKeyType="done" placeholder={`${terms.item} name`} placeholderTextColor={colors.hint}
       />
       {lifting && hints.length > 0 ? (
-        <View style={[s.wrap, { marginTop: -4, marginBottom: 8 }]}>
-          {hints.map((h) => <Chip key={h.name} label={h.muscle ? `${h.name} · ${h.muscle}` : h.name} active={false} onPress={() => setName(h.name)} />)}
-        </View>
+        // Suggestions as rows under the box, like search results: names of any length line up.
+        <Card style={{ padding: 0, marginTop: -4, marginBottom: 8 }}>
+          {hints.map((h, i) => (
+            <Tap key={h.name} onPress={() => setName(h.name)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
+                <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 15 }}>{h.name}</Text>
+                {h.muscle ? <Text style={{ color: colors.muted, fontSize: 13, marginLeft: 8 }}>{h.muscle}</Text> : null}
+              </View>
+            </Tap>
+          ))}
+        </Card>
       ) : null}
       {rowKind ? (
         <View style={{ marginBottom: 12 }}>

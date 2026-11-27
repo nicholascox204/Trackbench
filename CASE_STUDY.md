@@ -2083,3 +2083,18 @@ The list bar still mixed jobs: chips picked a list, a large name box sat under t
 - Common practice: a pencil means edit. A gear means settings, so it would be wrong here. Three dots means a menu of actions, which we don't need.
 
 **List editing.** The edit card showed every list again as its own row under the chips, so the same lists appeared twice. Now the pen turns the chips themselves into the editor. You tap a list to rename or remove it, or tap the dashed New list chip to add one. One set of chips, and only the list you're changing is open.
+
+## 2026-11-27: Retiring pills
+Nick found pills awkward everywhere. With names of different lengths they wrap unevenly and waste space, and tighter spacing only moved the problem. We set one rule:
+- **Fixed, short options (2–4):** equal cells (ChoiceGrid).
+- **Many, long, or typed options:** a dropdown.
+- **Lists of names and suggestions:** full-width rows.
+
+**Changes under that rule:**
+- **List picking** is now a List dropdown, with Edit lists in its footer.
+- **Settings:** icons, layout, units and week start are equal cells. Units lost their bracketed hints. Open the app on, and its tracker, are dropdowns.
+- **Elsewhere:** units in setup and the lift import's kg/lb are equal cells, and "A good day is" is a dropdown.
+- **Overview:** Ladder/Year is equal cells, and put-away panels are rows with Show.
+- **Exercise suggestions** are rows with the muscle on the right.
+
+**Not yet:** the logging form's pills (choice answers, Now, optional fields). They need their own pass, because logging speed matters there.

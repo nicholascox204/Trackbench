@@ -7,7 +7,7 @@ import { liftEntries, readLiftFile } from '../core/liftImport';
 import { addEntries, getState, newEntryId } from '../core/store';
 import { fieldUnit } from '../core/units';
 import type { Settings, Tracker } from '../core/types';
-import { Card, Chip, SmallButton, colors, s } from '../ui/kit';
+import { Card, ChoiceGrid, SmallButton, colors, s } from '../ui/kit';
 
 // defer: the tracker is not saved yet, so the file is read now and brought in when it is.
 export function LiftFileImport({ t, settings, defer }: { t: Tracker; settings: Settings; defer?: (job: (t: Tracker) => void) => void }) {
@@ -45,9 +45,8 @@ export function LiftFileImport({ t, settings, defer }: { t: Tracker; settings: S
       <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }}>Import from Strong or Hevy</Text>
       <Text style={{ color: colors.muted, fontSize: 13, marginTop: 4, marginBottom: 10 }}>Export your workouts as a CSV file in either app, then choose it here. Sets are added on the days you lifted them.</Text>
       <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>If the file does not say, its weights are in</Text>
-      <View style={[s.wrap, { marginBottom: 8 }]}>
-        <Chip label="kg" active={unit === 'kg'} onPress={() => setUnit('kg')} />
-        <Chip label="lb" active={unit === 'lb'} onPress={() => setUnit('lb')} />
+      <View style={{ marginBottom: 8 }}>
+        <ChoiceGrid cols={2} value={unit} onPick={(k) => setUnit(k as 'kg' | 'lb')} options={[{ key: 'kg', label: 'kg' }, { key: 'lb', label: 'lb' }]} />
       </View>
       <View style={{ alignSelf: 'flex-start' }}><SmallButton label="Choose file" onPress={pick} /></View>
       {note ? <Text style={{ color: colors.muted, fontSize: 13, marginTop: 8 }}>{note}</Text> : null}

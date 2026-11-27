@@ -12,8 +12,9 @@ import { useSession } from '../core/auth';
 import { PERSONAS } from '../core/personas';
 import { DeletedList } from './DeletedList';
 import { formatNumber } from '../core/units';
-import { Button, Card, Chip, Muted, Title, colors, s, topPad, Tap, Scroll, Toggle } from '../ui/kit';
+import { Button, Card, ChoiceGrid, Muted, Title, colors, s, topPad, Tap, Scroll, Toggle } from '../ui/kit';
 import { ScreenHeader } from '../ui/kit';
+import { Dropdown } from '../ui/Dropdown';
 import { defaultAppearance } from '../ui/theme';
 import { LookPicker } from '../ui/LookPicker';
 
@@ -86,32 +87,21 @@ export function Settings() {
         <Card>
           <LookPicker />
           <Label>Tracker icons</Label>
-          <View style={s.wrap}>
-            <Chip label="Show" active={a.icons} onPress={() => setAppearance({ icons: true })} />
-            <Chip label="Hide" active={!a.icons} onPress={() => setAppearance({ icons: false })} />
-          </View>
+          <ChoiceGrid cols={2} value={a.icons ? 'show' : 'hide'} onPick={(k) => setAppearance({ icons: k === 'show' })} options={[{ key: 'show', label: 'Show' }, { key: 'hide', label: 'Hide' }]} />
           <Label>Home layout</Label>
-          <View style={s.wrap}>
-            {(['rows', 'cards'] as const).map((d) => <Chip key={d} label={d[0].toUpperCase() + d.slice(1)} active={a.layout === d} onPress={() => setAppearance({ layout: d })} />)}
-          </View>
+          <ChoiceGrid cols={2} value={a.layout} onPick={(k) => setAppearance({ layout: k as 'rows' | 'cards' })} options={[{ key: 'rows', label: 'Rows' }, { key: 'cards', label: 'Cards' }]} />
         </Card>
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Units</Text>
         <Card>
           <Muted style={{ marginBottom: 10 }}>The default for every unit field. Any tracker can override one in its setup. Your stored data never changes.</Muted>
-          <View style={s.wrap}>
-            <Chip label="Imperial (lb, mi, in)" active={state.settings.units === 'imperial'} onPress={() => setUnits('imperial')} />
-            <Chip label="Metric (kg, km, cm)" active={state.settings.units === 'metric'} onPress={() => setUnits('metric')} />
-          </View>
+          <ChoiceGrid cols={2} value={state.settings.units} onPick={(k) => setUnits(k as 'imperial' | 'metric')} options={[{ key: 'imperial', label: 'Imperial' }, { key: 'metric', label: 'Metric' }]} />
         </Card>
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Weeks</Text>
         <Card>
           <Muted style={{ marginBottom: 10 }}>Where a week begins, for weekly goals.</Muted>
-          <View style={s.wrap}>
-            <Chip label="Monday" active={(state.settings.weekStart ?? 'mon') === 'mon'} onPress={() => setWeekStart('mon')} />
-            <Chip label="Sunday" active={state.settings.weekStart === 'sun'} onPress={() => setWeekStart('sun')} />
-          </View>
+          <ChoiceGrid cols={2} value={state.settings.weekStart ?? 'mon'} onPick={(k) => setWeekStart(k as 'mon' | 'sun')} options={[{ key: 'mon', label: 'Monday' }, { key: 'sun', label: 'Sunday' }]} />
         </Card>
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Data</Text>
@@ -135,16 +125,19 @@ export function Settings() {
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Opening</Text>
         <Card>
-          <Label>Open the app on</Label>
-          <View style={s.wrap}>
-            <Chip label="The one I need" active={(state.settings.openOn?.mode ?? 'smart') === 'smart'} onPress={() => setOpenOn({ mode: 'smart' })} />
-            <Chip label="Where I was" active={state.settings.openOn?.mode === 'last'} onPress={() => setOpenOn({ mode: 'last' })} />
-            <Chip label="Always the same one" active={state.settings.openOn?.mode === 'pinned'} onPress={() => setOpenOn({ mode: 'pinned', id: state.settings.openOn?.mode === 'pinned' ? state.settings.openOn.id : state.trackers[0]?.id ?? '' })} />
-          </View>
+          {/* Three long choices and a list of trackers: dropdowns, not pills. */}
+          <Dropdown
+            compact label="Open the app on" selected={state.settings.openOn?.mode ?? 'smart'}
+            value={({ smart: 'The one I need', last: 'Where I was', pinned: 'Always the same one' } as const)[state.settings.openOn?.mode ?? 'smart']}
+            options={[{ key: 'smart', label: 'The one I need' }, { key: 'last', label: 'Where I was' }, { key: 'pinned', label: 'Always the same one' }]}
+            onSelect={(k) => setOpenOn(k === 'pinned' ? { mode: 'pinned', id: state.settings.openOn?.mode === 'pinned' ? state.settings.openOn.id : state.trackers[0]?.id ?? '' } : { mode: k as 'smart' | 'last' })}
+          />
           {state.settings.openOn?.mode === 'pinned' ? (
-            <View style={[s.wrap, { marginTop: 4 }]}>
-              {state.trackers.map((tr) => <Chip key={tr.id} label={tr.name} active={state.settings.openOn?.mode === 'pinned' && state.settings.openOn.id === tr.id} onPress={() => setOpenOn({ mode: 'pinned', id: tr.id })} />)}
-            </View>
+            <Dropdown
+              compact label="Tracker" selected={state.settings.openOn.id}
+              value={state.trackers.find((tr) => state.settings.openOn?.mode === 'pinned' && tr.id === state.settings.openOn.id)?.name ?? 'Choose'}
+              options={state.trackers.map((tr) => ({ key: tr.id, label: tr.name }))} onSelect={(id) => setOpenOn({ mode: 'pinned', id })}
+            />
           ) : null}
           {(state.settings.openOn?.mode ?? 'smart') === 'smart' && state.trackers.length > 0 ? (
             <View style={{ marginTop: 4, marginBottom: 6 }}>

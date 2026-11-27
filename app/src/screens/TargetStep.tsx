@@ -6,7 +6,7 @@ import { targetText, type Answers } from '../core/setup';
 import { measureUnit } from '../core/units';
 import type { Settings, Tracker, TrackerDraft } from '../core/types';
 import { Dropdown } from '../ui/Dropdown';
-import { Chip, Stepper, colors } from '../ui/kit';
+import { Stepper, colors } from '../ui/kit';
 
 type Mode = 'logged' | 'plan' | 'min' | 'max' | 'range';
 
@@ -36,16 +36,19 @@ export function TargetStep({ a, set, draft, settings }: { a: Answers; set: (p: P
   if (a.avoid && a.record === 'done') {
     return <Text style={{ color: colors.muted, fontSize: 14, marginTop: 8 }}>This one is something you are avoiding, so a good day is a day with nothing logged.</Text>;
   }
+  const GOOD = [
+    { key: 'logged', label: draft.input === 'check' ? 'Tapping it' : 'Any entry' },
+    ...(planned ? [{ key: 'plan', label: 'Finish most of the plan' }] : []),
+    ...(canNumber ? [{ key: 'min', label: 'At least' }, { key: 'max', label: 'At most' }, { key: 'range', label: 'Between' }] : []),
+  ];
   return (
     <View style={{ marginTop: 6 }}>
       <Text style={{ color: colors.muted, fontSize: 14, marginBottom: 12 }}>What makes a good day. Your progress is shown as a share of this, from 0 to 100%.</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        <Chip label={draft.input === 'check' ? 'Tapping it' : 'Any entry'} active={mode === 'logged'} onPress={() => pick('logged')} />
-        {planned ? <Chip label="Finish most of the plan" active={mode === 'plan'} onPress={() => pick('plan')} /> : null}
-        {canNumber ? <Chip label="At least" active={mode === 'min'} onPress={() => pick('min')} /> : null}
-        {canNumber ? <Chip label="At most" active={mode === 'max'} onPress={() => pick('max')} /> : null}
-        {canNumber ? <Chip label="Between" active={mode === 'range'} onPress={() => pick('range')} /> : null}
-      </View>
+      {/* Up to five choices of mixed length: a dropdown, not pills. */}
+      <Dropdown
+        compact label="A good day is" selected={mode} onSelect={(k) => pick(k as typeof mode)}
+        value={GOOD.find((o) => o.key === mode)?.label ?? ''} options={GOOD}
+      />
 
       {g && measures.length > 1 ? (
         <View style={{ marginTop: 6 }}>
