@@ -121,6 +121,11 @@ export function skipSignIn(): void {
   setState({ ...state, settings: { ...state.settings, skippedSignIn: true } });
 }
 
+// Not signed in (skipped, or the account was signed out): show the sign-in screen again.
+export function askToSignIn(): void {
+  setState({ ...state, settings: { ...state.settings, skippedSignIn: false } });
+}
+
 // Just signed in: backing up switches on, what is on this phone goes up, and what the account already holds (a new phone) comes down.
 export async function afterSignIn(): Promise<void> {
   setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });

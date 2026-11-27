@@ -3,7 +3,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
-import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setCloudSync, setDevSync, syncNow, signOutSafely, deleteMyAccount, setName, setUnits, setWeekStart, useAppState } from '../core/store';
+import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setCloudSync, setDevSync, syncNow, signOutSafely, deleteMyAccount, askToSignIn, setName, setUnits, setWeekStart, useAppState } from '../core/store';
 import { exportBackup, exportReadable, parseBackup } from '../core/transfer';
 import { minuteText, usualMinute } from '../core/startPick';
 import { resetAllPermissions } from '../core/devReset';
@@ -73,6 +73,15 @@ export function Settings() {
                 onPress={async () => { if (confirm !== 'delete') { setConfirm('delete'); return; } setConfirm(null); const why = await deleteMyAccount(); if (why) setAccountMsg(why); }}
               />
               {accountMsg ? <Text style={{ color: colors.danger, fontSize: 13, marginTop: 8 }}>{accountMsg}</Text> : null}
+            </Card>
+          </View>
+        ) : cloudConfigured ? (
+          // Not signed in: the way in is always here, so a skipped sign-in is never a dead end.
+          <View>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Account</Text>
+            <Card>
+              <Muted style={{ marginBottom: 10 }}>Not signed in. Your trackers are only on this phone.</Muted>
+              <Button label="Sign in" onPress={askToSignIn} />
             </Card>
           </View>
         ) : null}
