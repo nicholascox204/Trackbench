@@ -9,7 +9,7 @@ import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isResto
 import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { syncHealth } from './src/core/healthRead';
-import { dismissFinishedAlerts, liveTimers, loadTimers } from './src/core/timers';
+import { dismissFinishedAlerts, liveTimers, loadTimers, stopRemovedTimers } from './src/core/timers';
 import { initialTap, listenForegroundTaps } from './src/core/notificationTap';
 import { peekTapTarget, subscribeTap, takeTapTarget } from './src/core/tapTarget';
 import { startOfDay } from './src/core/time';
@@ -72,6 +72,8 @@ function AppInner() {
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });
   const [timersReady, setTimersReady] = useState(false);
+  // A countdown or timer left running on a tool that was turned off, or a tracker that was deleted, is stopped.
+  useEffect(() => { if (loaded && timersReady && !isRestoring()) stopRemovedTimers(state.trackers); }, [loaded, timersReady, state.trackers]);
   const [tapChecked, setTapChecked] = useState(false); // whether the app was started by tapping a notification has been looked at
   const tapped = useSyncExternalStore(subscribeTap, peekTapTarget);
   const [lastId, setLastId] = useState<string | null>(null); // the tracker you were last on

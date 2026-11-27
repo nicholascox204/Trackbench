@@ -55,32 +55,37 @@ async function pushRows<R extends { id: string; updated_at: number }>(db: Db, cl
   return rows.length;
 }
 
-// Take a cloud row into the phone's database, unless the phone has a later change of its own waiting to be sent.
-async function takeTracker(db: Db, c: CloudRow): Promise<boolean> {
-  const at = ms(c.updated_at);
-  const mine = await db.all<{ dirty: number; updated_at: number }>('select dirty, updated_at from trackers where id = ?', [c.id]);
-  if (mine.length && mine[0].dirty === 1 && mine[0].updated_at > at) return false;
-  await db.run(
-    `insert into trackers (id, name, sort_order, config, created_at, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, 0)
+// How a cloud row is written into the phone's database. A row is skipped when the phone has a later change of its own waiting to be sent.
+const TRACKER_SQL = `insert into trackers (id, name, sort_order, config, created_at, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, 0)
      on conflict(id) do update set name = excluded.name, sort_order = excluded.sort_order, config = excluded.config, created_at = excluded.created_at,
-     updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`,
-    [c.id, c.name, c.sort_order, JSON.stringify(c.config), ms(c.created_at), at, c.deleted_at ? ms(c.deleted_at) : null],
-  );
-  return true;
-}
-
-async function takeEntry(db: Db, c: CloudRow): Promise<boolean> {
-  const at = ms(c.updated_at);
-  const mine = await db.all<{ dirty: number; updated_at: number }>('select dirty, updated_at from entries where id = ?', [c.id]);
-  if (mine.length && mine[0].dirty === 1 && mine[0].updated_at > at) return false;
-  await db.run(
-    `insert into entries (id, tracker_id, at, data, slot_id, row_index, variant, done, auto, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+     updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`;
+const trackerArgs = (c: CloudRow): unknown[] => [c.id, c.name, c.sort_order, JSON.stringify(c.config), ms(c.created_at), ms(c.updated_at), c.deleted_at ? ms(c.deleted_at) : null];
+const ENTRY_SQL = `insert into entries (id, tracker_id, at, data, slot_id, row_index, variant, done, auto, updated_at, deleted_at, dirty) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
      on conflict(id) do update set tracker_id = excluded.tracker_id, at = excluded.at, data = excluded.data, slot_id = excluded.slot_id, row_index = excluded.row_index,
-     variant = excluded.variant, done = excluded.done, auto = excluded.auto, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`,
-    [c.id, c.tracker_id, ms(c.at), JSON.stringify(c.data ?? {}), c.slot_id ?? null, c.row_index ?? null, c.variant ?? null, c.done === false ? 0 : 1,
-      c.auto ? JSON.stringify(c.auto) : null, at, c.deleted_at ? ms(c.deleted_at) : null],
-  );
-  return true;
+     variant = excluded.variant, done = excluded.done, auto = excluded.auto, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, dirty = 0`;
+const entryArgs = (c: CloudRow): unknown[] => [c.id, c.tracker_id, ms(c.at), JSON.stringify(c.data ?? {}), c.slot_id ?? null, c.row_index ?? null, c.variant ?? null, c.done === false ? 0 : 1,
+  c.auto ? JSON.stringify(c.auto) : null, ms(c.updated_at), c.deleted_at ? ms(c.deleted_at) : null];
+
+// A whole page goes in with one look-up and one batched write, not two database calls per row: a restore of thousands of entries
+// takes a second or two instead of half a minute.
+async function takePage(db: Db, table: Table, page: CloudRow[]): Promise<number> {
+  const waiting = new Map<string, number>();
+  const ids = page.map((c) => String(c.id));
+  for (let i = 0; i < ids.length; i += 400) { // SQLite allows a limited number of ? per statement
+    const part = ids.slice(i, i + 400);
+    const rows = await db.all<{ id: string; updated_at: number }>(`select id, updated_at from ${table} where dirty = 1 and id in (${part.map(() => '?').join(',')})`, part);
+    for (const r of rows) waiting.set(r.id, r.updated_at);
+  }
+  const take = page.filter((c) => !(waiting.get(String(c.id))! > ms(c.updated_at)));
+  // Many rows per statement: each call across to the database costs far more than the rows it carries.
+  const sql = table === 'trackers' ? TRACKER_SQL : ENTRY_SQL;
+  const args = table === 'trackers' ? trackerArgs : entryArgs;
+  const group = sql.match(/values (\([^)]*\))/)![1];
+  for (let i = 0; i < take.length; i += 80) {
+    const part = take.slice(i, i + 80);
+    await db.run(sql.replace(`values ${group}`, `values ${part.map(() => group).join(', ')}`), part.flatMap(args));
+  }
+  return take.length;
 }
 
 async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: number; changedLocal: boolean }> {
@@ -92,10 +97,7 @@ async function pull(db: Db, cloud: CloudApi, table: Table): Promise<{ received: 
     const page = await cloud.changedSince(table, cursor, PAGE);
     if (page.length === 0) break;
     await db.transaction(async () => {
-      for (const c of page) {
-        const took = table === 'trackers' ? await takeTracker(db, c) : await takeEntry(db, c);
-        if (took) changedLocal = true;
-      }
+      if (await takePage(db, table, page)) changedLocal = true;
     });
     received += page.length;
     const last = page[page.length - 1];

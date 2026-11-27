@@ -113,6 +113,23 @@ export const timerActions = {
   },
 };
 
+// A countdown or timer whose tool was turned off, or whose tracker was deleted, stops: its alert is cancelled and it leaves
+// the notification shade, so a tool you removed never rings later.
+export function stopRemovedTimers(trackers: { id: string; tools: { countdown?: boolean; timer?: boolean } }[]): void {
+  const byId = new Map(trackers.map((t) => [t.id, t]));
+  let next = saved;
+  for (const [id, c] of Object.entries(saved.countdowns)) {
+    if (byId.get(id)?.tools.countdown) continue;
+    void cancelCountdownEnd(id); void dismissAlert(id); void clearLive(id);
+    if (c.endsAt !== undefined || c.pausedLeft !== undefined) { const { [id]: _, ...rest } = next.countdowns; next = { ...next, countdowns: rest }; }
+  }
+  for (const [id, w] of Object.entries(saved.watches)) {
+    if (byId.get(id)?.tools.timer) continue;
+    if (watchStatus(w) !== 'idle') { void clearLive(id); const { [id]: _, ...rest } = next.watches; next = { ...next, watches: rest }; }
+  }
+  if (next !== saved) commit(next);
+}
+
 // Coming back to the app: any countdown that has run out has its alert cleared, so it stops ringing.
 export function dismissFinishedAlerts(now: number): void {
   for (const [id, c] of Object.entries(saved.countdowns)) {

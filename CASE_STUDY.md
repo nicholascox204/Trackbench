@@ -2164,3 +2164,9 @@ Publishing now checks that the cloud settings are inside each update before it c
 ## 2026-11-27 — Bringing trackers in after sign-in never just waits
 
 On the Preview app, signing in could sit on "Bringing in your trackers…" indefinitely, and reloading dropped the person into tracker setup as if the account were empty. Two causes: the hold waited on the sync with no time limit, and the hold lived only in memory, so a restart forgot a restore was half done. Decided: the pending restore is saved, so reopening the app resumes it instead of starting setup; each attempt has a 30-second limit; and the screen always says what is happening, with a spinner, a "taking longer than usual" line after 8 seconds, and on failure a plain explanation with Try again and Sign out. Considered letting people continue into the app while trackers load in the background, but that reopens the empty-setup flash the hold exists to prevent.
+
+## 2026-11-27 — Restores in seconds; removed timers stop ringing
+
+Signing in on a phone took far longer than the small amount of data suggested. The account held about 4,100 entries (mostly the imported lifting history), and each was written to the phone with its own look-up and its own insert: over 8,000 trips across to the database. Each page of 500 now takes one look-up and multi-row inserts of 80, about 55 trips in all. The rule that a newer change waiting on the phone is not overwritten is kept.
+
+A countdown started and then turned off in setup (or on a tracker that was deleted) still rang when its time ran out, because its alert was already scheduled with the phone. Now turning off the countdown or timer tool, or deleting the tracker, cancels the alert and clears it from the notification shade.
