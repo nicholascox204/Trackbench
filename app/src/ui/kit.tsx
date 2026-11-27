@@ -514,6 +514,16 @@ export function Stepper({
   const decimalDigits = Math.max(stepDecimals, hasPoint ? decText.length : 0);
   const content = whole * NUMBER_BOX.digit + (decimalDigits > 0 ? NUMBER_BOX.point + decimalDigits * NUMBER_BOX.digit : hasPoint ? NUMBER_BOX.point : 0);
   const nudge = (v: number) => { setEditing(null); onChange(clamp(v)); };
+  // Leaving the box: a number left below the lowest, or no number, becomes the lowest.
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    if (editing === 'n') { wasEditing.current = true; return; }
+    if (!wasEditing.current) return;
+    wasEditing.current = false;
+    const p = parseFloat(txt.replace(',', '.'));
+    if (Number.isNaN(p) || p < min) onChange(min);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
   const boxWidth = useHold(editing === 'n', width ?? Math.ceil(content));
   return (
     <StepFrame onMinus={() => nudge(value - step)} onPlus={() => nudge(value + step)}>
@@ -526,9 +536,11 @@ export function Stepper({
           setTxt(t);
           const p = parseFloat(t);
           if (Number.isNaN(p)) return t;
+          // Below the lowest allowed is left alone while typing (0. on the way to 0.25); it is raised to the lowest once you are done.
+          if (p < min) return t;
           const c = clamp(p);
           onChange(c);
-          if (c !== p && Math.abs(c - p) > 0.005) { setTxt(String(c)); return String(c); } // past a limit: it becomes the limit
+          if (c !== p && Math.abs(c - p) > 0.005) { setTxt(String(c)); return String(c); } // past the highest: it becomes the highest
           return t;
         }}
       />
