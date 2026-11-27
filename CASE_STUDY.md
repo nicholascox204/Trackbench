@@ -1962,3 +1962,13 @@ Follow-up the same day: the live preview came out. It made the section feel long
 
 ## 2026-11-26: Row endings, round two
 The plain grey chevron read as flat after the tinted-circle arrow. Kept the chevron shape (the arrow felt heavy) but put it back in the accent-tinted circle, so rows still invite a tap. Build your own now uses the same placements as template rows (icon tile, name, one line, badge) inside its card, so the first option on the screen doesn't look like a different kind of thing.
+
+## 2026-11-26: Build your own drops its card
+I tried letting the card extend past the page margins so its icon would line up with the template rows. That broke the page edge. Build your own is now a plain row like the templates. Being alone above Popular is enough to set it apart.
+
+## 2026-11-26: You log, rethinking the five ways (in discussion)
+"Tick off a list" was really two different things:
+- **Checklists** (habits, meds, vitamins, chores, pet care): Mark it done, for several things at once.
+- **Planned sessions** (gym): Log it each time, with the entry names written in advance.
+
+Both already live inside other ways. Merging into four with a hidden "Plan them ahead" switch was rejected because hidden actions get missed. The headings have to carry the meaning.
