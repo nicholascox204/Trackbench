@@ -4,13 +4,13 @@ import { NAV, itemWidthFor } from '../constants/layout';
 import { suggestGoals } from './goalPresets';
 import { dailyGoals, dayKey, describeGoal, goalEvents, goalProgress, withDailyGoal, withoutDailyGoal } from './goals';
 import { answersFromPreset, dayGoalDefs, dayGoalFromDef, draftFromAnswers, goalText } from './setup';
-import { SHAPES, TEMPLATES } from './templates';
+import { DEMO_PLANS, SHAPES, TEMPLATES } from './templates';
 import { termsOf } from './terms';
 import { addDays, startOfDay } from './time';
 import type { Entry, GoalDef, Tracker } from './types';
 
 const metric = { units: 'metric' as const };
-const make = (id: string, over: Partial<Tracker> = {}): Tracker => ({ ...draftFromAnswers({ ...TEMPLATES.find((t) => t.id === id)!.make(), planMode: 'example' }, metric), id: 't', systemId: 's', createdAt: 0, ...over });
+const make = (id: string, over: Partial<Tracker> = {}): Tracker => ({ ...draftFromAnswers({ ...TEMPLATES.find((t) => t.id === id)!.make(), planMode: 'example', sample: DEMO_PLANS()[id] }, metric), id: 't', systemId: 's', createdAt: 0, ...over });
 const now = new Date(2026, 10, 18, 12).getTime();
 const today = startOfDay(now);
 const entry = (at: number, values: Entry['values'] = {}): Entry => ({ id: `e${at}`, trackerId: 't', at: at + 3600000, done: true, values });

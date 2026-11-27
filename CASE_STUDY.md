@@ -1927,3 +1927,16 @@ Follow-up the same day: matching the rows went too far. How often is the only me
 ## 2026-11-26: You log, first-pass quick fixes
 
 Audited the You log screen in the same vein as the rest of the setup pass and fixed the small things: the screen was titled "What do you enter?" with a section of the same name under it, so the title is now "You log" (matching its summary row) and the section "What you enter". The remaining wrapped pills (Scale: 1 to 5 or 1 to 10; Several a day: Add up or Keep the latest) use the equal-width grid. "Latest" became "Keep the latest" so the choice reads on its own. A new number starts named "Number" like every other type, instead of blank and shown as "Unnamed". Duration reads "Duration" everywhere, not "Hours and minutes" in one place. Placeholders lost their parentheses and the one that repeated its label. Weight and Reps, lifting shortcuts, were offered at the top of Add something on every tracker; they now show only on a list of sets.
+
+## 2026-11-26: Templates can go no further than Build your own, and a test holds it
+
+Nick wants to audit every option in one place, Build your own, and know that a fix there reaches every template. Templates were already built from the same answers, but several used settings setup gave no way to set, so Build your own could not reach them. Fixed each so templates are only answers Build your own could give:
+- Item and row names on a planned list ("Habit", "Medication", "Exercise" and "Set") are now set in You log.
+- Health Connect readings are offered by a tracker's fields alone (blood pressure from top and bottom numbers, blood sugar from a reading in mg/dL), never by which template it came from.
+- Run and lifting file imports work while making a tracker. The files are read at once and come in when it is saved, instead of only when editing.
+- The 30-day challenge template is gone. Without an end date it was only a check-in, and end dates wait for goals.
+- Caffeine's built-in limit is gone, as is Gym split and Full body's "finish most of the plan". Both are targets, parked with goals.
+- The gym templates' hidden sample workouts were moved out to the demo data in Developer settings, since real templates start empty.
+- Show a streak moved from You log to It shows, renamed Clean streak, since it changes what the tracker displays, not how you log.
+
+Asked whether the code could enforce this: it already shares the code (a template is a set of setup answers), so the gap was settings with no control. A new test, parity.test.ts, fails if any template sets one of them (goals, targets, finishing the plan, end dates, sample lists), so the rule cannot drift back.

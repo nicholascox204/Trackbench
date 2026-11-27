@@ -66,8 +66,8 @@ test("setup has no Target row: goals are worked out after the fact, apart from s
 });
 
 test("targets still read the way they are set (for when goals come back)", () => {
-  const row = (id: string) => { const a = TEMPLATES.find((x) => x.id === id)!.make(); return targetText(a, draftFromAnswers(a, SETTINGS), SETTINGS); };
-  assert.equal(row("caffeine"), "At most 4 cups a day");
+  const row = (id: string, extra = {}) => { const a = { ...TEMPLATES.find((x) => x.id === id)!.make(), ...extra }; return targetText(a, draftFromAnswers(a, SETTINGS), SETTINGS); };
+  assert.equal(row("caffeine", { goal: 'number' as const, goals: [{ id: 'limit', measure: 'count', cmp: 'max' as const, value: 4, value2: 4 }] }), "At most 4 cups a day");
   assert.equal(row("no-alcohol"), "A day with nothing logged");
-  assert.match(row("gym-split"), /plan/i);
+  assert.match(row("gym-split", { finishPlan: true }), /plan/i);
 });

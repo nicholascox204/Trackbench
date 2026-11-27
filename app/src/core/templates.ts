@@ -72,19 +72,23 @@ function T(
   };
 }
 
+// Filled-in plans for the demo people in Settings, Developer only. Templates start empty (no sample content for real people).
+export const DEMO_PLANS = (): Record<string, PlanDay[]> => ({
+  'gym-split': [
+    day('Push', [row('Bench Press', 4, '6-8'), row('Incline Dumbbell Press', 3, '8-10'), row('Overhead Press', 3, '8-10'), row('Lateral Raise', 3, '12-15'), row('Triceps Pushdown', 3, '10-12')]),
+    day('Pull', [row('Pull-Up', 4, '6-10'), row('Barbell Row', 4, '8-10'), row('Lat Pulldown', 3, '10-12'), row('Face Pull', 3, '12-15'), row('Biceps Curl', 3, '10-12')]),
+    day('Legs', [row('Squat', 4, '6-8'), row('Romanian Deadlift', 3, '8-10'), row('Leg Press', 3, '10-12'), row('Leg Curl', 3, '10-12'), row('Calf Raise', 4, '12-15')]),
+  ],
+  'full-body': [day('Full body', [row('Squat', 3, '5'), row('Bench Press', 3, '5'), row('Barbell Row', 3, '5'), row('Overhead Press', 3, '8'), row('Romanian Deadlift', 3, '8'), row('Plank', 3, '30-60s')])],
+});
+
 const ALL: Template[] = [
   // ---- Fitness ----
   T('gym-split', 'Gym split', 'barbell-outline', 'Fitness', 'Lifts by day, every set logged.', 'gym lifting weights strength push pull legs split workout hypertrophy', 'set-plan', () => ({
-    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: false, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
-    sample: [
-      day('Push', [row('Bench Press', 4, '6-8'), row('Incline Dumbbell Press', 3, '8-10'), row('Overhead Press', 3, '8-10'), row('Lateral Raise', 3, '12-15'), row('Triceps Pushdown', 3, '10-12')]),
-      day('Pull', [row('Pull-Up', 4, '6-10'), row('Barbell Row', 4, '8-10'), row('Lat Pulldown', 3, '10-12'), row('Face Pull', 3, '12-15'), row('Biceps Curl', 3, '10-12')]),
-      day('Legs', [row('Squat', 4, '6-8'), row('Romanian Deadlift', 3, '8-10'), row('Leg Press', 3, '10-12'), row('Leg Curl', 3, '10-12'), row('Calf Raise', 4, '12-15')]),
-    ],
+    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: false, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
   })),
   T('full-body', 'Full body', 'fitness-outline', 'Fitness', 'One list of lifts, every session.', 'gym lifting weights full body beginner strength 5x5 workout', 'set-plan', () => ({
-    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, finishPlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
-    sample: [day('Full body', [row('Squat', 3, '5'), row('Bench Press', 3, '5'), row('Barbell Row', 3, '5'), row('Overhead Press', 3, '8'), row('Romanian Deadlift', 3, '8'), row('Plank', 3, '30-60s')])],
+    chips: ['weight', 'reps'], schedule: { kind: 'weekdays', days: [1, 3, 5] }, samePlan: true, planMode: 'asigo', extras: { previous: true, lockPast: false, average: false, countdown: true },
   })),
   T('running', 'Running', 'footsteps-outline', 'Fitness', 'Distance and time per run.', 'run running jog cardio distance pace miles km', 'time-blocks', { chips: ['distance', 'minutes'], combos: [{ id: 'pace', name: 'Pace', a: 'minutes', b: 'distance', fn: 'div' }], goal: 'none', goals: [], schedule: { kind: 'times', n: 3, per: 'week' }, extras: { previous: true, lockPast: false, average: false } }),
   T('steps', 'Steps', 'walk-outline', 'Fitness', 'Your steps, once a day.', 'steps walking walk daily movement pedometer', 'measurement', () => ({
@@ -185,7 +189,7 @@ const ALL: Template[] = [
   T('blood-sugar', 'Blood sugar', 'pulse-outline', 'Health', 'A reading and when you took it.', 'blood sugar glucose diabetes mg dl reading insulin', 'time-blocks', () => ({
     chips: [], custom: [num('level', 'Level', { unit: 'mg/dL', step: 5, default: 100, reading: true }), choice('when', 'When', ['Fasting', 'Before meal', 'After meal', 'Bedtime']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
-  T('caffeine', 'Caffeine', 'cafe-outline', 'Body', 'Tap for each cup.', 'caffeine coffee tea energy drink cups limit', 'counter', () => ({ countUnit: 'cups', goal: 'number', goals: [{ id: 'limit', measure: 'count', cmp: 'max', value: 4, value2: 4 }] })), // a starting limit, not advice: change or clear it in setup
+  T('caffeine', 'Caffeine', 'cafe-outline', 'Body', 'Tap for each cup.', 'caffeine coffee tea energy drink cups limit', 'counter', () => ({ countUnit: 'cups' })),
   T('cycle', 'Cycle', 'rose-outline', 'Health', 'Flow by day. No predictions.', 'period cycle menstrual flow spotting', 'time-blocks', () => ({
     chips: [], custom: [choice('flow', 'Flow', ['Spotting', 'Light', 'Medium', 'Heavy']), multi('symptoms', 'Symptoms', ['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Mood swings']), note()], goal: 'none', goals: [], schedule: { kind: 'whenever' },
   })),
@@ -193,9 +197,6 @@ const ALL: Template[] = [
     chips: [], custom: [{ id: 'last', name: 'Last meal', type: 'time', default: 1200 }, { id: 'first', name: 'First meal', type: 'time', default: 720 }],
     combos: [{ id: 'fast', name: 'Hours fasted', a: 'last', b: 'first', fn: 'span' }], daily: true, extras: { previous: true, lockPast: false, average: false },
     goal: 'none', goals: [],
-  })),
-  T('challenge', '30-day challenge', 'trophy-outline', 'Habits', 'A daily tick for 30 days.', 'challenge 30 day streak sprint cold shower no sugar reset', 'check-in', () => ({
-    window: { from: dayKeyOf(startOfDay(Date.now())), until: dayKeyOf(addDays(startOfDay(Date.now()), 29)) },
   })),
   T('bills', 'Bills', 'receipt-outline', 'Money', 'Tick off when paid, monthly.', 'bills rent pay payment monthly subscription utilities due', 'check-in', { schedule: { kind: 'monthly', day: 1 } }),
   T('balance', 'Balance', 'wallet-outline', 'Money', 'A balance, checked weekly.', 'balance net worth debt savings account bank loan', 'measurement', () => ({
@@ -213,7 +214,7 @@ export const POPULARITY: string[] = [
   'habit', 'water', 'sleep', 'mood', 'weigh-in', 'gym-split', 'workout-log', 'steps', 'spending', 'reading', 'meditate',
   'running', 'journal', 'food-log', 'medication', 'savings', 'no-alcohol', 'quit-smoking', 'vitamins',
   'caffeine', 'study', 'fasting', 'full-body', 'stretching', 'no-scrolling', 'bills', 'language', 'practice', 'chores',
-  'meals', 'blood-pressure', 'time-log', 'challenge', 'symptoms', 'cycle', 'pet-care', 'balance', 'blood-sugar', 'plants', 'pain',
+  'meals', 'blood-pressure', 'time-log', 'symptoms', 'cycle', 'pet-care', 'balance', 'blood-sugar', 'plants', 'pain',
 ];
 const rank = (id: string): number => { const i = POPULARITY.indexOf(id); return i < 0 ? 999 : i; };
 export const TEMPLATES: Template[] = [...ALL].sort((a, b) => rank(a.id) - rank(b.id));

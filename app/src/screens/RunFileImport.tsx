@@ -10,22 +10,32 @@ import { startOfDay } from '../core/time';
 import type { Tracker } from '../core/types';
 import { Card, SmallButton, colors } from '../ui/kit';
 
-export function RunFileImport({ t }: { t: Tracker }) {
+// defer: the tracker is not saved yet, so the files are read now and brought in when it is.
+export function RunFileImport({ t, defer }: { t: Tracker; defer?: (job: (t: Tracker) => void) => void }) {
   const [note, setNote] = useState('');
   const pick = async () => {
     try {
       const DocumentPicker = await import('expo-document-picker');
       const res = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true, copyToCacheDirectory: true });
       if (res.canceled || !res.assets?.length) return;
-      let added = 0; let skipped = 0;
-      for (const a of res.assets) {
-        const text = await (await fetch(a.uri)).text();
-        const fill = runFill(t, text);
-        if (!fill) { skipped++; continue; }
-        const route = encodeRoute(simplifyRoute(parseGpx(text)));
-        logFree(t.id, { ...fill.values, route }, startOfDay(fill.at ?? Date.now()));
-        added++;
+      const texts: string[] = [];
+      for (const a of res.assets) texts.push(await (await fetch(a.uri)).text());
+      const bring = (target: Tracker) => {
+        let added = 0; let skipped = 0;
+        for (const text of texts) {
+          const fill = runFill(target, text);
+          if (!fill) { skipped++; continue; }
+          const route = encodeRoute(simplifyRoute(parseGpx(text)));
+          logFree(target.id, { ...fill.values, route }, startOfDay(fill.at ?? Date.now()));
+          added++;
+        }
+        return { added, skipped };
+      };
+      if (defer) {
+        defer((saved) => { bring(saved); });
+        return setNote(`${texts.length} file${texts.length === 1 ? '' : 's'} will be added when you save this tracker.`);
       }
+      const { added, skipped } = bring(t);
       setNote(`${added} run${added === 1 ? '' : 's'} added${skipped ? `, ${skipped} file${skipped === 1 ? '' : 's'} had no route` : ''}.`);
     } catch {
       setNote('Could not read those files.');

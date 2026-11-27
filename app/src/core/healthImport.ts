@@ -22,11 +22,13 @@ export const HEALTH_LABEL: Record<HealthKind, string> = {
 export const RECORD: Record<HealthKind, string> = { weight: 'Weight', sleep: 'SleepSession', runs: 'ExerciseSession', bloodPressure: 'BloodPressure', bloodSugar: 'BloodGlucose' };
 export const RUN_TYPES = [56, 57]; // Health Connect's running and treadmill running
 
-// Which kind a tracker takes, if any: its starting point first, else what its fields look like.
+// Which kind a tracker takes, if any, from what its fields look like alone: a template gets nothing a tracker built the same
+// way would not, so templates and Build your own stay one system.
 export function healthKind(t: Tracker): HealthKind | undefined {
-  const byTemplate: Record<string, HealthKind> = { 'weigh-in': 'weight', sleep: 'sleep', running: 'runs', 'blood-pressure': 'bloodPressure', 'blood-sugar': 'bloodSugar' };
-  if (t.templateId && byTemplate[t.templateId]) return byTemplate[t.templateId];
   if (t.input !== 'form') return undefined;
+  const has = (re: RegExp) => t.fields.some((f) => f.type === 'number' && re.test(f.name));
+  if (has(/systolic|^top/i) && has(/diastolic|^bottom/i)) return 'bloodPressure';
+  if (t.fields.some((f) => f.type === 'number' && (f.unit === 'mg/dL' || /sugar|glucose/i.test(f.name)))) return 'bloodSugar';
   const p = spanPair(t);
   if (p && /bed|sleep/i.test(`${p.from.name} ${p.measure.name}`)) return 'sleep';
   if (canRecordRun(t.fields)) return 'runs';

@@ -9,7 +9,8 @@ import { fieldUnit } from '../core/units';
 import type { Settings, Tracker } from '../core/types';
 import { Card, Chip, SmallButton, colors, s } from '../ui/kit';
 
-export function LiftFileImport({ t, settings }: { t: Tracker; settings: Settings }) {
+// defer: the tracker is not saved yet, so the file is read now and brought in when it is.
+export function LiftFileImport({ t, settings, defer }: { t: Tracker; settings: Settings; defer?: (job: (t: Tracker) => void) => void }) {
   const weight = t.fields.find((f) => f.unitKind === 'weight');
   const [unit, setUnit] = useState<'kg' | 'lb'>(weight && fieldUnit(weight, settings) === 'lb' ? 'lb' : 'kg');
   const [note, setNote] = useState('');
@@ -21,6 +22,10 @@ export function LiftFileImport({ t, settings }: { t: Tracker; settings: Settings
       const text = await (await fetch(res.assets[0].uri)).text();
       const file = readLiftFile(text, unit);
       if (!file || file.sets.length === 0) return setNote('That file is not a Strong or Hevy export. In either app, export your data as a CSV file and choose that.');
+      if (defer) {
+        defer((saved) => addEntries(liftEntries(saved, file, getState().entries, newEntryId).entries));
+        return setNote(`${file.sets.length} sets from ${file.app} will be added when you save this tracker.`);
+      }
       const { entries, matched, unmatched } = liftEntries(t, file, getState().entries, newEntryId);
       addEntries(entries);
       const days = new Set(entries.map((e) => new Date(e.at).toDateString())).size;

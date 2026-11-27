@@ -504,7 +504,9 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   if (hasLatest && a.extras.average) shows.push('3-day average');
   const hasNumbers = draft.fields.some((f) => f.type !== 'text');
   if (a.record === 'numbers' && hasNumbers && a.extras.previous) shows.push('previous numbers');
-  if ((a.record === 'numbers' && hasNumbers) || a.combos.length > 0 || hasLatest) lines.push({ label: 'It shows', value: shows.length ? cap(shows.join(' · ')) : 'Nothing extra', step: 'shows' });
+  const avoiding = a.record === 'done' && a.avoid;
+  if (avoiding && a.streak) shows.push('clean streak');
+  if ((a.record === 'numbers' && hasNumbers) || a.combos.length > 0 || hasLatest || avoiding) lines.push({ label: 'It shows', value: shows.length ? cap(shows.join(' · ')) : 'Nothing extra', step: 'shows' });
 
   // Tools.
   const tools: string[] = [];

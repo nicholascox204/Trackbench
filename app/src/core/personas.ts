@@ -8,7 +8,7 @@ import { hash01 } from './engine';
 import { dayKeyOf, planFor } from './plan';
 import { isDueOn, scheduleOf } from './schedule';
 import { draftFromAnswers } from './setup';
-import { TEMPLATES } from './templates';
+import { DEMO_PLANS, TEMPLATES } from './templates';
 import { addDays, startOfDay } from './time';
 import { joinPicks } from './choices';
 import type { Entry, Field, Settings, Slot, Tracker } from './types';
@@ -69,11 +69,13 @@ export function buildPersona(p: Persona, settings: Settings, systemId: string | 
     const tpl = TEMPLATES.find((x) => x.id === tid);
     if (!tpl) return;
     let a = tpl.make();
+    // These people set a daily limit on caffeine themselves (templates start with no target), so the limit panel has data.
+    if (tid === 'caffeine') a = { ...a, goal: 'number', goals: [{ id: 'limit', measure: 'count', cmp: 'max', value: 4, value2: 4 }] };
     const items = ITEMS[tid];
     if (a.log === 'plan') {
       a = a.planStyle === 'items' && items
         ? { ...a, planMode: 'example', sample: [{ label: '', slots: items.map((name, i) => ({ id: `${tid}-${i}`, name })) }] }
-        : { ...a, planMode: 'example' };
+        : { ...a, planMode: 'example', sample: DEMO_PLANS()[tid] ?? a.sample };
     }
     const draft = draftFromAnswers(a, settings);
     const id = `${p.id}-${tid}`;

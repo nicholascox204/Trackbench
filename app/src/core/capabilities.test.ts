@@ -6,6 +6,8 @@ import { goalProgress } from './goals';
 import { computeDay } from './measures';
 import { expectedOn } from './measures';
 import { scheduleText } from './schedule';
+import { dayKeyOf } from './plan';
+import { addDays, startOfDay } from './time';
 import { answersFromPreset, answersFromTracker, draftFromAnswers, summaryLines, type Answers, type Combo } from './setup';
 import { TEMPLATES } from './templates';
 import { formatFieldValue, formatMeasure, measureToDisplay } from './units';
@@ -118,8 +120,9 @@ test('fasting: the hours between the last meal and the first', () => {
   assert.equal(dayResult(t, [entry({ last: 20 * 60, first: 12 * 60 })], day(2026, 11, 17)).success, true, 'a day counts when it is logged');
 });
 
-test('a 30-day challenge is only active for thirty days', () => {
-  const t = make(tpl('challenge'));
+test('a tracker given thirty days is only active for thirty days', () => {
+  const now = startOfDay(Date.now());
+  const t = make({ ...tpl('habit'), log: 'free', record: 'done', window: { from: dayKeyOf(now), until: dayKeyOf(addDays(now, 29)) } } as Answers);
   assert.ok(t.window?.from && t.window?.until);
   const from = new Date(`${t.window!.from}T00:00:00`).getTime();
   const last = new Date(`${t.window!.until}T00:00:00`).getTime();

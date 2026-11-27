@@ -43,7 +43,7 @@ test('strict credit gives nothing for anything short, and 1 for met', () => {
 });
 
 test('a plan: the share of the way to the threshold; logged and clean are all or nothing', () => {
-  const base = draftFromAnswers(TEMPLATES.find((x) => x.id === 'gym-split')!.make(), SETTINGS) as unknown as Tracker;
+  const base = draftFromAnswers({ ...TEMPLATES.find((x) => x.id === 'gym-split')!.make(), finishPlan: true }, SETTINGS) as unknown as Tracker; // finishing the plan is set by the person (goals), not the template
   assert.equal(base.success.mode, 'plan');
   near(trackerProgress(base, { completion: 60 }), 0.75);
   near(trackerProgress(base, { completion: 80 }), 1);

@@ -4,7 +4,7 @@ import { dayKeyOf } from './plan';
 import { answersFromPreset, answersFromTracker, draftFromAnswers, type Answers } from './setup';
 import { daysBetween, isDueOn, lastDayOfMonth, normalizeSchedule, scheduleOf, scheduleText, startingSchedule, weekdaysOf } from './schedule';
 import { expectedOn } from './measures';
-import { TEMPLATES } from './templates';
+import { DEMO_PLANS, TEMPLATES } from './templates';
 import type { Schedule, Settings, Tracker } from './types';
 
 const SETTINGS: Settings = { units: 'imperial' };
@@ -155,7 +155,7 @@ test('switching kind starts from a sensible setting and weekdays are tidied', ()
 });
 
 test('editing a planned tracker shows the names its days already have', () => {
-  const a = { ...tpl('gym-split'), planMode: 'example' as const, schedule: { kind: 'weekdays', days: [1, 3, 5] } as Schedule };
+  const a = { ...tpl('gym-split'), planMode: 'example' as const, sample: DEMO_PLANS()['gym-split'], schedule: { kind: 'weekdays', days: [1, 3, 5] } as Schedule };
   const t = make(a);
   const back = answersFromTracker(t, SETTINGS, false);
   assert.deepEqual([back.dayNames[1], back.dayNames[3], back.dayNames[5]], ['Push', 'Pull', 'Legs']);
@@ -163,7 +163,7 @@ test('editing a planned tracker shows the names its days already have', () => {
 });
 
 test('a plan with one shared list can run on any rhythm, not just set weekdays', () => {
-  const base = { ...tpl('full-body'), planMode: 'example' as const, samePlan: true };
+  const base = { ...tpl('full-body'), planMode: 'example' as const, sample: DEMO_PLANS()['full-body'], samePlan: true };
   const monthly = make({ ...base, schedule: { kind: 'monthly', day: 'last' } });
   assert.ok(expectedOn(monthly, day(2026, 11, 30)), 'due on the last day, with the list');
   assert.ok(!expectedOn(monthly, day(2026, 11, 16)));

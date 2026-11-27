@@ -280,9 +280,6 @@ export function RecordStep({
           value={a.avoid} onChange={(v) => set(v ? { avoid: true, goals: [], finishPlan: false } : { avoid: false })}
         />
       ) : null}
-      {a.record === 'done' && a.avoid ? (
-        <Toggle label="Show a streak" value={a.streak} onChange={(v) => set({ streak: v })} />
-      ) : null}
 
       {writing ? (
         <View style={{ marginTop: 16 }}>
@@ -298,6 +295,20 @@ export function RecordStep({
                 ]}
                 onSelect={(k) => set({ planStyle: k as 'sets' | 'items' })}
               />
+              <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Each item is called</Text>
+              <TextInput
+                style={[s.input, { marginBottom: 10 }]} value={a.terms?.item ?? DEFAULT_TERMS.item} maxLength={16} selectTextOnFocus
+                onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), item: v } })}
+              />
+              {a.planStyle === 'sets' ? (
+                <View>
+                  <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Each row is called</Text>
+                  <TextInput
+                    style={[s.input, { marginBottom: 10 }]} value={a.terms?.row ?? DEFAULT_TERMS.row} maxLength={16} selectTextOnFocus
+                    onChangeText={(v) => set({ terms: { ...DEFAULT_TERMS, ...(a.terms ?? {}), row: v } })}
+                  />
+                </View>
+              ) : null}
               </View>
             ) : null}
             {mode === 'free' ? (
