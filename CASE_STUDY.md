@@ -2191,3 +2191,7 @@ It looked like Google treating sign-in as sign-up, but the app never distinguish
 ## 2026-11-27 — Backing up is invisible; sign-out never blocks on settings
 
 Sign-out refused with "the latest changes could not be backed up", even though the server had accepted every request. The check counted settings, which change almost constantly (the tracker last opened is saved in them), so there was nearly always "something unsent". Decided, with Nick: backing up is automatic and not something a person should manage. The "Backed up… Tap to back up now" line is gone from the Account card. Sign-out makes one last send and then goes ahead; it stops only when trackers or entries made on this phone would really be lost (made offline, not yet sent), and then says so in plain words.
+
+## 2026-11-27 — Signed in means backed up; the backup switch is gone
+
+Sign-out kept refusing because backing up had quietly switched itself off. Whether the app backed up was a setting (cloudSync); sign-out set it off on the phone, that "off" could travel up with the settings, and the next sign-in brought it back down, so nothing was sent again and new entries piled up unsent. Nick asked for syncing to be simpler: Trackbench is phone-first, and the account exists for safety and, later, social features, not for juggling devices. Decided: there is no backup setting. Signed in means backed up, decided by the session alone, so no stored value can get out of step. The old switch is removed from Settings.

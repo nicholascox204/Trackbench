@@ -68,7 +68,7 @@ let current: Promise<void> | null = null; // the sync running now, so a caller c
 
 // Send and fetch changes a few seconds after the last one, so a burst of taps is one sync.
 function queueSync(): void {
-  if (!db || !state.settings.cloudSync || syncTimer) return;
+  if (!db || !signedIn || syncTimer) return;
   syncTimer = setTimeout(() => { syncTimer = null; void syncNow(); }, 4000);
 }
 
@@ -80,7 +80,7 @@ export function syncNow(opts?: { pull?: boolean }): Promise<void> {
 }
 
 async function runSync(pull: boolean): Promise<void> {
-  if (!db || syncing || !state.settings.cloudSync) return;
+  if (!db || syncing || !signedIn) return;
   const cloud = await import('./cloud');
   if (!cloud.cloudConfigured) return;
   syncing = true;
@@ -113,7 +113,7 @@ async function runSync(pull: boolean): Promise<void> {
     cloud.setCloudStatus({ phase: 'error', message: cloud.friendlyError(e) });
   } finally {
     syncing = false;
-    if (version !== startedAt && state.settings.cloudSync) void syncNow(); // something changed while this ran: send that too
+    if (version !== startedAt && signedIn) void syncNow(); // something changed while this ran: send that too
   }
 }
 
@@ -185,7 +185,8 @@ export async function restoreAccount(): Promise<void> {
       if (current) await Promise.race([current, wait(RESTORE_LIMIT)]); // a sync from before signing in finishes first
       syncing = false; current = null;
       mark('wait');
-      setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });
+      signedIn = true; // a restore only runs signed in; do not wait for the app to pass the session on
+      setState({ ...state, settings: { ...state.settings, skippedSignIn: false } });
       if (db) { await saving; await db.run("update kv set dirty = 0, updated_at = 0 where key = 'settings'"); }
       mark('prepare');
       const done = await Promise.race([syncNow().then(() => true), wait(RESTORE_LIMIT).then(() => false)]);
@@ -238,9 +239,10 @@ async function leaveAccount(): Promise<void> {
   const auth = await import('./auth');
   const keep = { appearance: state.settings.appearance, units: state.settings.units, welcomed: state.settings.welcomed };
   if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  signedIn = false; // nothing more is sent from here: the phone is about to be cleared
   await auth.signOutLocal();
   await resetAll();
-  setState({ ...state, settings: { ...state.settings, ...keep, cloudSync: false } });
+  setState({ ...state, settings: { ...state.settings, ...keep } });
 }
 
 // Sign out. A last send goes first (quick: usually only settings are waiting), then the phone is cleared; it all comes
@@ -274,9 +276,12 @@ export async function deleteMyAccount(): Promise<string | null> {
   return null;
 }
 
-export function setCloudSync(on: boolean): void {
-  setState({ ...state, settings: { ...state.settings, cloudSync: on } });
-  if (on) void syncNow();
+// Backing up has no switch: signed in means backed up. The app tells the store when the session starts and ends.
+let signedIn = false;
+export function setSignedIn(on: boolean): void {
+  const was = signedIn;
+  signedIn = on;
+  if (on && !was && !pending) void syncNow();
 }
 
 function setState(next: AppState) {

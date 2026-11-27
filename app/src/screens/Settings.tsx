@@ -3,7 +3,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
-import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setCloudSync, setDevSync, syncNow, signOutSafely, deleteMyAccount, askToSignIn, setName, setUnits, setWeekStart, useAppState } from '../core/store';
+import { deleteData, loadNickSetup, mergeBackup, resetAll, setOpenOn, seedDemo, loadPersona, setAppearance, setDevSync, syncNow, signOutSafely, deleteMyAccount, askToSignIn, setName, setUnits, setWeekStart, useAppState } from '../core/store';
 import { exportBackup, exportReadable, parseBackup } from '../core/transfer';
 import { minuteText, usualMinute } from '../core/startPick';
 import { resetAllPermissions } from '../core/devReset';
@@ -170,16 +170,7 @@ export function Settings() {
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Developer</Text>
         <Card>
           <Button label="Load my gym, nutrition and weight setup" variant="ghost" onPress={loadNickSetup} style={{ marginBottom: 8 }} />
-          {cloudConfigured && !session.userId ? (
-            <View style={{ marginBottom: 8 }}>
-              <Toggle label="Back up to the cloud" value={!!state.settings.cloudSync} onChange={setCloudSync} />
-              {state.settings.cloudSync ? (
-                <Tap onPress={() => void syncNow()}>
-                  <Muted>{cloudLine}</Muted>
-                </Tap>
-              ) : <Muted>Off: your data stays on this phone.</Muted>}
-            </View>
-          ) : null}
+          {cloudConfigured && session.userId ? <Tap onPress={() => void syncNow()} style={{ marginBottom: 8 }}><Muted>{cloudLine}</Muted></Tap> : null}
           <Toggle label="Keep trackers in step with presets" value={!!state.settings.devSync} onChange={setDevSync} />
           <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Example people (replaces everything tracked)</Text>
           {PERSONAS.map((p) => (
