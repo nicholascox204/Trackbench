@@ -17,3 +17,22 @@ test('no template sets anything Build your own cannot', () => {
     assert.equal(a.sample, undefined, `${t.id}: sample list`);
   }
 });
+
+import { answersFromPreset, answersFromTracker, draftFromAnswers, summaryLines } from './setup';
+import { fieldUnit, toDisplay } from './units';
+import type { Settings, Tracker } from './types';
+
+test('a counter can follow the units and add decimals, and reads back the same', () => {
+  const metric = { units: 'metric' } as Settings;
+  const imperial = { units: 'imperial' } as Settings;
+  const a = { ...answersFromPreset('counter'), name: 'Juice', countKind: 'volume' as const, countStep: 250, countUnit: '' };
+  const t = { ...draftFromAnswers(a, metric), id: 'j', systemId: null, createdAt: 0 } as Tracker;
+  const f = t.fields.find((x) => x.id === 'n')!;
+  assert.equal(fieldUnit(f, metric), 'ml');
+  assert.equal(Math.round(toDisplay(f, f.step!, metric)), 250, '250 ml a tap');
+  assert.notEqual(fieldUnit(f, imperial), 'ml', 'the same counter shows imperial units for an imperial person');
+  assert.equal(answersFromTracker(t, metric, false).countStep, 250, 'reads back as 250');
+  const half = draftFromAnswers({ ...answersFromPreset('counter'), name: 'Half', countStep: 0.5, countUnit: '' }, metric);
+  assert.equal(half.fields[0].step, 0.5, 'a tap can add half');
+  assert.ok(summaryLines(a, metric).some((l) => l.value === 'Tap to count, 250 ml a tap'));
+});

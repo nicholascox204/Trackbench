@@ -1940,3 +1940,7 @@ Nick wants to audit every option in one place, Build your own, and know that a f
 - Show a streak moved from You log to It shows, renamed Clean streak, since it changes what the tracker displays, not how you log.
 
 Asked whether the code could enforce this: it already shares the code (a template is a set of setup answers), so the gap was settings with no control. A new test, parity.test.ts, fails if any template sets one of them (goals, targets, finishing the plan, end dates, sample lists), so the rule cannot drift back.
+
+## 2026-11-26: Counters get the same unit choice as numbers, and decimal taps
+
+A counter's unit was a free text box, so 250 ml a tap stayed ml for someone who uses ounces. It now uses the same Unit list as any number: Just a number, the four kinds that follow the units (weight, distance, height or length, liquid volume), the fixed labels (minutes, hours, calories, grams, money), or your own label. Amounts that follow the units are stored in the base unit like every other number, so changing units later shows the same amount converted. Each tap can now add a decimal (0.5, 0.1), on the principle Nick set: presets cover most people, and setup stays as open as possible for niche needs, adding anything that is clear and costs nothing to those who never touch it. A daily target count was considered and left with goals. A test checks a 250 ml counter shows ml in metric, converts for imperial, reads back as 250, and that half a tap works.

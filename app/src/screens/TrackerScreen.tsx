@@ -506,7 +506,9 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
   const weekdayOfDay = listIndex; // where this day's list sits in the plan (its weekday, or its day in a block)
   // A counter whose taps add an amount (250 ml) holds it in one field; the total is that field's measure.
   const tapTotal = t.input === 'tap' ? t.measures.find((m) => m.id === 'n') : undefined;
-  const tapStep = t.fields.find((f) => f.id === 'n')?.step ?? 1;
+  const tapField = t.fields.find((f) => f.id === 'n');
+  const tapStep = tapField?.step ?? 1; // stored units (kg, ml…) when the counter follows the units
+  const shown = (v: number): number => (tapField ? Math.round(toDisplay(tapField, v, settings) * 100) / 100 : v);
   // A counter holds at most 99 taps' worth (typing a huge total would make that many entries), and warns when it is over its limit.
   const tapCap = tapStep * 99;
   const tapNow = t.input === 'tap' ? (tapTotal ? measures.n ?? 0 : measures.count ?? 0) : 0;
@@ -654,16 +656,16 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
                   <View style={{ width: 84 }}>
                     <NumInput
                       key={`total${day}-${totalKey}-${tapTotal ? measures.n ?? 0 : measures.count ?? 0}`}
-                      value={tapTotal ? measures.n ?? 0 : measures.count ?? 0}
+                      value={tapTotal ? shown(measures.n ?? 0) : measures.count ?? 0}
                       disabled={!editable}
                       onCommit={(v) => { typedTotal.current = v; }}
                       onEnd={() => {
                         const v = typedTotal.current;
                         typedTotal.current = undefined;
-                        if (v !== undefined) setTapTotal(t.id, day, Math.min(v, tapCap), !!tapTotal);
+                        if (v !== undefined) setTapTotal(t.id, day, Math.min(tapField && tapTotal ? fromDisplay(tapField, v, settings) : v, tapCap), !!tapTotal);
                         setTotalKey((k) => k + 1);
                       }}
-                      maxLength={String(tapCap).length}
+                      maxLength={String(shown(tapCap)).length + 3}
                       style={{ fontSize: 24, fontWeight: '700', height: 46, borderRadius: 8, ...(overLimit ? { color: colors.warn, borderColor: colors.warn } : {}) }}
                     />
                   </View>
@@ -682,13 +684,13 @@ export function TrackerScreen({ id, setup }: { id: string; setup: () => void }) 
                   ) : null}
                   <Button
                     disabled={t.input === 'tap' && tapNow >= tapCap}
-                    label={t.input === 'check' ? (t.avoid ? (doneNow ? 'Undo slip' : 'I slipped') : doneNow ? 'Undo' : 'Mark done') : `+${formatNumber(tapStep)}`}
+                    label={t.input === 'check' ? (t.avoid ? (doneNow ? 'Undo slip' : 'I slipped') : doneNow ? 'Undo' : 'Mark done') : `+${formatNumber(shown(tapStep))}`}
                     onPress={() => (t.input === 'check' && doneNow ? undoLast(t.id, day) : logFree(t.id, tapTotal ? { n: tapStep } : {}, day))}
                   />
                 </View>
               ) : null}
             </View>
-            {overLimit ? <Text style={{ color: colors.warn, fontSize: 14, fontWeight: '600', marginTop: 8 }}>Over your limit by {formatNumber(tapNow - (tapLimit as number))}{tapTotal && measureUnit(t, tapTotal, settings) ? ` ${measureUnit(t, tapTotal, settings)}` : ''}</Text> : null}
+            {overLimit ? <Text style={{ color: colors.warn, fontSize: 14, fontWeight: '600', marginTop: 8 }}>Over your limit by {formatNumber(shown(tapNow - (tapLimit as number)))}{tapTotal && measureUnit(t, tapTotal, settings) ? ` ${measureUnit(t, tapTotal, settings)}` : ''}</Text> : null}
           </Card>
         )}
 

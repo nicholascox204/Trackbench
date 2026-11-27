@@ -124,6 +124,31 @@ function FieldEditor({ f, onChange, onRemove, onMove, first, last, settings, pla
   );
 }
 
+// A counter's unit uses the same list as a number's.
+const COUNT_UNITS: DropdownOption[] = [
+  { key: 'none', label: 'Just a number' },
+  ...KINDS.map((k) => ({ key: k.kind, label: k.label })),
+  ...Object.entries(FIXED).map(([k, v]) => ({ key: k, label: v.label })),
+  { key: 'own', label: 'Your own label' },
+];
+function counterUnitKey(a: Answers): string {
+  if (a.countKind) return a.countKind;
+  const fixed = Object.entries(FIXED).find(([, v]) => v.unit === a.countUnit);
+  if (fixed) return fixed[0];
+  return a.countUnit ? 'own' : 'none';
+}
+function counterUnitLabel(a: Answers, settings: Settings): string {
+  if (a.countKind) return `${KINDS.find((k) => k.kind === a.countKind)?.label} (${systemDefaultUnit(a.countKind, settings)})`;
+  const fixed = Object.values(FIXED).find((v) => v.unit === a.countUnit);
+  return fixed ? fixed.label : a.countUnit || 'Just a number';
+}
+function pickCounterUnit(k: string, a: Answers): Partial<Answers> {
+  if (k === 'none') return { countKind: undefined, countUnit: '' };
+  if (k === 'own') return { countKind: undefined, countUnit: a.countKind || FIXED[counterUnitKey(a)] ? '' : a.countUnit };
+  if (FIXED[k]) return { countKind: undefined, countUnit: FIXED[k].unit };
+  return { countKind: k as Answers['countKind'], countUnit: '' };
+}
+
 const ADD_TYPES: { type: Field['type']; label: string; sub: string }[] = [
   { type: 'number', label: 'Number', sub: 'Anything you count or measure: minutes, a height, pages.' },
   { type: 'rating', label: 'Rating', sub: 'Tap a score from 1 to 5 or 1 to 10.' },
@@ -264,14 +289,25 @@ export function RecordStep({
       </View>
       {a.record === 'count' ? (
         <View style={{ marginTop: 6 }}>
+          {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}
+          <Dropdown
+            label="Unit" value={counterUnitLabel(a, settings)} options={COUNT_UNITS} selected={counterUnitKey(a)}
+            onSelect={(k) => set(pickCounterUnit(k, a))}
+          />
+          {counterUnitKey(a) === 'own' ? (
+            <TextInput
+              style={[s.input, { marginTop: -6, marginBottom: 12 }]} value={a.countUnit} maxLength={12} onChangeText={(v) => set({ countUnit: v })}
+              placeholder="Label" placeholderTextColor={colors.muted}
+            />
+          ) : null}
           <View style={[s.row, { justifyContent: 'space-between', marginBottom: 10 }]}>
             <Text style={{ color: colors.text, fontSize: 15 }}>Each tap adds</Text>
-            <Stepper value={a.countStep} min={1} max={5000} step={a.countStep >= 100 ? 50 : a.countStep >= 10 ? 5 : 1} onChange={(v) => set({ countStep: Math.max(1, Math.round(v)) })} />
+            <Stepper
+              value={a.countStep} min={0.1} max={5000}
+              step={a.countStep < 1 || (a.countStep === 1 && a.countStep % 1 !== 0) ? 0.1 : a.countStep >= 100 ? 50 : a.countStep >= 10 ? 5 : 1}
+              onChange={(v) => set({ countStep: Math.max(0.1, Math.round(v * 100) / 100) })}
+            />
           </View>
-          <TextInput
-            style={s.input} value={a.countUnit} maxLength={12} onChangeText={(v) => set({ countUnit: v })}
-            placeholder="Unit" placeholderTextColor={colors.muted}
-          />
         </View>
       ) : null}
       {a.record === 'done' ? (

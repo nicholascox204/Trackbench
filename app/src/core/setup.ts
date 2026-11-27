@@ -9,7 +9,7 @@ import { normalizeSchedule, scheduleOf, scheduleText, weekdaysOf } from './sched
 import { getPreset } from './presets';
 import { stepsFieldIn } from './autoFields';
 import { DEFAULT_TERMS, plural, SETS_TERMS } from './terms';
-import { fieldUnit, formatNumber, measureFromDisplay, measureToDisplay, measureUnit, round2, unitForSystem } from './units';
+import { fieldUnit, formatNumber, fromDisplay, measureFromDisplay, measureToDisplay, measureUnit, round2, toDisplay, unitForSystem } from './units';
 import { canRecordRun } from './runImport';
 import { spanPair } from './spanClock';
 import { HEALTH_LABEL, healthKind, type HealthKind } from './healthImport';
@@ -96,6 +96,7 @@ export interface Answers {
   daily: boolean; // one reading a day; saving again replaces it
   countStep: number; // a counter: how much each tap adds (1 by default)
   countUnit: string; // a counter: what it counts, like glasses or ml (blank for plain taps)
+  countKind?: UnitKind; // a counter that measures something that follows the units (weight, distance, length, volume); countStep is then in the shown unit
   terms?: Terms; // what a planned tracker calls things
   sample?: PlanDay[]; // a ready-made plan this starting point brings
   templateId?: string; // set when it came from a template: those go straight to the summary
@@ -198,8 +199,7 @@ export function answersFromTracker(t: Tracker, settings: Settings, hasSystem: bo
       id: m.id, name: m.name, a: (m.calc as { a: string }).a, b: (m.calc as { b: string }).b,
       fn: (m.calc.op === 'sumProduct' ? 'mul' : m.calc.op === 'ratio' ? 'div' : (m.calc as { fn: 'add' | 'sub' | 'span' }).fn) as ComboFn,
     })),
-    countStep: t.input === 'tap' ? t.fields.find((f) => f.id === 'n')?.step ?? 1 : 1,
-    countUnit: t.input === 'tap' ? t.fields.find((f) => f.id === 'n')?.unit ?? '' : '',
+    ...counterAnswers(t, settings),
     units: unitsOfTracker(t), avoid: !!t.avoid, streak: t.streak !== false, daily: !!t.daily, terms: t.terms,
     startGoals: [],
     system: hasSystem && t.systemId !== null,
@@ -233,13 +233,13 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
   let input: InputKind = 'check';
   let primary = 'done';
 
-  const amounts = a.record === 'count' && (a.countStep > 1 || a.countUnit.trim() !== '');
+  const amounts = a.record === 'count' && (a.countStep !== 1 || a.countUnit.trim() !== '' || !!a.countKind);
   if (a.record === 'count') {
     input = 'tap';
     if (amounts) {
       // Each tap adds an amount, so the counter holds one number field and totals it.
-      const unit = a.countUnit.trim();
-      fields = [{ id: 'n', name: unit || 'Amount', type: 'number', step: Math.max(1, a.countStep), default: Math.max(1, a.countStep), ...(unit ? { unit } : {}) }];
+      fields = [counterField(a, settings)];
+      const unit = a.countKind ? '' : a.countUnit.trim();
       measures = [{ id: 'n', name: unit ? unit[0].toUpperCase() + unit.slice(1) : 'Total', calc: { op: 'sum', field: 'n' } }, { id: 'count', name: 'Taps', calc: { op: 'count' } }];
       primary = 'n';
     } else {
@@ -461,6 +461,35 @@ export function changeUnits(a: Answers, to: Answers['units'], settings: Settings
 
 const shellOf = (draft: TrackerDraft): Tracker => ({ ...draft, id: 'new', systemId: null, createdAt: 0 });
 
+// A counter's one field. An amount that follows the units is stored in the base unit (kg, km, cm, ml) like any other number,
+// so switching between metric and imperial later shows the same amount converted.
+export function counterField(a: Answers, settings: Settings): Field {
+  const step = a.countStep > 0 ? a.countStep : 1;
+  if (a.countKind) {
+    const override = a.units !== 'default' ? { unitOverride: unitForSystem(a.countKind, a.units) } : {};
+    const shell: Field = { id: 'n', name: KIND_NAME[a.countKind], type: 'number', unitKind: a.countKind, ...override };
+    const base = round2(fromDisplay(shell, step, settings) * 1000) / 1000;
+    return { ...shell, step: base, default: base };
+  }
+  const unit = a.countUnit.trim();
+  return { id: 'n', name: unit || 'Amount', type: 'number', step, default: step, ...(unit ? { unit } : {}) };
+}
+const KIND_NAME: Record<UnitKind, string> = { weight: 'Weight', distance: 'Distance', length: 'Length', volume: 'Volume' };
+
+// Reading a saved counter back into the answers: the tap amount in the unit it is shown in.
+function counterAnswers(t: Tracker, settings: Settings): Pick<Answers, 'countStep' | 'countUnit' | 'countKind'> {
+  const f = t.input === 'tap' ? t.fields.find((x) => x.id === 'n') : undefined;
+  if (!f) return { countStep: 1, countUnit: '' };
+  if (f.unitKind) return { countStep: round2(toDisplay(f, f.step ?? 1, settings)), countUnit: '', countKind: f.unitKind };
+  return { countStep: f.step ?? 1, countUnit: f.unit ?? '' };
+}
+
+function counterWords(a: Answers, settings: Settings): string {
+  const unit = a.countKind ? fieldUnit(counterField(a, settings), settings) ?? '' : a.countUnit.trim();
+  if (a.countStep === 1 && !unit) return 'Tap to count';
+  return `Tap to count, ${formatNumber(a.countStep)}${unit ? ' ' + unit : ''} a tap`;
+}
+
 export function nameProblem(name: string, others: string[]): '' | 'empty' | 'taken' {
   const n = name.trim().toLowerCase();
   if (!n) return 'empty';
@@ -491,7 +520,7 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const named = draft.fields.some((f) => f.label) ? ', each named' : '';
   const logging =
     a.record === 'done' ? (a.avoid ? 'Tap once to log a slip' : 'Tap once when done')
-    : a.record === 'count' ? (a.countStep > 1 || a.countUnit.trim() ? `Tap to count${a.countStep > 1 ? `, ${a.countStep} at a time` : ''}${a.countUnit.trim() ? ` (${a.countUnit.trim()})` : ''}` : 'Tap to count')
+    : a.record === 'count' ? counterWords(a, settings)
     : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'One value a day' : `Add entries as you go${named}`}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;
   lines.push({ label: 'You log', value: empty ? 'Nothing yet' : logging, step: 'record' });
