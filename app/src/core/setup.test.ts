@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { versionFor } from './plan';
-import { answersFromPreset, answersFromTracker, draftFromAnswers, previewText, stepsFor, summaryLines } from './setup';
+import { answersFromPreset, answersFromTracker, draftFromAnswers, previewText, stepsFor, planWords, summaryLines } from './setup';
 import type { Settings, Tracker } from './types';
 
 const imperial: Settings = { units: 'imperial' };
@@ -78,7 +78,7 @@ test('editing reopens the same answers, goals set elsewhere included', async () 
 test('descriptions read as plain language', () => {
   const a = answersFromPreset('set-plan');
   assert.match(previewText(a, imperial), /weight · reps · plan Mon Wed Fri/);
-  assert.ok(summaryLines(a, imperial).some((l) => l.value.includes('A list per weekday')));
+  assert.ok(planWords(a).includes('A list per weekday'));
 });
 
 test('a range goal and a show-up goal together need both to count as a good day', async () => {

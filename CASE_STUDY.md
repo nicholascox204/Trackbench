@@ -2013,3 +2013,8 @@ The checkbox/counter/entry version still nested a checklist inside "a checkbox",
 
 ## 2026-11-27: The five ways go in a dropdown
 Five full-width cells looked awkward, with short labels in long cells. The five ways now sit in one compact dropdown that reads "You log · By Ticking things off". The forks under each way stay visible on screen.
+
+## 2026-11-27: One add pattern, one chevron
+- **Adding a thing** to a checklist used a text box and an Add button, while the fields below used "+ Add something" that drops in a row you name. Two patterns on one screen broke continuity. Ticking now uses the same pattern: "+ Add a thing" drops in a row you name in place. "Each one is called" sits above the list.
+- **The circled accent chevron** is now a shared component, used on every row that opens something, starting with the summary.
+- **The summary row reads "You log by"**, followed by the way, so the sentence finishes itself.

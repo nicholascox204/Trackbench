@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { nextList, planIndexFor, versionFor } from './plan';
-import { answersFromPreset, answersFromTracker, draftFromAnswers, scheduleFromAnswers, summaryLines } from './setup';
+import { answersFromPreset, answersFromTracker, draftFromAnswers, scheduleFromAnswers, planWords, summaryLines } from './setup';
 import { startOfDay } from './time';
 import type { Entry, Settings, Tracker } from './types';
 
@@ -70,6 +70,6 @@ test('editing a rotation brings its lists back, and keeps what was built in them
 
 test('the summary says the lists are chosen each time', () => {
   const t = rotation();
-  const line = summaryLines(answersFromTracker(t, SETTINGS, false), SETTINGS, true).find((l) => l.label === 'You log')?.value ?? '';
+  const line = planWords(answersFromTracker(t, SETTINGS, false));
   assert.ok(line.startsWith('Choose each time (Push, Pull, Legs)'), line);
 });

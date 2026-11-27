@@ -100,7 +100,7 @@ test('a counter can add more than one and say what it counts', () => {
   assert.equal(back.countStep, 250);
   assert.equal(back.countUnit, 'ml');
   assert.equal(back.custom.length, 0, 'the amount is a setting, not a thing entered');
-  assert.equal(summaryLines(back, imperial).find((l) => l.label === 'You log')?.value, 'Tap to count, 250 ml a tap');
+  assert.equal(summaryLines(back, imperial).find((l) => l.label === 'You log by')?.value, 'Counting something, 250 ml a tap');
 });
 
 test('a plain counter is unchanged, and water now counts glasses', () => {

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { CATEGORIES, POPULAR_COUNT, TEMPLATES, searchTemplates, type Template } from '../core/templates';
-import { Icon, Muted, Tap, TrackerIcon, colors, s } from '../ui/kit';
+import { Go, Icon, Muted, Tap, TrackerIcon, colors, s } from '../ui/kit';
 import { px } from '../ui/theme';
 
 export function StartPicker({
@@ -16,12 +16,7 @@ export function StartPicker({
   const q = query.trim();
   const results = searchTemplates(query);
 
-  // The end of every row: a chevron in a tinted circle, a check once you have it.
-  const badge = (added = false) => (
-    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={added ? 'checkmark' : 'chevron-forward'} size={16} color={colors.accent} />
-    </View>
-  );
+  const badge = (added = false) => <Go done={added} />;
   // Build your own is an ordinary row, same placements as the templates; it sits alone above Popular.
   const card = (label: string, onPress: () => void) => (
     <Tap onPress={onPress}>

@@ -34,5 +34,5 @@ test('a counter can follow the units and add decimals, and reads back the same',
   assert.equal(answersFromTracker(t, metric, false).countStep, 250, 'reads back as 250');
   const half = draftFromAnswers({ ...answersFromPreset('counter'), name: 'Half', countStep: 0.5, countUnit: '' }, metric);
   assert.equal(half.fields[0].step, 0.5, 'a tap can add half');
-  assert.ok(summaryLines(a, metric).some((l) => l.value === 'Tap to count, 250 ml a tap'));
+  assert.ok(summaryLines(a, metric).some((l) => l.value === 'Counting something, 250 ml a tap'));
 });

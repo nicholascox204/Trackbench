@@ -25,7 +25,7 @@ import { ScheduleSection } from './ScheduleSection';
 import { TargetStep } from './TargetStep';
 import { Totals } from './RecordStep';
 import { RecordStep } from './RecordStep';
-import { BackButton, ScreenHeader } from '../ui/kit';
+import { BackButton, ScreenHeader, Go } from '../ui/kit';
 import { Dropdown } from '../ui/Dropdown';
 import { NameCard } from './NameCard';
 import { StartPicker } from './StartPicker';
@@ -327,7 +327,7 @@ export function SetupFlow({
                     <Text style={{ color: colors.muted, fontSize: 12 }}>{l.label}</Text>
                     <Text style={{ color: colors.text, fontSize: 15 }}>{l.value}</Text>
                   </View>
-                  <Icon name="chevron-forward" size={18} color={colors.muted} />
+                  <Go />
                 </Card>
               </Tap>
             ))}

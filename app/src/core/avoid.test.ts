@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { bestClean, cleanDays } from './derive';
-import { answersFromPreset, answersFromTracker, draftFromAnswers, summaryLines } from './setup';
+import { answersFromPreset, answersFromTracker, draftFromAnswers, planWords, summaryLines } from './setup';
 import type { Entry, Settings, Tracker } from './types';
 
 const SETTINGS: Settings = { units: 'imperial' };
@@ -25,7 +25,7 @@ test('a streak that is still going can be the best', () => {
 });
 
 test('the summary says whether the lists are the same every day or one for each day', () => {
-  const lines = (patch: object) => summaryLines({ ...answersFromPreset('set-plan'), ...patch } as never, SETTINGS).find((l) => l.label === 'You log')?.value ?? '';
+  const lines = (patch: object) => planWords({ ...answersFromPreset('set-plan'), ...patch } as never);
   assert.ok(lines({ samePlan: true }).startsWith('The same list'));
   const each = lines({ samePlan: false, schedule: { kind: 'weekdays', days: [1, 3, 5] }, dayNames: { 1: 'Push', 3: 'Pull', 5: 'Legs' } });
   assert.ok(each.startsWith('A list per weekday (Push, Pull, Legs)'), each);

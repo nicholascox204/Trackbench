@@ -268,8 +268,9 @@ export function RecordStep({
     set({ ticks: next, record: 'numbers', avoid: false, planStyle: 'items', samePlan: true, finishPlan: false });
     if (mode !== 'plan') setMode('plan');
   };
-  const [tickDraft, setTickDraft] = useState('');
-  const addTick = () => { const n = tickDraft.trim(); if (!n) return; setTicks([...ticks, { id: newId(), name: n }]); setTickDraft(''); };
+  // Adding a thing works like adding something to fill in: a new row appears, named in place.
+  const [justAdded, setJustAdded] = useState<string | null>(null);
+  const addTick = () => { const id = newId(); setTicks([...ticks, { id, name: '' }]); setJustAdded(id); };
   const pickWay = (w: Way) => {
     if (w === way) return;
     if (w === 'tick') return ticks.length ? setTicks(ticks) : set({ record: 'done', avoid: false, goal: 'none', log: 'free', daily: false });
@@ -300,29 +301,34 @@ export function RecordStep({
   const enterHeading = tickList ? `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`
     : mode === 'plan' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in`
     : mode === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
-  const row = (name: string, ghost: boolean, onRemove?: () => void, key?: string) => (
-    <View key={key} style={[s.row, { paddingVertical: 10, borderBottomWidth: px(1), borderBottomColor: colors.border }]}>
-      <Icon name="square-outline" size={20} color={ghost ? colors.hint : colors.accent} />
-      <Text numberOfLines={1} style={{ flex: 1, marginLeft: 10, color: ghost ? colors.hint : colors.text, fontSize: 15 }}>{name}</Text>
-      {onRemove ? <Tap onPress={onRemove} accessibilityLabel={`Remove ${name}`}><Icon name="close" size={18} color={colors.muted} /></Tap> : null}
-    </View>
+  // A thing to tick off, drawn like the rows of things you fill in.
+  const tickRow = (x: { id: string; name: string } | null) => (
+    <Card key={x?.id ?? 'self'} style={{ padding: 0, marginBottom: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: x ? 2 : 12 }}>
+        <Icon name="square-outline" size={22} color={x ? colors.accent : colors.hint} />
+        {x ? (
+          <TextInput
+            style={{ flex: 1, marginLeft: 12, paddingVertical: 10, color: colors.text, fontSize: 16, fontWeight: '700' }}
+            value={x.name} maxLength={40} autoFocus={justAdded === x.id} placeholder="Name it" placeholderTextColor={colors.hint}
+            onChangeText={(v) => setTicks(ticks.map((y) => (y.id === x.id ? { ...y, name: v } : y)))}
+          />
+        ) : (
+          <Text numberOfLines={1} style={{ flex: 1, marginLeft: 12, color: colors.hint, fontSize: 16, fontWeight: '700' }}>{a.name.trim() || 'This tracker'}</Text>
+        )}
+        {x ? <Tap onPress={() => setTicks(ticks.filter((y) => y.id !== x.id))} accessibilityLabel="Remove" style={{ padding: 6 }}><Icon name="close" size={18} color={colors.muted} /></Tap> : null}
+      </View>
+    </Card>
   );
   return (
     <View style={{ marginTop: 6 }}>
       <Dropdown compact label="By" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
       {way === 'tick' ? (
-        <View>
-          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2, marginBottom: 6 }}>Things to tick off</Text>
+        <View style={{ marginTop: 6 }}>
+          {tickList ? <View style={{ marginBottom: 12 }}>{term('item', 'Each one is called')}</View> : null}
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Things to tick off</Text>
           {/* With nothing listed, the one box is the tracker itself, shown in grey until a thing is added. */}
-          {ticks.length === 0 ? row(a.name.trim() || 'This tracker', true) : ticks.map((x) => row(x.name, false, () => setTicks(ticks.filter((y) => y.id !== x.id)), x.id))}
-          <View style={[s.row, { marginTop: 8, gap: 8 }]}>
-            <TextInput
-              style={[s.input, { flex: 1 }]} value={tickDraft} maxLength={40} onChangeText={setTickDraft} onSubmitEditing={addTick}
-              placeholder="Add a thing" placeholderTextColor={colors.hint} returnKeyType="done" blurOnSubmit={false}
-            />
-            <SmallButton label="Add" onPress={addTick} />
-          </View>
-          {tickList ? term('item', 'Each one is called') : null}
+          {ticks.length === 0 ? tickRow(null) : ticks.map((x) => tickRow(x))}
+          <Button label="+ Add a thing" variant="ghost" onPress={addTick} />
         </View>
       ) : null}
       {way === 'details' ? (

@@ -499,8 +499,7 @@ function counterAnswers(t: Tracker, settings: Settings): Pick<Answers, 'countSte
 
 function counterWords(a: Answers, settings: Settings): string {
   const unit = a.countKind ? fieldUnit(counterField(a, settings), settings) ?? '' : a.countUnit.trim();
-  if (a.countStep === 1 && !unit) return 'Tap to count';
-  return `Tap to count, ${formatNumber(a.countStep)}${unit ? ' ' + unit : ''} a tap`;
+  return `${formatNumber(a.countStep)}${unit ? ' ' + unit : ''} a tap`;
 }
 
 export function nameProblem(name: string, others: string[]): '' | 'empty' | 'taken' {
@@ -531,12 +530,16 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   // What you log: how it is logged and what is written down.
   const names = draft.fields.map((f) => f.name).join(', ');
 
+  // Read as one sentence with the label: "You log by" + the way, then what it holds.
+  const tickNames = (a.ticks ?? []).map((x) => x.name.trim()).filter(Boolean).join(', ');
   const logging =
-    a.record === 'done' ? (a.avoid ? 'Tap once to log a slip' : 'Tap once when done')
-    : a.record === 'count' ? counterWords(a, settings)
-    : `${a.log === 'plan' ? (a.planStyle === 'items' && a.samePlan && a.rotation.length < 2 ? `Tick off each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}` : planWords(a)) : a.daily ? 'Once a day' : 'Each time'}${names ? `: ${names}` : ''}`;
+    a.record === 'done' ? (a.avoid ? 'Avoiding something' : 'Ticking things off')
+    : a.record === 'count' ? `Counting something, ${counterWords(a, settings)}`
+    : a.log === 'plan' && a.planStyle === 'items' ? `Ticking things off${tickNames ? `: ${tickNames}` : ''}`
+    : a.log === 'plan' ? `Following a plan${names ? `: ${names}` : ''}`
+    : `Writing down details, ${a.daily ? 'one a day' : 'any number'}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;
-  lines.push({ label: 'You log', value: empty ? 'Nothing yet' : logging, step: 'record' });
+  lines.push({ label: 'You log by', value: empty ? 'Writing down details, nothing yet' : logging, step: 'record' });
   // No Target row: goals and progress are worked out after the fact, apart from setup (decided 2026-11-26). A preset's own
   // target (Caffeine at most 4) still applies; the Target screen stays in the code for when goals are reworked. // what makes a good day: where progress is measured from
 

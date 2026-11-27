@@ -13,7 +13,7 @@ test('every preset has a sound set of summary rows', () => {
   for (const t of TEMPLATES) {
     const rows = summaryLines(t.make(), SETTINGS);
     const labels = rows.map((r) => r.label);
-    assert.equal(rows[0].label, 'You log', `${t.id}: first row`);
+    assert.equal(rows[0].label, 'You log by', `${t.id}: first row`);
     assert.ok(labels.includes('Tools'), `${t.id}: tools row`);
     assert.ok(labels.some((l) => l.startsWith('Past days')), `${t.id}: past days row`);
     assert.equal(new Set(labels).size, labels.length, `${t.id}: no row twice`);
@@ -34,9 +34,9 @@ test('the past-days row is named for what is in it', () => {
 });
 
 test('a list that is the same every day says what is ticked, not that it is the same list', () => {
-  const rows = (id: string) => summaryLines(TEMPLATES.find((t) => t.id === id)!.make(), SETTINGS).find((r) => r.label === 'You log')?.value;
-  assert.equal(rows('habit'), 'Tick off each habit');
-  assert.equal(rows('vitamins'), 'Tick off each vitamin');
+  const rows = (id: string) => summaryLines(TEMPLATES.find((t) => t.id === id)!.make(), SETTINGS).find((r) => r.label === 'You log by')?.value;
+  assert.equal(rows('habit'), 'Ticking things off');
+  assert.equal(rows('vitamins'), 'Ticking things off');
 });
 
 test('Steps from my phone is under Bring in: on for the Steps preset, saved as the source, and named in that row', () => {

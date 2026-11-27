@@ -35,14 +35,14 @@ test('a named-entry tracker keeps the name first and out of the numbers', () => 
 
 test('setup has one You log line that says how it is logged and what is written down', () => {
   const base = { ...answersFromPreset('blank'), record: 'numbers' as const, custom: [what, weight, reps] };
-  const line = (a: typeof base) => summaryLines(a, settings).find((l) => l.label === 'You log')?.value;
-  assert.equal(line({ ...base, log: 'free', daily: false }), 'Each time: Exercise, Weight, Reps');
-  assert.equal(line({ ...base, custom: [weight], log: 'free', daily: true }), 'Once a day: Weight');
-  assert.equal(line({ ...base, custom: [weight, reps], log: 'plan' }), 'A list per weekday: Weight, Reps');
-  assert.equal(line({ ...answersFromPreset('check-in') } as typeof base), 'Tap once when done');
-  assert.equal(line({ ...answersFromPreset('check-in'), avoid: true } as typeof base), 'Tap once to log a slip');
-  assert.equal(line({ ...answersFromPreset('counter') } as typeof base), 'Tap to count');
-  assert.equal(summaryLines(base, settings).filter((l) => l.label === 'You log').length, 1, 'one line, not two');
+  const line = (a: typeof base) => summaryLines(a, settings).find((l) => l.label === 'You log by')?.value;
+  assert.equal(line({ ...base, log: 'free', daily: false }), 'Writing down details, any number: Exercise, Weight, Reps');
+  assert.equal(line({ ...base, custom: [weight], log: 'free', daily: true }), 'Writing down details, one a day: Weight');
+  assert.equal(line({ ...base, custom: [weight, reps], log: 'plan' }), 'Following a plan: Weight, Reps');
+  assert.equal(line({ ...answersFromPreset('check-in') } as typeof base), 'Ticking things off');
+  assert.equal(line({ ...answersFromPreset('check-in'), avoid: true } as typeof base), 'Avoiding something');
+  assert.equal(line({ ...answersFromPreset('counter') } as typeof base), 'Counting something, 1 a tap');
+  assert.equal(summaryLines(base, settings).filter((l) => l.label === 'You log by').length, 1, 'one line, not two');
 });
 
 test('building your own opens the same summary as a template: start, summary', () => {

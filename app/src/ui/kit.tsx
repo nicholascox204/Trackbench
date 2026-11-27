@@ -587,6 +587,15 @@ export function Title({ children }: { children: ReactNode }) {
 export function Heading({ children }: { children: ReactNode }) {
   return <Text style={s.heading}>{children}</Text>;
 }
+// The end of any row that opens something: a chevron in a tinted circle (a check where the row is already done).
+export function Go({ done = false }: { done?: boolean }) {
+  return (
+    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name={done ? 'checkmark' : 'chevron-forward'} size={16} color={colors.accent} />
+    </View>
+  );
+}
+
 export function Muted({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   return <Text style={[s.muted, style]}>{children}</Text>;
 }
