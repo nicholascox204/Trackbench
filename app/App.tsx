@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState as RNAppState, BackHandler, View, useColorScheme } from 'react-native';
+import { AppState as RNAppState, BackHandler, Platform, View, useColorScheme } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
@@ -61,7 +61,10 @@ function AppInner() {
   const { state, loaded } = useAppState();
   const session = useSession();
   // Everyone has an account; only while testing can it be skipped.
-  const needsAccount = cloudConfigured && !session.loading && !session.userId && !state.settings.skippedSignIn;
+  // An account is required. The one way past it is the browser preview on the PC while developing (to check screens); a
+  // phone never skips, and a phone build that cannot reach the cloud still stops here and says so.
+  const browserSkip = Platform.OS === 'web' && __DEV__ && !!state.settings.skippedSignIn;
+  const needsAccount = !(cloudConfigured && session.loading) && !session.userId && !browserSkip;
   const scheme = useColorScheme();
   const [nav, setNav] = useState<Nav>({ name: 'launch' });
   const [timersReady, setTimersReady] = useState(false);

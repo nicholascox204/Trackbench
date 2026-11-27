@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { authProblem, emailAccount, googleConfigured, signInWithGoogle } from '../core/auth';
+import { authProblem, cloudConfigured, emailAccount, googleConfigured, signInWithGoogle } from '../core/auth';
 import { afterSignIn, skipSignIn } from '../core/store';
 import { Button, Scroll, Tap, colors, s, useTopPad } from '../ui/kit';
 import { EDGE } from '../ui/theme';
@@ -84,11 +84,13 @@ export function AuthScreen() {
           onPress={() => { setMode(mode === 'create' ? 'signin' : 'create'); setProblem(''); }} style={{ marginTop: 10 }}
         />
 
+        {!cloudConfigured ? <Text style={{ color: colors.danger, fontSize: 14, marginTop: 10, textAlign: 'center' }}>This copy of the app cannot reach your account right now. It needs an update before you can sign in.</Text> : null}
         {problem ? <Text style={{ color: colors.danger, fontSize: 14, marginTop: 10, textAlign: 'center' }}>{problem}</Text> : null}
 
-        {__DEV__ ? (
+        {/* Only the browser preview on the PC can skip, to check screens while developing; phones never can. */}
+        {__DEV__ && Platform.OS === 'web' ? (
           <Tap onPress={skipSignIn} style={{ alignSelf: 'center', padding: 12, marginTop: 24 }}>
-            <Text style={{ color: colors.muted, fontSize: 13 }}>Skip (testing only)</Text>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>Skip (browser preview only)</Text>
           </Tap>
         ) : null}
       </Scroll>

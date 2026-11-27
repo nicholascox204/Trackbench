@@ -2143,3 +2143,11 @@ The dev build loads its code from the PC, so outside home Wi-Fi any reload or ba
 - The build lives in a short folder (C:\p), because release paths hit Windows' 260-character limit.
 
 **Limits:** the free plan allows unlimited updates and up to 1,000 monthly devices.
+
+## 2026-11-27: An account is required
+Nick got into the app without signing in and then had no way out. The "Skip (testing only)" link was dev-only. Preview got past sign-in because its first update lacked cloud settings, and the app treated a missing cloud as "no account needed". Decision: no non-signed-in path for people at all.
+- Phones always require an account, and a skip saved earlier is ignored.
+- A build that can't reach the cloud stops at sign-in and says so, rather than opening the welcome page.
+- The only skip left is in the browser preview on the PC, so screens can still be checked while developing.
+
+Publishing now checks that the cloud settings are inside each update before it counts.
