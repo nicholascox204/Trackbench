@@ -38,9 +38,7 @@ export function StartPicker({
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{t.name}</Text>
             <Text style={[s.muted, { fontSize: 13 }]} numberOfLines={1}>{t.blurb}</Text>
           </View>
-          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: added ? `${colors.done}22` : colors.accentBg }}>
-            <Icon name={added ? 'checkmark' : 'arrow-forward'} size={16} color={added ? colors.done : colors.accent} />
-          </View>
+          <Icon name={added ? 'checkmark' : 'chevron-forward'} size={18} color={colors.muted} />
         </View>
       </Tap>
     );

@@ -115,7 +115,7 @@ const goal = (measure: string, cmp: Goal['cmp'], value: number): Goal => ({ id: 
 
 function blank(): Answers {
   return {
-    presetId: 'blank', name: 'New tracker', icon: 'apps-outline', record: 'numbers', chips: [], custom: [],
+    presetId: 'blank', name: 'New tracker', icon: 'apps-outline', record: 'done', chips: [], custom: [],
     log: 'free', schedule: { kind: 'daily' }, planMode: 'asigo', dayNames: {}, samePlan: false, rotation: [], startGoals: [], planStyle: 'sets', combos: [], units: 'default', avoid: false, streak: true, daily: false, countStep: 1, countUnit: '', goal: 'none', goals: [], finishPlan: false,
     extraTargets: [], extras: { previous: true, lockPast: false, average: false }, system: true,
   };

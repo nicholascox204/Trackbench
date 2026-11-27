@@ -18,7 +18,6 @@ import { dayKeyOf } from '../core/plan';
 import { Button, Card, ChoiceGrid, Icon, Muted, Option, Reveal, SmallButton, Stepper, Tap, Toggle, colors, s } from '../ui/kit';
 import { cleanOption } from '../core/choices';
 import { Dropdown, type DropdownOption } from '../ui/Dropdown';
-import { LogPreview } from './LogPreview';
 import { EDGE, px } from '../ui/theme';
 
 const TYPE_ICON: Record<Field['type'], string> = {
@@ -280,20 +279,7 @@ export function RecordStep({
   const enterHeading = way === 'list' ? (a.planStyle === 'sets' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in` : `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`) : way === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
   return (
     <View style={{ marginTop: 6 }}>
-      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>How do you log it?</Text>
-      <Card style={{ padding: 0, marginBottom: 8 }}>
-        {WAYS.map((w, i) => {
-          const on = way === w.key;
-          return (
-            <Tap key={w.key} onPress={() => pickWay(w.key)}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: i === 0 ? 0 : px(1), borderTopColor: colors.border, backgroundColor: on ? colors.accentBg : 'transparent' }}>
-                <Text style={{ flex: 1, color: colors.text, fontSize: 15, fontWeight: on ? '700' : '500' }}>{w.label}</Text>
-                {on ? <Icon name="checkmark-circle" size={20} color={colors.accent} /> : null}
-              </View>
-            </Tap>
-          );
-        })}
-      </Card>
+      <Dropdown compact label="How" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
       {a.record === 'count' ? (
         <View style={{ marginTop: 6 }}>
           {/* The same unit choice as any number: something that follows the units, a fixed label, or your own. */}
@@ -417,7 +403,6 @@ export function RecordStep({
 
         </View>
       ) : null}
-      <LogPreview a={a} fields={fields} settings={settings} countUnit={a.countKind ? systemDefaultUnit(a.countKind, settings) : a.countUnit.trim()} />
     </View>
   );
 }
