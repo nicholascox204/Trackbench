@@ -2010,3 +2010,6 @@ The checkbox/counter/entry version still nested a checklist inside "a checkbox",
 - **One box versus a checklist is no longer a choice.** You type the things to tick off. With nothing listed, the tracker itself is the box (shown in grey); anything listed makes a checklist. Items used to be added only after creation, so setup gained a small list editor.
 - **Avoiding** came out from behind a switch, because it's its own mindset.
 - **Plan versus details** keeps some overlap, which Nick flagged. We're trying it in hand before refining.
+
+## 2026-11-27: The five ways go in a dropdown
+Five full-width cells looked awkward, with short labels in long cells. The five ways now sit in one compact dropdown that reads "You log · By Ticking things off". The forks under each way stay visible on screen.

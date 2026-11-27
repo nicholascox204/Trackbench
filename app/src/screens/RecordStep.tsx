@@ -309,10 +309,10 @@ export function RecordStep({
   );
   return (
     <View style={{ marginTop: 6 }}>
-      <ChoiceGrid cols={1} value={way} onPick={(k) => pickWay(k as Way)} options={WAYS} />
+      <Dropdown compact label="By" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
       {way === 'tick' ? (
         <View>
-          {label('Things to tick off')}
+          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2, marginBottom: 6 }}>Things to tick off</Text>
           {/* With nothing listed, the one box is the tracker itself, shown in grey until a thing is added. */}
           {ticks.length === 0 ? row(a.name.trim() || 'This tracker', true) : ticks.map((x) => row(x.name, false, () => setTicks(ticks.filter((y) => y.id !== x.id)), x.id))}
           <View style={[s.row, { marginTop: 8, gap: 8 }]}>
