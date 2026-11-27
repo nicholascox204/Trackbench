@@ -34,8 +34,9 @@ export function Dropdown({
       >
         {compact ? (
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: colors.muted, fontSize: 13, marginRight: 10 }}>{label}</Text>
-            <Text numberOfLines={1} style={{ color: colors.text, fontSize: 15, fontWeight: '700', flex: 1, textAlign: 'right', marginRight: 8 }}>{value}</Text>
+            {/* With no label the value sits on the left, where the list it opens lines up with it. */}
+            {label ? <Text style={{ color: colors.muted, fontSize: 13, marginRight: 10 }}>{label}</Text> : null}
+            <Text numberOfLines={1} style={{ color: colors.text, fontSize: 15, fontWeight: '700', flex: 1, textAlign: label ? 'right' : 'left', marginRight: 8 }}>{value}</Text>
           </View>
         ) : (
           <View style={{ flex: 1 }}>
