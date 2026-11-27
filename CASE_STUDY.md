@@ -2187,3 +2187,7 @@ Moving the "still restoring" mark out of settings (so it would not sync) also to
 ## 2026-11-27 — Sign-in opened on "What do you want to track"
 
 It looked like Google treating sign-in as sign-up, but the app never distinguishes the two and already shows setup only when there are no trackers. The real cause: after the restore, the sync re-reads the phone's database into the app, but gives up when the app changes during that read, and signing in itself changes settings. The trackers were saved but never shown, so the app saw none and opened setup; reopening showed them. A restore now always ends with a full re-read, so setup appears only for an account that really has no trackers (a new one included).
+
+## 2026-11-27 — Backing up is invisible; sign-out never blocks on settings
+
+Sign-out refused with "the latest changes could not be backed up", even though the server had accepted every request. The check counted settings, which change almost constantly (the tracker last opened is saved in them), so there was nearly always "something unsent". Decided, with Nick: backing up is automatic and not something a person should manage. The "Backed up… Tap to back up now" line is gone from the Account card. Sign-out makes one last send and then goes ahead; it stops only when trackers or entries made on this phone would really be lost (made offline, not yet sent), and then says so in plain words.

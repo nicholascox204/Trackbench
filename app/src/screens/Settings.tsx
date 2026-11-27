@@ -65,7 +65,7 @@ export function Settings() {
             <Card>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{state.settings.name || session.name || 'Signed in'}</Text>
               {session.email ? <Muted>{session.email}</Muted> : null}
-              <Tap onPress={() => void syncNow()} style={{ marginTop: 6, marginBottom: 10 }}><Muted>{cloudLine}</Muted></Tap>
+              <View style={{ height: 12 }} />
               <Button
                 label={confirm === 'out' ? 'Tap again: this phone is cleared, your data stays in your account' : 'Sign out'} variant="ghost" style={{ marginBottom: 8 }}
                 onPress={async () => { if (confirm !== 'out') { setConfirm('out'); return; } setConfirm(null); const why = await signOutSafely(); if (why) setAccountMsg(why); }}

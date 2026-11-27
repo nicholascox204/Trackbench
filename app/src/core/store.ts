@@ -223,11 +223,12 @@ let restoreRun: Promise<void> | null = null;
 export const restoreNeedsStart = (): boolean => pending && !restoreRun && restorePhase !== 'failed';
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-// Anything on this phone not yet in the account?
+// Any trackers or entries on this phone not yet in the account? Settings do not count: they change all the time (the
+// tracker last opened) and losing the last few seconds of them loses nothing that matters.
 async function hasUnsent(): Promise<boolean> {
   if (!db) return false;
   await saving;
-  const r = await db.all<{ n: number }>("select (select count(*) from trackers where dirty = 1) + (select count(*) from entries where dirty = 1) + (select count(*) from kv where key = 'settings' and dirty = 1) as n");
+  const r = await db.all<{ n: number }>('select (select count(*) from trackers where dirty = 1) + (select count(*) from entries where dirty = 1) as n');
   return (r[0]?.n ?? 0) > 0;
 }
 
@@ -242,16 +243,14 @@ async function leaveAccount(): Promise<void> {
   setState({ ...state, settings: { ...state.settings, ...keep, cloudSync: false } });
 }
 
-// Sign out. Only what has not reached the account yet is sent first (usually nothing, so it is immediate), then the phone is
-// cleared; it all comes back on signing in again. Returns a sentence when it could not be done safely.
+// Sign out. A last send goes first (quick: usually only settings are waiting), then the phone is cleared; it all comes
+// back on signing in again. Backing up is automatic, so this stops only when trackers or entries made here would really
+// be lost: changes made offline that cannot reach the account yet.
 export async function signOutSafely(): Promise<string | null> {
-  if (await hasUnsent()) {
-    const cloud = await import('./cloud');
-    if (current) await Promise.race([current, wait(15000)]);
-    syncing = false; current = null;
-    const done = await Promise.race([syncNow({ pull: false }).then(() => true), wait(15000).then(() => false)]);
-    if (!done || cloud.getCloudStatus().phase === 'error' || (await hasUnsent())) return 'The latest changes could not be backed up, so signing out would lose them. Connect and try again.';
-  }
+  if (current) await Promise.race([current, wait(10000)]);
+  syncing = false; current = null;
+  await Promise.race([syncNow({ pull: false }), wait(10000)]);
+  if (await hasUnsent()) return 'Some changes made on this phone have not reached your account yet. Connect to the internet, then sign out.';
   await leaveAccount();
   return null;
 }
