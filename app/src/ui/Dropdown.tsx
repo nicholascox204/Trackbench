@@ -91,8 +91,9 @@ export function Dropdown({
                     {o.sub ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{o.sub}</Text> : null}
                   </View>
                   {onRename ? (
-                    <Tap onPress={() => { setEditKey(o.key); setDraft(o.label); setSure(false); setAdding(false); }} accessibilityLabel={`Edit ${o.label}`} style={{ width: mark, height: mark, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="pencil-outline" size={17} color={colors.muted} />
+                    <Tap onPress={() => { setEditKey(o.key); setDraft(o.label); setSure(false); setAdding(false); }} accessibilityLabel={`Edit ${o.label}`} style={{ width: mark, height: mark, borderRadius: mark / 2, borderWidth: 1.5, borderColor: colors.muted, alignItems: 'center', justifyContent: 'center' }}>
+                      {/* A pen in a ring the size of the chevron above it, so the two line up as one column. */}
+                      <Icon name="pencil" size={Math.round(mark * 0.5)} color={colors.muted} />
                     </Tap>
                   ) : (
                     <View style={{ width: mark, alignItems: 'center' }}><Icon name={on ? 'checkmark-circle' : 'ellipse-outline'} size={mark} color={on ? colors.accent : colors.border} /></View>

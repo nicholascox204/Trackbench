@@ -2122,3 +2122,6 @@ The rename and add boxes in dropdowns are now kept in view as a whole, name box 
 
 ## 2026-11-27: Smart scroll stops just above the keyboard
 When the keyboard opened, the page scrolled until a field sat 40 points above it, and kept-together blocks (a name box with its buttons) added their own padding on top. Together that showed part of the next item, which looked like an overshoot. The gap is now 12 points everywhere, set in one shared value, so a field or its buttons sit just above the keyboard.
+
+## 2026-11-27: The list pen gets a ring
+The pen on each list sat loose on the row. It now sits in a ring the same size as the dropdown's chevron, directly under it. The right edge of the control reads as one column: chevron, then a ringed pen on each list.
