@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState as RNAppState, BackHandler, Platform, View, useColorScheme } from 'react-native';
+import { AppState as RNAppState, BackHandler, Platform, Text, View, useColorScheme } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dayResult, entriesOnDay } from './src/core/derive';
 import { defaultConfig } from './src/core/engine';
-import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
+import { applyPresetChanges, completeOnboarding, flushOnLeave, getState, isRestoring, loadState, syncNow, noteTrackerOpened, useAppState } from './src/core/store';
 import { startAuth, useSession, cloudConfigured } from './src/core/auth';
 import { syncPhoneSteps } from './src/core/healthSync';
 import { syncHealth } from './src/core/healthRead';
@@ -126,7 +126,7 @@ function AppInner() {
 
   // With no trackers at all (a fresh install, a full reset, or the last one deleted) the only place to be is making one.
   useEffect(() => {
-    if (loaded && state.onboarded && state.trackers.length === 0 && nav.name !== 'setup' && nav.name !== 'launch' && nav.name !== 'welcome') setNav({ name: 'setup' });
+    if (loaded && !isRestoring() && state.onboarded && state.trackers.length === 0 && nav.name !== 'setup' && nav.name !== 'launch' && nav.name !== 'welcome') setNav({ name: 'setup' });
   }, [loaded, state.onboarded, state.trackers.length, nav.name]);
 
   // Finishing the opening screen moves on to the first tracker (or the one you were on).
@@ -172,6 +172,8 @@ function AppInner() {
   );
 
   if (!loaded || (cloudConfigured && session.loading)) return <View style={s.screen} />;
+  // Signing in: hold still until the account's trackers are in, so nothing flashes on the way.
+  if (isRestoring()) return <View style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: colors.muted, fontSize: 14 }}>Bringing in your trackers…</Text></View>;
   if (needsAccount) return <View style={s.screen}>{bar}<AuthScreen /></View>;
 
   // Where "back" goes from Progress, Settings and flows: the tracker you were on, else the first one.

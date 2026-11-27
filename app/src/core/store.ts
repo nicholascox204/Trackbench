@@ -126,6 +126,12 @@ export function askToSignIn(): void {
   setState({ ...state, settings: { ...state.settings, skippedSignIn: false } });
 }
 
+// Signing in and bringing an account's trackers down: while this is on, the app holds still, so an account that has
+// trackers never flashes the empty "make a tracker" screen before they arrive.
+let restoring = false;
+export const isRestoring = (): boolean => restoring;
+export function setRestoring(on: boolean): void { restoring = on; listeners.forEach((l) => l()); }
+
 // Just signed in: backing up switches on, what is on this phone goes up, and what the account already holds (a new phone) comes down.
 export async function afterSignIn(): Promise<void> {
   setState({ ...state, settings: { ...state.settings, cloudSync: true, skippedSignIn: false } });
@@ -139,8 +145,12 @@ export async function signOutSafely(): Promise<string | null> {
   const auth = await import('./auth');
   await syncNow();
   if (cloud.getCloudStatus().phase === 'error') return 'The latest changes could not be backed up, so signing out would lose them. Connect and try again.';
-  await resetAll();
+  // Signed out first, so the screen goes straight to sign-in; then the phone is cleared, keeping what belongs to the phone
+  // rather than the account (the look, units, and having seen the welcome), so signing back in does not ask for them again.
+  const keep = { appearance: state.settings.appearance, units: state.settings.units, welcomed: state.settings.welcomed };
   await auth.signOutNow();
+  await resetAll();
+  setState({ ...state, settings: { ...state.settings, ...keep } });
   return null;
 }
 

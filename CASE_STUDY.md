@@ -2151,3 +2151,12 @@ Nick got into the app without signing in and then had no way out. The "Skip (tes
 - The only skip left is in the browser preview on the PC, so screens can still be checked while developing.
 
 Publishing now checks that the cloud settings are inside each update before it counts.
+
+## 2026-11-27: Signing in and out without flashes
+**Signing in.** It flashed the "make a tracker" screen for a moment, because the account counted as signed in before its trackers had arrived, and an empty phone redirects to setup. The app now holds on a quiet "Bringing in your trackers…" until the first sync has finished.
+
+**Sign-in buttons.** Both showed "One moment…" during a sign-in. Now only the one you pressed does.
+
+**Signing out.**
+- It went through the look-and-name welcome before reaching sign-in, because it cleared the phone first and signed out second. Now it signs out first, so the screen goes straight to sign-in.
+- It keeps what belongs to the phone rather than the account (the look, the units, having seen the welcome), so signing back in doesn't ask for them again.

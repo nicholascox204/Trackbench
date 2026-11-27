@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { authProblem, cloudConfigured, emailAccount, googleConfigured, signInWithGoogle } from '../core/auth';
-import { afterSignIn, skipSignIn } from '../core/store';
+import { afterSignIn, setRestoring, skipSignIn } from '../core/store';
 import { Button, Scroll, Tap, colors, s, useTopPad } from '../ui/kit';
 import { EDGE } from '../ui/theme';
 
@@ -24,19 +24,21 @@ export function AuthScreen() {
   const [mode, setMode] = useState<'create' | 'signin'>('create');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<null | 'google' | 'email'>(null); // which way in is working, so only that button says so
   const [problem, setProblem] = useState('');
 
-  async function run(go: () => Promise<void>): Promise<void> {
-    setBusy(true);
+  async function run(way: 'google' | 'email', go: () => Promise<void>): Promise<void> {
+    setBusy(way);
     setProblem('');
+    setRestoring(true); // hold the app still until the account's trackers are in
     try {
       await go();
       await afterSignIn();
     } catch (e) {
       setProblem(authProblem(e));
     } finally {
-      setBusy(false);
+      setRestoring(false);
+      setBusy(null);
     }
   }
 
@@ -52,11 +54,11 @@ export function AuthScreen() {
 
         {googleConfigured ? (
           <Tap
-            onPress={() => void run(signInWithGoogle)} disabled={busy} accessibilityLabel='Continue with Google'
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 56, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: EDGE, borderColor: '#DADCE0', opacity: busy ? 0.5 : 1 }}
+            onPress={() => void run('google', signInWithGoogle)} disabled={!!busy} accessibilityLabel='Continue with Google'
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 56, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: EDGE, borderColor: '#DADCE0', opacity: busy && busy !== 'google' ? 0.5 : 1 }}
           >
             <GoogleG />
-            <Text style={{ color: '#1F1F1F', fontSize: 17, fontWeight: '600', marginLeft: 12 }}>{busy ? 'One moment…' : 'Continue with Google'}</Text>
+            <Text style={{ color: '#1F1F1F', fontSize: 17, fontWeight: '600', marginLeft: 12 }}>{busy === 'google' ? 'One moment…' : 'Continue with Google'}</Text>
           </Tap>
         ) : null}
 
@@ -78,7 +80,7 @@ export function AuthScreen() {
           secureTextEntry autoCapitalize='none' autoCorrect={false} textContentType={mode === 'create' ? 'newPassword' : 'password'}
           style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 12 }]}
         />
-        <Button label={busy ? 'One moment…' : mode === 'create' ? 'Create account' : 'Sign in'} disabled={busy || !ready} onPress={() => void run(() => emailAccount(mode, email, password))} />
+        <Button label={busy === 'email' ? 'One moment…' : mode === 'create' ? 'Create account' : 'Sign in'} disabled={!!busy || !ready} onPress={() => void run('email', () => emailAccount(mode, email, password))} />
         <Button
           label={mode === 'create' ? 'I already have an email account' : 'New here? Create an account'} variant='ghost'
           onPress={() => { setMode(mode === 'create' ? 'signin' : 'create'); setProblem(''); }} style={{ marginTop: 10 }}
