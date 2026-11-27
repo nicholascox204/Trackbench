@@ -13,18 +13,27 @@ export interface DropdownOption { key: string; label: string; sub?: string }
 const LONG_LIST = 7; // more options than this scroll inside the list
 
 export function Dropdown({
-  label, value, options, selected, onSelect, searchable, searchLabel, footer, compact,
+  label, value, options, selected, onSelect, searchable, searchLabel, footer, compact, row,
 }: {
   label: string; value: string; options: DropdownOption[]; selected: string | undefined; onSelect: (key: string) => void;
   searchable?: boolean; searchLabel?: string; footer?: ReactNode; compact?: boolean; // compact: one line, label left and value right
+  row?: boolean; // row: drawn like a summary row (label over value, plain chevron), for use inside a card that already has the box
 }) {
   const [open, setOpen] = useState(false);
   const [find, setFind] = useState('');
   const panel = useReveal(open);
   const shown = options.filter((o) => o.label.toLowerCase().includes(find.trim().toLowerCase()));
   return (
-    <View ref={panel} style={{ marginBottom: compact ? SEPARATION.panelGap + 2 : SEPARATION.endOfList }}>
-      <Tap
+    <View ref={panel} style={{ marginBottom: row ? 0 : compact ? SEPARATION.panelGap + 2 : SEPARATION.endOfList }}>
+      {row ? (
+        <Tap onPress={() => setOpen(!open)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
+            <Text style={{ color: colors.text, fontSize: 15 }}>{value}</Text>
+          </View>
+          <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.muted} />
+        </Tap>
+      ) : <Tap
         onPress={() => setOpen(!open)}
         style={{
           flexDirection: 'row', alignItems: 'center', borderWidth: px(SEPARATION.controlBorder), borderRadius: 14, padding: compact ? 10 : 14,
@@ -43,7 +52,7 @@ export function Dropdown({
           </View>
         )}
         <Icon name={open ? 'chevron-up-circle-outline' : 'chevron-down-circle-outline'} size={compact ? 22 : 26} color={colors.accent} />
-      </Tap>
+      </Tap>}
       {open ? (
         <View style={{ marginTop: SEPARATION.panelGap, borderWidth: px(SEPARATION.controlBorder), borderColor: colors.border, borderRadius: 14, backgroundColor: colors.card, overflow: 'hidden' }}>
           {searchable ? (

@@ -68,7 +68,7 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
 
   return (
     <Card style={{ padding: 12, marginBottom: 8 }}>
-      <Dropdown compact label="How often" value={kindLabel} options={options} selected={sc.kind} onSelect={choose} />
+      <Dropdown row label="How often" value={kindLabel} options={options} selected={sc.kind} onSelect={choose} />
 
       {sc.kind === 'weekdays' ? <View style={{ marginTop: 10 }}><WeekToggles schedule={sc} onChange={(x) => set({ schedule: x })} /></View> : null}
       {sc.kind === 'times' || sc.kind === 'interval' || sc.kind === 'monthly' || sc.kind === 'blocks' ? <View style={{ marginTop: 10 }}><KindControls schedule={sc} change={(x) => set({ schedule: x })} /></View> : null}
@@ -77,7 +77,7 @@ export function ScheduleSection({ a, set, planned }: { a: Answers; set: (p: Part
       {planned ? (
         <View style={{ marginTop: 10 }}>
           <Dropdown
-            compact label="Lists" value={listsLabel} selected={lists} onSelect={chooseLists}
+            row label="Lists" value={listsLabel} selected={lists} onSelect={chooseLists}
             options={[
               { key: 'same', label: 'The same list' },
               { key: 'each', label: 'A list per weekday' },
