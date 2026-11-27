@@ -1,5 +1,5 @@
-// "You log". Three things you do: tick it off, count it, or fill it in. Ticking asks whether it is one thing or a list;
-// filling in asks how often, and for entries made each time, whether each one is new or picked from your list.
+// "You log". Named for what you will see when logging: a checkbox, a counter, or an entry. A checkbox asks one box or a
+// checklist; an entry asks one a day or any number, and for any number, whether each is named as you go or picked from a list.
 // Then the things you fill in, one row each, and Calculations.
 // Every number can measure something that follows the person's units (weight, distance, height or length, liquid volume)
 // or carry a fixed label (minutes, calories, money, their own). That one "Measures" setting replaces the separate presets
@@ -288,25 +288,25 @@ export function RecordStep({
   return (
     <View style={{ marginTop: 6 }}>
       <ChoiceGrid cols={3} value={top} onPick={(k) => pickTop(k as Top)}
-        options={[{ key: 'tick', label: 'Tick it off' }, { key: 'count', label: 'Count it' }, { key: 'fill', label: 'Fill it in' }]} />
+        options={[{ key: 'tick', label: 'A checkbox' }, { key: 'count', label: 'A counter' }, { key: 'fill', label: 'An entry' }]} />
       {top === 'tick' ? (
         <View>
-          {label('What you tick off')}
+          {label('How many boxes')}
           <ChoiceGrid cols={2} value={tickList ? 'list' : 'one'} onPick={(k) => pickTick(k === 'list')}
-            options={[{ key: 'one', label: 'Just this' }, { key: 'list', label: 'A list of things' }]} />
-          {tickList ? term('item', 'Each thing is called') : null}
+            options={[{ key: 'one', label: 'One box' }, { key: 'list', label: 'A checklist' }]} />
+          {tickList ? term('item', 'Each box is called') : null}
         </View>
       ) : null}
       {top === 'fill' ? (
         <View>
-          {label('How often')}
+          {label('How many entries')}
           <ChoiceGrid cols={2} value={fillOften} onPick={(k) => setMode(k === 'daily' ? 'daily' : 'free')}
-            options={[{ key: 'daily', label: 'Once a day' }, { key: 'each', label: 'Each time it happens' }]} />
+            options={[{ key: 'daily', label: 'One a day' }, { key: 'each', label: 'Any number' }]} />
           {fillOften === 'each' ? (
             <View>
               {label('Each entry is')}
               <ChoiceGrid cols={2} value={fillFrom} onPick={(k) => (k === 'list' ? (set({ planStyle: 'sets' }), setMode('plan')) : setMode('free'))}
-                options={[{ key: 'new', label: 'New each time' }, { key: 'list', label: 'From your list' }]} />
+                options={[{ key: 'new', label: 'Named as you go' }, { key: 'list', label: 'Picked from a list' }]} />
               {fillFrom === 'list' ? <View>{term('item', 'Each thing on the list is called')}{term('row', 'Each round of it is called')}</View> : null}
             </View>
           ) : null}

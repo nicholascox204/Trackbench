@@ -1993,3 +1993,11 @@ Also:
 - **Row lines:** dividers are back under every row on the start screen, including the last in each section. The list reads as one continuous index, and stopping the lines early made the last rows look unfinished.
 - **Scrollbar:** the accent colour was reverted. It only worked on the web, and phones are where the app lives.
 - **Item names:** the "called" boxes for list things and rounds now start empty, with the default word as grey hint text, so people write their own word rather than editing "Item".
+
+## 2026-11-26: You log names what you will see
+Nick spotted the root problem: much of our vocabulary only makes sense after you've seen the logging screen, not before. The choices now name the thing you'll see when logging instead of the action you take:
+- **Top choice:** A checkbox, A counter, or An entry.
+- **For a checkbox:** One box or A checklist.
+- **For an entry:** One a day or Any number; then Named as you go or Picked from a list.
+
+"Form" was rejected as technical. "Entry" won because the rest of the app already uses the word, so setup teaches it. The headings carry the noun, which keeps each option to two or three words.
