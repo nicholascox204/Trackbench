@@ -64,12 +64,3 @@ test('nothing is keyed to a starting point: the same fields behave the same ever
   assert.equal(adds.measures[0].calc.op, 'sum');
 });
 
-test('a checklist written in setup becomes the list on every planned day, and reads back for editing', () => {
-  const a = scratch({ record: 'numbers', log: 'plan', planStyle: 'items', samePlan: true, ticks: [{ id: 't1', name: 'Floss' }, { id: 't2', name: ' Stretch ' }, { id: 't3', name: '' }] });
-  const d = draftFromAnswers(a, settings);
-  const days = d.plan[d.plan.length - 1].days;
-  assert.equal(days.filter((x) => x.slots.length === 2).length, 7);
-  assert.deepEqual(days[0].slots.map((x) => x.name), ['Floss', 'Stretch']);
-  const back = answersFromTracker({ ...d, id: 'x' } as never, settings, true);
-  assert.deepEqual(back.ticks?.map((x) => x.id), ['t1', 't2']);
-});

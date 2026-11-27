@@ -195,8 +195,8 @@ export function SetupFlow({
   const nameIssue = nameProblem(a.name, otherNames);
   const nameMsg = nameIssue === 'taken' ? 'You already have a tracker with this name.' : nameIssue === 'empty' && nameNudge ? 'Give it a name to continue.' : '';
   const hasThings = draft.fields.length > 0;
-  // Details need something to fill in; a checklist written here needs something on it.
-  const needsThings = (a.record === 'numbers' && a.log !== 'plan' && !hasThings) || (a.record === 'numbers' && a.log === 'plan' && a.planStyle === 'items' && !!a.ticks && !a.ticks.some((x) => x.name.trim()));
+  // Details need something to fill in.
+  const needsThings = (a.record === 'numbers' && a.log !== 'plan' && !hasThings);
   // What stops you going on from here, if anything. The button then looks unavailable but still answers.
   const blocked =
     step === 'summary' ? nameIssue !== '' || needsThings :

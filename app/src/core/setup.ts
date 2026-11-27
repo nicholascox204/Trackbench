@@ -99,7 +99,6 @@ export interface Answers {
   countKind?: UnitKind; // a counter that measures something that follows the units (weight, distance, length, volume); countStep is then in the shown unit
   terms?: Terms; // what a planned tracker calls things
   sample?: PlanDay[]; // a ready-made plan this starting point brings
-  ticks?: { id: string; name: string }[]; // a checklist written during setup: the things ticked off, on every planned day
   templateId?: string; // set when it came from a template: those go straight to the summary
   goal: 'none' | 'plan' | 'number';
   goals: Goal[]; // used when goal is 'number'
@@ -134,7 +133,7 @@ export function answersFromPreset(presetId: string): Answers {
       return { ...a, record: 'done' };
     // Build your own starts as a checklist with nothing on it yet.
     case 'blank':
-      return { ...a, record: 'numbers', log: 'plan', planStyle: 'items', samePlan: true, ticks: [] };
+      return { ...a, record: 'numbers', log: 'plan', planStyle: 'items', samePlan: true };
     case 'set-plan':
       return { ...a, record: 'numbers', chips: ['weight', 'reps'], log: 'plan', schedule: { kind: 'weekdays', days: [1, 3, 5] }, planMode: 'asigo', terms: SETS_TERMS };
     case 'measurement':
@@ -199,8 +198,6 @@ export function answersFromTracker(t: Tracker, settings: Settings, hasSystem: bo
     extraTargets: t.targets.filter((x) => !goalSet.has(x.id)),
     extras: { previous: t.tools.previous, lockPast: t.tools.lockPast, average: t.derived.length > 0, ...autoOf(t), ...(t.tools.countdown ? { countdown: true } : {}), ...(t.tools.timer ? { timer: true } : {}), ...(t.tools.timerInto ? { timerInto: t.tools.timerInto } : {}), ...(t.tools.countdownInto ? { countdownInto: t.tools.countdownInto } : {}), ...(t.tools.gps ? { gps: true } : {}), ...(t.tools.clock ? { clock: true } : {}), ...(t.tools.stock ? { stock: true } : {}), ...(t.tools.photos ? { photos: true } : {}), ...(t.tools.health ? { health: true } : {}) },
     planStyle: t.planStyle ?? (t.measures.some((m) => m.id === 'sets') ? 'sets' : 'items'),
-    // A checklist with one shared list is edited right in setup; its things are read back from the current list.
-    ...(t.input === 'plan' && (t.planStyle ?? 'items') === 'items' && latest?.same && !latest.rotation ? { ticks: (latest.days.find((d) => d.slots.length > 0)?.slots ?? []).map((x) => ({ id: x.id, name: x.name })) } : {}),
     combos: t.measures.filter((m) => m.calc.op === 'sumProduct' || m.calc.op === 'sumExpr' || m.calc.op === 'ratio').map((m) => ({
       id: m.id, name: m.name, a: (m.calc as { a: string }).a, b: (m.calc as { b: string }).b,
       fn: (m.calc.op === 'sumProduct' ? 'mul' : m.calc.op === 'ratio' ? 'div' : (m.calc as { fn: 'add' | 'sub' | 'span' }).fn) as ComboFn,
@@ -360,12 +357,6 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
       const src = sample.length ? sample[k++ % sample.length] : null;
       return src ? { label: named || was?.label || src.label, slots: JSON.parse(JSON.stringify(src.slots)) } : { label: named || was?.label || '', slots: [] };
     });
-    // A checklist written in setup is the list on every planned day; things already there keep their own details.
-    if (a.planStyle === 'items' && a.ticks) {
-      const known = new Map((cur ?? []).flatMap((d) => d.slots).map((x) => [x.id, x] as const));
-      const slots = a.ticks.filter((x) => x.name.trim()).map((x) => ({ ...(known.get(x.id) ?? {}), id: x.id, name: x.name.trim() }));
-      days.forEach((d, wd) => { d.slots = planDays.includes(wd) ? JSON.parse(JSON.stringify(slots)) : []; });
-    }
     if (a.samePlan) {
       const si = days.findIndex((d, i) => planDays.includes(i) && d.slots.length > 0);
       if (si >= 0) syncSame(days, si, planDays);
@@ -534,11 +525,10 @@ export function summaryLines(a: Answers, settings: Settings, editing = false): {
   const names = draft.fields.map((f) => f.name).join(', ');
 
   // Read as one sentence with the label: "You log by" + the way, then what it holds.
-  const tickNames = (a.ticks ?? []).map((x) => x.name.trim()).filter(Boolean).join(', ');
   const logging =
     a.record === 'done' ? (a.avoid ? 'Avoiding something' : 'Ticking things off')
     : a.record === 'count' ? `Counting something, ${counterWords(a, settings)}`
-    : a.log === 'plan' && a.planStyle === 'items' ? `Ticking things off${tickNames ? `: ${tickNames}` : a.ticks ? ', nothing yet' : ''}`
+    : a.log === 'plan' && a.planStyle === 'items' ? 'Ticking things off'
     : a.log === 'plan' ? `Following a plan${names ? `: ${names}` : ''}`
     : `Writing down details, ${a.daily ? 'one a day' : 'any number'}${names ? `: ${names}` : ''}`;
   const empty = a.record === 'numbers' && a.log !== 'plan' && !names;

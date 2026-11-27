@@ -261,18 +261,11 @@ export function RecordStep({
   type Way = 'tick' | 'count' | 'details' | 'plan' | 'avoid';
   const way: Way = a.record === 'count' ? 'count' : a.record === 'done' ? (a.avoid ? 'avoid' : 'tick')
     : mode === 'plan' ? (a.planStyle === 'items' ? 'tick' : 'plan') : 'details';
-  const ticks = a.ticks ?? [];
-  // The list decides the shape: nothing listed ticks the tracker itself, anything listed makes a checklist.
-  const setTicks = (next: { id: string; name: string }[]) => {
-    set({ ticks: next, record: 'numbers', avoid: false, planStyle: 'items', samePlan: true, finishPlan: false });
-    if (mode !== 'plan') setMode('plan');
-  };
-  // Adding a thing works like adding something to fill in: a new row appears, named in place.
-  const [justAdded, setJustAdded] = useState<string | null>(null);
-  const addTick = () => { const id = newId(); setTicks([...ticks, { id, name: '' }]); setJustAdded(id); };
+  // A checklist's things are written on the tracker itself, like a plan's; setup only says what each one is called.
+  const toChecklist = () => { set({ record: 'numbers', avoid: false, planStyle: 'items', samePlan: true, finishPlan: false }); if (mode !== 'plan') setMode('plan'); };
   const pickWay = (w: Way) => {
     if (w === way) return;
-    if (w === 'tick') return setTicks(ticks);
+    if (w === 'tick') return toChecklist();
     if (w === 'avoid') return set({ record: 'done', avoid: true, goals: [], goal: 'none', log: 'free', daily: false, finishPlan: false });
     if (w === 'count') return set({ record: 'count', avoid: false, log: 'free', daily: false, finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') });
     if (w === 'plan') { set({ record: 'numbers', avoid: false, planStyle: 'sets' }); return setMode('plan'); }
@@ -300,36 +293,10 @@ export function RecordStep({
   const enterHeading = tickList ? 'Each thing adds up'
     : mode === 'plan' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in`
     : mode === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
-  // A thing to tick off, drawn like the rows of things you fill in.
-  const tickRow = (x: { id: string; name: string } | null) => (
-    <Card key={x?.id ?? 'self'} style={{ padding: 0, marginBottom: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: x ? 2 : 12 }}>
-        <Icon name="square-outline" size={22} color={x ? colors.accent : colors.hint} />
-        {x ? (
-          <TextInput
-            style={{ flex: 1, marginLeft: 12, paddingVertical: 10, color: colors.text, fontSize: 16, fontWeight: '700' }}
-            value={x.name} maxLength={40} autoFocus={justAdded === x.id} placeholder="Name it" placeholderTextColor={colors.hint}
-            onChangeText={(v) => setTicks(ticks.map((y) => (y.id === x.id ? { ...y, name: v } : y)))}
-          />
-        ) : (
-          <Text numberOfLines={1} style={{ flex: 1, marginLeft: 12, color: colors.hint, fontSize: 16, fontWeight: '700' }}>{a.name.trim() || 'This tracker'}</Text>
-        )}
-        {x ? <Tap onPress={() => setTicks(ticks.filter((y) => y.id !== x.id))} accessibilityLabel="Remove" style={{ padding: 6 }}><Icon name="close" size={18} color={colors.muted} /></Tap> : null}
-      </View>
-    </Card>
-  );
   return (
     <View style={{ marginTop: 6 }}>
       <Dropdown compact label="" value={WAYS.find((w) => w.key === way)?.label ?? ''} options={WAYS} selected={way} onSelect={(k) => pickWay(k as Way)} />
-      {way === 'tick' ? (
-        <View style={{ marginTop: 6 }}>
-          <View style={{ marginBottom: 12 }}>{term('item', 'Each one is called')}</View>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Things to tick off</Text>
-          {ticks.map((x) => tickRow(x))}
-          {nudge && !ticks.some((x) => x.name.trim()) ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to tick off, then continue.</Text> : null}
-          <Button label="+ Add a thing" variant="ghost" onPress={addTick} />
-        </View>
-      ) : null}
+      {way === 'tick' ? <View style={{ marginTop: 6 }}>{term('item', 'Each one is called')}</View> : null}
       {way === 'details' ? (
         <View>
           {label('How many entries')}

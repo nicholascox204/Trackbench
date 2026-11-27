@@ -2030,3 +2030,7 @@ Two cuts to make ticking behave like an ordinary checklist:
 - **No per-item numbers in setup.** "Each thing adds up" was list-editing UI inside setup. To keep templates within what Build your own can reach, Meal plan became a plain checklist of meals and lost its calorie and protein totals. If those come back, they belong where the list itself is edited.
 
 Also: the screen title reads "You log by", and the dropdown above the choices lost its "By" label. Build your own starts as an empty checklist that needs at least one thing before it can be saved.
+
+## 2026-11-27: Setup decides how, the tracker holds what
+Checklist items could be added in setup, but gym plans are deliberately written on the tracker after setup, so it doesn't feel long or daunting. Nick flagged the inconsistency. Checklist items now also live only on the tracker. Setup asks just what each one is called, and the new tracker opens on "Add your first habit".
+- **Considered: templates bringing a starter item** as a built-in tutorial. Rejected, because it is sample content: an item you have to delete, which would count in your history if ticked. The tracker's empty state already teaches the step.
