@@ -215,7 +215,7 @@ export function AddSlot({
       <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 2 }}>
         {first ? `Add your first ${terms.item.toLowerCase()}${same ? '' : ` to ${dayName}`}` : `Add ${terms.item.toLowerCase()}`}
       </Text>
-      <Muted style={{ marginBottom: 10 }}>{first ? 'Type a name and tap Add.' : 'It goes at the end of the list.'}</Muted>
+      {first ? <View style={{ height: 8 }} /> : <Muted style={{ marginBottom: 10 }}>It goes at the end of the list.</Muted>}
       <TextInput
         ref={input} style={[s.input, { marginBottom: 10 }]} value={name} onChangeText={setName} onSubmitEditing={() => input.current?.blur()}
         returnKeyType="done" placeholder={`${terms.item} name`} placeholderTextColor={colors.hint}
