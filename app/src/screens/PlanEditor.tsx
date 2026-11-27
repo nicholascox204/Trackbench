@@ -123,12 +123,10 @@ export function EditButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Lists to pick from: one List dropdown picks the day's list (the next in turn marked Next); Edit lists in its footer opens
-// a card with each list as a row (name typed in place, bin) and a box to add one. With no lists yet: Make your first list.
+// Lists to pick from: one List dropdown picks the day's list (the next in turn marked Next); in it each list has a pen to
+// rename or remove it, and the last row adds a list. With no lists yet: Make your first list.
 export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day: number; entries: Entry[]; current: number; canEdit: boolean }) {
-  const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [removing, setRemoving] = useState<number | null>(null);
   const v = versionFor(t.plan, day);
   if (!v?.rotation) return null;
   const may = canEdit && day >= startOfDay(Date.now());
@@ -159,46 +157,21 @@ export function ListBar({ t, day, entries, current, canEdit }: { t: Tracker; day
     );
   }
   const listName = (i: number) => v.days[i]?.label.trim() || `List ${i + 1}`;
-  const close = () => { setEditing(false); setRemoving(null); setName(''); };
-  // Picking: one dropdown, so names of any length sit on one line. Editing the lists themselves is in its footer.
-  if (!editing) {
-    return (
-      <View style={{ marginBottom: 12 }}>
-        <Dropdown
-          compact flush label="List" value={listName(current)} selected={String(current)}
-          options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && v.days.length > 1 ? { sub: 'Next' } : {}) }))}
-          onSelect={(k) => updateTracker(t.id, { rotationPick: { day, index: Number(k) } })}
-          footer={may ? (
-            <Tap onPress={() => setEditing(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-              <Icon name="pencil" size={15} color={colors.muted} />
-              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }}>Edit lists</Text>
-            </Tap>
-          ) : undefined}
-        />
-      </View>
-    );
-  }
-  // Editing: every list as a full-width row, its name typed in place with a bin, then a box to add one.
+  // One dropdown picks the day's list; each list in it has a pen to rename or remove it in place, and the last row adds one.
   return (
-    <Card keep style={{ marginBottom: 12 }}>
-      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Your lists</Text>
-      {v.days.map((d, i) => (
-        <View key={i} style={[s.row, { marginBottom: 8 }]}>
-          <TextInput
-            style={[s.input, { flex: 1 }]} value={d.label} maxLength={24} placeholder={`List ${i + 1}`} placeholderTextColor={colors.hint}
-            onChangeText={(val) => mutatePlanDay(t.id, i, (x) => { x.label = val; })}
-          />
-          <Tap
-            onPress={() => (removing === i ? (removeList(t.id, i), setRemoving(null)) : setRemoving(i))}
-            accessibilityLabel={`Remove ${listName(i)}`} style={{ paddingHorizontal: 10, paddingVertical: 8 }}
-          >
-            {removing === i ? <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Tap again</Text> : <Icon name="trash-outline" size={19} color={colors.muted} />}
-          </Tap>
-        </View>
-      ))}
-      {v.days.length < MAX_LISTS ? <View style={{ marginTop: 4 }}>{nameBox('Add')}</View> : null}
-      <Button label="Done" variant="ghost" onPress={close} style={{ marginTop: 8 }} />
-    </Card>
+    <View style={{ marginBottom: 12 }}>
+      <Dropdown
+        compact flush label="List" value={listName(current)} selected={String(current)}
+        options={v.days.map((_, i) => ({ key: String(i), label: listName(i), ...(i === next && v.days.length > 1 ? { sub: 'Next' } : {}) }))}
+        onSelect={(k) => updateTracker(t.id, { rotationPick: { day, index: Number(k) } })}
+        {...(may ? {
+          onRename: (k: string, val: string) => mutatePlanDay(t.id, Number(k), (x) => { x.label = val; }),
+          onRemove: (k: string) => removeList(t.id, Number(k)),
+          onAdd: (n: string) => { if (v.days.length < MAX_LISTS) addList(t.id, n); },
+          addLabel: 'Add a list',
+        } : {})}
+      />
+    </View>
   );
 }
 

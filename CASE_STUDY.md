@@ -2098,3 +2098,11 @@ Nick found pills awkward everywhere. With names of different lengths they wrap u
 - **Exercise suggestions** are rows with the muscle on the right.
 
 **Not yet:** the logging form's pills (choice answers, Now, optional fields). They need their own pass, because logging speed matters there.
+
+## 2026-11-27: Left-aligned dropdowns; lists edited inside the dropdown
+- **Dropdown alignment.** Right-aligned values looked bad against the grey label on the left. A compact dropdown now places its value straight after the label, and the open list starts at that same line, so the options sit under the value and the label stays clear. Check and circle marks still line up with the chevron.
+- **Editing lists.** Lists were edited in a separate card under the dropdown. Now it all happens in the dropdown:
+  - each list has a faint pen that turns its row into a name box, with a bin and a check;
+  - the last row, "Add a list", works the same way for a new list.
+
+  Dropdown gained optional rename, remove and add hooks, so any person-kept list can reuse this.
