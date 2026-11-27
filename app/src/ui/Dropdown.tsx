@@ -49,7 +49,7 @@ export function Dropdown({
         <View style={{ marginTop: SEPARATION.panelGap, borderWidth: px(SEPARATION.controlBorder), borderColor: colors.border, borderRadius: 14, backgroundColor: colors.card, overflow: 'hidden' }}>
           {searchable ? (
             <View style={{ padding: 10, borderBottomWidth: px(1), borderBottomColor: colors.border }}>
-              <TextInput style={s.input} value={find} onChangeText={setFind} placeholder={searchLabel ?? 'Search'} placeholderTextColor={colors.muted} />
+              <TextInput style={s.input} value={find} onChangeText={setFind} placeholder={searchLabel ?? 'Search'} placeholderTextColor={colors.hint} />
             </View>
           ) : null}
           {/* a short list opens in full; only a long or searchable one scrolls inside itself */}

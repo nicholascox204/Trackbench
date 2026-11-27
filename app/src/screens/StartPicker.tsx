@@ -55,7 +55,7 @@ export function StartPicker({
     <View style={{ marginTop: 6 }}>
       <TextInput
         style={[s.input, { marginBottom: 8 }]} value={query} onChangeText={setQuery}
-        placeholder="Search starting points" placeholderTextColor={colors.muted}
+        placeholder="Search starting points" placeholderTextColor={colors.hint}
       />
       {q ? (
         <View>

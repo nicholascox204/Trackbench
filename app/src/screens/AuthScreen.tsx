@@ -69,12 +69,12 @@ export function AuthScreen() {
         ) : null}
 
         <TextInput
-          value={email} onChangeText={setEmail} placeholder='Email' placeholderTextColor={colors.muted}
+          value={email} onChangeText={setEmail} placeholder='Email' placeholderTextColor={colors.hint}
           autoCapitalize='none' autoCorrect={false} keyboardType='email-address' textContentType='emailAddress'
           style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 10 }]}
         />
         <TextInput
-          value={password} onChangeText={setPassword} placeholder='Password' placeholderTextColor={colors.muted}
+          value={password} onChangeText={setPassword} placeholder='Password' placeholderTextColor={colors.hint}
           secureTextEntry autoCapitalize='none' autoCorrect={false} textContentType={mode === 'create' ? 'newPassword' : 'password'}
           style={[s.input, { fontSize: 17, borderWidth: EDGE, borderColor: colors.border, marginBottom: 12 }]}
         />

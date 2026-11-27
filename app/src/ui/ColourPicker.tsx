@@ -83,7 +83,7 @@ export function ColourPicker({ value, onChange }: { value: string; onChange: (he
       <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Or type a colour code</Text>
       <TextInput
         style={[s.input, { width: 140 }]} value={text} autoCapitalize="none" autoCorrect={false} maxLength={7}
-        placeholder="#7c9cff" placeholderTextColor={colors.muted}
+        placeholder="#7c9cff" placeholderTextColor={colors.hint}
         onChangeText={(v) => {
           setText(v);
           const hex = parseHex(v);

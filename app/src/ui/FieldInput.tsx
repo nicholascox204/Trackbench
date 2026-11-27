@@ -93,7 +93,7 @@ function ChoiceInput({ f, value, onChange, onOptions }: { f: Field; value: numbe
         <View style={[s.row, { marginTop: 8, gap: 8 }]}>
           <TextInput
             autoFocus style={[s.input, { flex: 1, paddingVertical: 8 }]} value={draft} onChangeText={setDraft} maxLength={30}
-            placeholder="New option" placeholderTextColor={colors.muted} onSubmitEditing={add} returnKeyType="done"
+            placeholder="New option" placeholderTextColor={colors.hint} onSubmitEditing={add} returnKeyType="done"
           />
           <Chip label="Add" active onPress={add} />
         </View>
@@ -115,7 +115,7 @@ export function NoteInput({ value, onChange, placeholder, autoFocus }: { value: 
   const lines = value.split('\n').reduce((n, part) => n + Math.max(1, Math.ceil(part.length / perLine)), 0);
   return (
     <TextInput
-      autoFocus={autoFocus} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.muted}
+      autoFocus={autoFocus} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.hint}
       multiline scrollEnabled={false} textAlignVertical="top" onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
       style={[s.input, { paddingVertical: 8, lineHeight: NOTE_LINE, height: (lines + 1) * NOTE_LINE + 16 + 2 * px(1) }]}
     />
@@ -205,7 +205,7 @@ function FieldInputBody({
         {bare ? null : <Text style={{ color: colors.text, fontSize: 15, marginBottom: 6 }}>{f.name}</Text>}
         <TextInput
           style={[s.input, { paddingVertical: 8 }]} value={typed} onChangeText={onChange} maxLength={40}
-          placeholder={f.name} placeholderTextColor={colors.muted}
+          placeholder={f.name} placeholderTextColor={colors.hint}
         />
         {shown.length > 0 ? <View style={[s.wrap, { marginTop: 8 }]}>{shown.map((x) => <Chip key={x} label={x} onPress={() => onChange(x)} />)}</View> : null}
       </View>

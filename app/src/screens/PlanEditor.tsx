@@ -53,7 +53,7 @@ export function SlotEditor({
       <TextInput
         style={[s.input, { marginBottom: 10 }]} value={slot.name} autoFocus={!slot.name}
         onChangeText={(v) => patch((x) => { x.name = v; })}
-        placeholder={`${terms.item} name`} placeholderTextColor={colors.muted}
+        placeholder={`${terms.item} name`} placeholderTextColor={colors.hint}
       />
       {isRowSlot(slot) ? (
         <View>
@@ -65,7 +65,7 @@ export function SlotEditor({
             <Text style={{ color: colors.text, fontSize: 15 }}>{terms.target}</Text>
             <TextInput
               style={[s.input, { width: 140, paddingVertical: 8, textAlign: 'center' }]} value={slot.range ?? ''}
-              onChangeText={(v) => patch((x) => { x.range = v; })} placeholder="optional" placeholderTextColor={colors.muted}
+              onChangeText={(v) => patch((x) => { x.range = v; })} placeholder="optional" placeholderTextColor={colors.hint}
             />
           </View>
         </View>
@@ -150,7 +150,7 @@ export function DayHeader({ t, weekday, editable }: { t: Tracker; weekday: numbe
     <TextInput
       style={[s.input, { marginBottom: 12, fontSize: 18, fontWeight: '700' }]} value={pd.label}
       onChangeText={(v) => mutatePlanDay(t.id, weekday, (d) => { d.label = v; })}
-      placeholder={planOf(t).rotation ? 'List name' : 'Day title'} placeholderTextColor={colors.muted}
+      placeholder={planOf(t).rotation ? 'List name' : 'Day title'} placeholderTextColor={colors.hint}
     />
   );
 }
@@ -216,7 +216,7 @@ export function AddSlot({
       <Muted style={{ marginBottom: 10 }}>{first ? 'Type a name and tap Add.' : 'It goes at the end of the list.'}</Muted>
       <TextInput
         ref={input} style={[s.input, { marginBottom: 10 }]} value={name} onChangeText={setName} onSubmitEditing={() => input.current?.blur()}
-        returnKeyType="done" placeholder={`${terms.item} name`} placeholderTextColor={colors.muted}
+        returnKeyType="done" placeholder={`${terms.item} name`} placeholderTextColor={colors.hint}
       />
       {lifting && hints.length > 0 ? (
         <View style={[s.wrap, { marginTop: -4, marginBottom: 8 }]}>
@@ -233,7 +233,7 @@ export function AddSlot({
             <Text style={{ color: colors.text, fontSize: 15 }}>{terms.target}</Text>
             <TextInput
               style={[s.input, { width: 140, paddingVertical: 8, textAlign: 'center' }]} value={range} onChangeText={setRange}
-              placeholder="Optional" placeholderTextColor={colors.muted}
+              placeholder="Optional" placeholderTextColor={colors.hint}
             />
           </View>
         </View>

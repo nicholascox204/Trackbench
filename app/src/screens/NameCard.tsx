@@ -28,7 +28,7 @@ export function NameCard({
           </View>
         </Tap>
         <TextInput
-          ref={inputRef} value={name} onChangeText={onName} placeholder={placeholder} placeholderTextColor={colors.muted}
+          ref={inputRef} value={name} onChangeText={onName} placeholder={placeholder} placeholderTextColor={colors.hint}
           maxLength={LIMITS.trackerName} returnKeyType="done"
           style={[s.input, { flex: 1, minWidth: 0, fontSize: 18, fontWeight: '700', borderWidth: EDGE, borderColor: message ? colors.danger : colors.border }]}
         />

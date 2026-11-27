@@ -51,7 +51,7 @@ export function NumInput({
         keyboardType="decimal-pad"
         maxLength={maxLength}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colors.hint}
         selectTextOnFocus
         onBlur={onEnd}
         onChangeText={(t) => {

@@ -194,7 +194,7 @@ export function SetupFlow({
   const otherNames = state.trackers.filter((x) => x.id !== existing?.id).map((x) => x.name);
   const nameIssue = nameProblem(a.name, otherNames);
   const nameMsg = nameIssue === 'taken' ? 'You already have a tracker with this name.' : nameIssue === 'empty' && nameNudge ? 'Give it a name to continue.' : '';
-  const hasThings = draft.fields.some((f) => !f.label);
+  const hasThings = draft.fields.length > 0;
   // What stops you going on from here, if anything. The button then looks unavailable but still answers.
   const blocked =
     step === 'summary' ? nameIssue !== '' || (a.record === 'numbers' && a.log !== 'plan' && !hasThings) :

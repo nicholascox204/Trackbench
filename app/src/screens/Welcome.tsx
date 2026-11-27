@@ -44,7 +44,7 @@ export function Welcome({ onDone }: { onDone?: () => void }) {
         <Animated.View style={{ transform: [{ translateX: shake }] }}>
           <TextInput
             ref={input} value={name} onChangeText={(v) => { setName(v); if (v.trim()) setNudged(false); }}
-            placeholder="Your name" placeholderTextColor={colors.muted} autoCapitalize="words" autoCorrect={false}
+            placeholder="Your name" placeholderTextColor={colors.hint} autoCapitalize="words" autoCorrect={false}
             returnKeyType="done" maxLength={40} onSubmitEditing={() => Keyboard.dismiss()}
             style={[s.input, { fontSize: 18, borderWidth: EDGE, borderColor: nudged ? colors.danger : empty ? colors.accent : colors.border }]}
           />

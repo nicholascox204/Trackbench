@@ -79,7 +79,7 @@ export function Settings() {
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>You</Text>
         <Card>
           <Label>Name</Label>
-          <TextInput style={s.input} defaultValue={state.settings.name ?? ''} onEndEditing={(e) => setName(e.nativeEvent.text)} onChangeText={(v) => { if (v.trim()) setName(v); }} placeholder="Your name" placeholderTextColor={colors.muted} maxLength={40} />
+          <TextInput style={s.input} defaultValue={state.settings.name ?? ''} onEndEditing={(e) => setName(e.nativeEvent.text)} onChangeText={(v) => { if (v.trim()) setName(v); }} placeholder="Your name" placeholderTextColor={colors.hint} maxLength={40} />
         </Card>
 
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>Appearance</Text>
@@ -123,7 +123,7 @@ export function Settings() {
             <View>
               <TextInput
                 style={[s.input, { minHeight: 120, textAlignVertical: 'top', fontSize: 12 }]} multiline value={importText}
-                onChangeText={setImportText} placeholder="# TRACKER BACKUP (v1) ..." placeholderTextColor={colors.muted}
+                onChangeText={setImportText} placeholder="# TRACKER BACKUP (v1) ..." placeholderTextColor={colors.hint}
               />
               <Button label="Import backup" onPress={doImport} style={{ marginTop: 8 }} disabled={!importText.trim()} />
             </View>

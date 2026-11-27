@@ -59,7 +59,7 @@ function FieldEditor({ f, onChange, onRemove, onMove, first, last, settings, pla
       <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>Name</Text>
       <TextInput
         style={[s.input, { marginBottom: 12 }]} value={f.name} maxLength={24} selectTextOnFocus onChangeText={(v) => onChange({ ...f, name: v })}
-        placeholder="Name it" placeholderTextColor={colors.muted}
+        placeholder={TYPE_WORD[f.type] === 'Time of day' ? 'Time' : TYPE_WORD[f.type]} placeholderTextColor={colors.hint}
       />
 
       {f.type === 'number' || f.type === 'duration' ? (
@@ -73,7 +73,7 @@ function FieldEditor({ f, onChange, onRemove, onMove, first, last, settings, pla
           {key === 'own' ? (
             <TextInput
               style={[s.input, { marginTop: -6, marginBottom: 12 }]} value={f.unit ?? ''} maxLength={12} onChangeText={(v) => onChange({ ...f, unit: v })}
-              placeholder="Label for this number" placeholderTextColor={colors.muted}
+              placeholder="Label for this number" placeholderTextColor={colors.hint}
             />
           ) : null}
           </View>
@@ -213,7 +213,7 @@ export function Totals({ fields, combos, setCombos }: { fields: Field[]; combos:
           {pool.length < 2 ? <Muted style={{ marginBottom: 8 }}>{fn === 'span' ? 'Add two "Time of day" things to work out the time between them.' : 'Add two numbers first.'}</Muted> : null}
           <TextInput
             style={[s.input, { marginBottom: 10 }]} value={name} maxLength={24} onChangeText={setName}
-            placeholder={first && second ? `${nameOf(first)} ${spec.sym} ${nameOf(second)}` : 'Name'} placeholderTextColor={colors.muted}
+            placeholder={first && second ? `${nameOf(first)} ${spec.sym} ${nameOf(second)}` : 'Name'} placeholderTextColor={colors.hint}
           />
           <Button label="Add" onPress={add} disabled={!ready} />
         </Card>
@@ -231,13 +231,11 @@ export function RecordStep({
   const planned = a.log === 'plan';
   const writing = a.record === 'numbers';
   const mode: 'free' | 'daily' | 'plan' = a.log === 'plan' ? 'plan' : a.daily ? 'daily' : 'free';
-  const labelF = fields.find((f) => f.label);
-  const rows = fields.filter((f) => !f.label);
+  const rows = fields;
   const rawName = (f: Field): Field => { const c = a.custom.find((x) => x.id === f.id); return c ? { ...f, name: c.name } : f; };
   // A name for each entry only makes sense when entries are added as you go, so changing the way drops it.
   const setMode = (m: 'free' | 'daily' | 'plan') => set({
     log: m === 'plan' ? 'plan' : 'free', daily: m === 'daily', finishPlan: m === 'plan' ? a.finishPlan : false,
-    ...(m !== 'free' && labelF ? { custom: fields.filter((f) => !f.label), chips: [] } : {}),
     // A list with a different list for each weekday needs set weekdays; any other rhythm shares one list.
     ...(m === 'plan' && a.schedule.kind !== 'daily' && a.schedule.kind !== 'weekdays' ? { samePlan: true } : {}),
   });
@@ -252,7 +250,7 @@ export function RecordStep({
     if (i < 0 || j < 0 || j >= rows.length) return;
     const next = [...rows];
     [next[i], next[j]] = [next[j], next[i]];
-    commit(labelF ? [labelF, ...next] : next);
+    commit(next);
   };
   const remove = (id: string) => { setOpenId(null); commit(fields.filter((x) => x.id !== id)); };
   const addField = (f: Field, edit: boolean) => { commit([...fields, f]); setAdding(false); setOpenId(edit ? f.id : null); };
@@ -264,12 +262,12 @@ export function RecordStep({
   const ways: { key: Answers['record']; label: string; caption: string; pick: () => void }[] = [
     { key: 'done', label: 'Tap once', caption: 'Mark it done. Good for habits.', pick: () => set({ record: 'done', avoid: false, goal: 'none', log: 'free' }) },
     { key: 'count', label: 'Tap to count', caption: 'Each tap adds one, or a set amount.', pick: () => set({ record: 'count', avoid: false, log: 'free', finishPlan: false, goals: a.goals.filter((g) => g.measure === 'count' || g.measure === 'n') }) },
-    { key: 'numbers', label: 'Enter details', caption: 'Numbers, ratings, times, notes. Any mix.', pick: () => set({ record: 'numbers', avoid: false }) },
+    { key: 'numbers', label: 'Fill in', caption: 'Numbers, ratings, times, notes. Any mix.', pick: () => set({ record: 'numbers', avoid: false }) },
   ];
   const modes: (DropdownOption & { key: 'free' | 'daily' | 'plan' })[] = [
-    { key: 'free', label: 'Add as you go' },
-    { key: 'daily', label: 'One value a day' },
-    { key: 'plan', label: 'A planned list' },
+    { key: 'free', label: 'Each time it happens' },
+    { key: 'daily', label: 'Once a day' },
+    { key: 'plan', label: 'From a list' },
   ];
   return (
     <View style={{ marginTop: 6 }}>
@@ -297,7 +295,7 @@ export function RecordStep({
           {counterUnitKey(a) === 'own' ? (
             <TextInput
               style={[s.input, { marginTop: -6, marginBottom: 12 }]} value={a.countUnit} maxLength={12} onChangeText={(v) => set({ countUnit: v })}
-              placeholder="Label" placeholderTextColor={colors.muted}
+              placeholder="Label" placeholderTextColor={colors.hint}
             />
           ) : null}
           <View style={[s.row, { justifyContent: 'space-between', marginBottom: 10 }]}>
@@ -320,7 +318,7 @@ export function RecordStep({
       {writing ? (
         <View style={{ marginTop: 16 }}>
           <View style={{ marginBottom: 6 }}>
-            <Dropdown compact label="How entries work" value={modes.find((m) => m.key === mode)?.label ?? ''} options={modes} selected={mode} onSelect={(k) => setMode(k as 'free' | 'daily' | 'plan')} />
+            <Dropdown compact label="Entries" value={modes.find((m) => m.key === mode)?.label ?? ''} options={modes} selected={mode} onSelect={(k) => setMode(k as 'free' | 'daily' | 'plan')} />
             {mode === 'plan' ? (
               <View>
               <Dropdown
@@ -347,27 +345,12 @@ export function RecordStep({
               ) : null}
               </View>
             ) : null}
-            {mode === 'free' ? (
-              <View>
-                <Toggle
-                  label="Name each entry"
-                  value={!!labelF} onChange={(v) => commit(v ? [{ id: 'what', name: 'What', type: 'text', label: true }, ...fields] : fields.filter((f) => !f.label))}
-                />
-                {labelF ? (
-                  <TextInput
-                    style={[s.input, { marginTop: 4 }]} value={labelF.name} maxLength={24} onChangeText={(v) => change({ ...labelF, name: v })}
-                    placeholder="What each entry is called" placeholderTextColor={colors.muted}
-                  />
-                ) : null}
-              </View>
-            ) : null}
           </View>
           <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>What you enter</Text>
           {rows.length === 0 && nudge ? <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>Add at least one thing to enter, then continue.</Text> : null}
           {rows.map((f0) => {
             const f = rawName(f0);
-            const blankRows = rows.filter((r) => !rawName(r).name.trim());
-            const title = f.name || (blankRows.length > 1 ? `Unnamed ${blankRows.findIndex((r) => r.id === f.id) + 1}` : 'Unnamed'); // the name as typed: the draft fills a blank one with the type's word, which would refill the box
+            const title = f.name || f0.name; // left empty, it shows the word it will be saved under
             const open = openId === f.id;
             return (
               <Reveal key={f.id} when={open}>
@@ -377,7 +360,7 @@ export function RecordStep({
                     <Icon name={TYPE_ICON[f.type]} size={22} color={colors.accent} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text numberOfLines={1} style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{title}</Text>
-                      <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 13 }}>{subtitle(f, settings)}</Text>
+                      <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 13 }}>{f0.label ? 'Note, names each entry' : subtitle(f, settings)}</Text>
                     </View>
                     <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.muted} />
                   </View>
@@ -404,12 +387,12 @@ export function RecordStep({
                 <Tap
                   key={t.type}
                   onPress={() => addField(
-                    t.type === 'number' ? { id: newId(), name: 'Number', type: 'number', step: 1, default: 0 }
-                    : t.type === 'rating' ? { id: newId(), name: 'Rating', type: 'rating', max: 5 }
-                    : t.type === 'time' ? { id: newId(), name: 'Time', type: 'time', default: 480 }
-                    : t.type === 'duration' ? { id: newId(), name: 'Duration', type: 'duration', unit: 'min', default: 0 }
-                    : t.type === 'choice' ? { id: newId(), name: 'Choice', type: 'choice', options: [] }
-                    : { id: newId(), name: 'Note', type: 'text', default: '' }, true,
+                    t.type === 'number' ? { id: newId(), name: '', type: 'number', step: 1, default: 0 }
+                    : t.type === 'rating' ? { id: newId(), name: '', type: 'rating', max: 5 }
+                    : t.type === 'time' ? { id: newId(), name: '', type: 'time', default: 480 }
+                    : t.type === 'duration' ? { id: newId(), name: '', type: 'duration', unit: 'min', default: 0 }
+                    : t.type === 'choice' ? { id: newId(), name: '', type: 'choice', options: [] }
+                    : { id: newId(), name: '', type: 'text', default: '' }, true,
                   )}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: i === ADD_TYPES.length - 1 ? 0 : 1, borderBottomColor: colors.border }}>

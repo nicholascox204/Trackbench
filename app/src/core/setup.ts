@@ -268,6 +268,10 @@ export function draftFromAnswers(a: Answers, settings: Settings, existing?: Trac
       const { unitOverride: _drop, ...rest } = f;
       return a.units === 'default' ? rest : { ...rest, unitOverride: unitForSystem(f.unitKind, a.units) };
     });
+    // An entry's name is not a setting: on a tracker logged each time it happens, a Note placed first names each entry
+    // (the food, the exercise, the purchase). Anywhere else nothing is a name.
+    fields = fields.map(({ label: _l, ...f }) => f as Field);
+    if (input === 'form' && !a.daily && fields[0]?.type === 'text') fields[0] = { ...fields[0], label: true };
     const nums = fields.filter((f) => f.type === 'number' || f.type === 'rating' || f.type === 'time' || f.type === 'duration');
     if (input === 'plan' && a.planStyle === 'sets') measures.push({ id: 'sets', name: plural(rowWord(a), 2), calc: { op: 'count' } });
     for (const f of nums) {

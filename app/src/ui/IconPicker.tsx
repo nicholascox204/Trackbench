@@ -34,7 +34,7 @@ export function IconPicker({ value, onPick, onSearchFocus }: { value: string; on
       <TextInput
         style={[s.input, { marginBottom: 10 }]} value={query} onChangeText={setQuery}
         onFocus={() => onSearchFocus?.(true)} onBlur={() => onSearchFocus?.(false)}
-        placeholder="Search icons" placeholderTextColor={colors.muted}
+        placeholder="Search icons" placeholderTextColor={colors.hint}
       />
       {searching ? null : (
         <View style={{ marginBottom: 2 }}><ChoiceGrid options={ICON_GROUPS.map((g, i) => ({ key: String(i), label: g.name }))} value={String(group)} onPick={(k) => setGroup(Number(k))} cols={4} /></View>

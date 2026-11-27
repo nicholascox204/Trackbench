@@ -57,8 +57,16 @@ function luminance(hex: string): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
+// A colour part way from one to another (0 is the first, 1 the second).
+function blendHex(a: string, b: string, t: number): string {
+  const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+  const ch = (sh: number) => Math.round(((x >> sh) & 255) * (1 - t) + ((y >> sh) & 255) * t);
+  return `#${[16, 8, 0].map((sh) => ch(sh).toString(16).padStart(2, '0')).join('')}`;
+}
+
 export interface Colors extends Palette {
   accent: string; onAccent: string; accentBg: string; done: string; doneBg: string;
+  hint: string; // grey hint text in an empty box: a step brighter than muted so it can be read, still clearly not typed text
 }
 
 export interface Theme {
@@ -87,6 +95,7 @@ export function resolveTheme(a: Appearance, scheme: 'light' | 'dark' | null | un
     onAccent: luminance(accent) > 0.6 ? '#14161b' : '#ffffff',
     accentBg: `${accent}26`,
     doneBg: `${done}24`,
+    hint: blendHex(p.muted, p.text, 0.3),
   };
   return { appearance: a, colors, radius: RADIUS.soft, space: SPACE.tuned };
 }
