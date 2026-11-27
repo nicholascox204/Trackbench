@@ -2018,3 +2018,8 @@ Five full-width cells looked awkward, with short labels in long cells. The five 
 - **Adding a thing** to a checklist used a text box and an Add button, while the fields below used "+ Add something" that drops in a row you name. Two patterns on one screen broke continuity. Ticking now uses the same pattern: "+ Add a thing" drops in a row you name in place. "Each one is called" sits above the list.
 - **The circled accent chevron** is now a shared component, used on every row that opens something, starting with the summary.
 - **The summary row reads "You log by"**, followed by the way, so the sentence finishes itself.
+
+## 2026-11-27: Checklist numbers say what they are
+Under a checklist, "For each item, you can also fill in" with "+ Add something" read as a second form leaking in from Following a plan. In truth these are numbers fixed per item that add up when ticked: Meals carries calories and protein per meal. The heading is now **Each thing adds up** and the button **+ Add a number**, offering numbers only.
+- **Dropping Ticking things off was considered and rejected.** It's the most popular case and the simplest idea.
+- **The two list ways now differ plainly:** ticking adds fixed numbers, while a plan has you type details each round.

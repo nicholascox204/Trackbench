@@ -298,7 +298,7 @@ export function RecordStep({
   );
   const tickList = way === 'tick' && mode === 'plan';
   // The heading over the fields says, as a sentence, when they are filled in.
-  const enterHeading = tickList ? `For each ${(a.terms?.item ?? DEFAULT_TERMS.item).toLowerCase()}, you can also fill in`
+  const enterHeading = tickList ? 'Each thing adds up'
     : mode === 'plan' ? `For each ${(a.terms?.row ?? DEFAULT_TERMS.row).toLowerCase()}, you fill in`
     : mode === 'daily' ? 'Each day, you fill in' : 'Each time, you fill in';
   // A thing to tick off, drawn like the rows of things you fill in.
@@ -424,7 +424,10 @@ export function RecordStep({
               ))}
             </Card>
           ) : null}
-          <Button label={adding ? 'Close' : '+ Add something'} variant="ghost" onPress={() => setAdding((v) => !v)} />
+          {/* On a checklist each thing carries fixed numbers that add up when ticked, so the only thing to add is a number. */}
+          {tickList
+            ? <Button label="+ Add a number" variant="ghost" onPress={() => addField({ id: newId(), name: '', type: 'number', step: 1, default: 0 }, true)} />
+            : <Button label={adding ? 'Close' : '+ Add something'} variant="ghost" onPress={() => setAdding((v) => !v)} />}
 
         </View>
       ) : null}
